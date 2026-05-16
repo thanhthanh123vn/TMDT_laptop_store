@@ -7,8 +7,14 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ProfilePage from './pages/ProfilePage';
+import ChangePasswordPage from './pages/ChangePasswordPage';
 import CartPage from './pages/CartPage';
 import CheckoutPage from './pages/CheckoutPage';
+import AddressPage from './pages/Address';
+import OrdersPage from './pages/OrdersPage';
+import WishListPage from './pages/WishListPage';
+import NotificationsPage from './pages/NotificationsPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 import {AdminLayout} from "./pages/admin/AdminLayout.tsx";
 import {AdminProductFormPage} from "./pages/admin/AdminProductFormPage.tsx";
 import {AdminProductsPage} from "./pages/admin/AdminProductsPage.tsx";
@@ -29,8 +35,22 @@ export const router = createBrowserRouter([
       { path: 'login', Component: LoginPage },
       { path: 'register', Component: RegisterPage },
       { path: 'forgot-password', Component: ForgotPasswordPage },
+      { path: 'reset-password', Component: ResetPasswordPage },
       { path: 'profile', Component: ProfilePage },
-      { path: 'profile', Component: ProfilePage },
+      { path: 'wishlist', Component: WishListPage },
+      { path: 'notifications', Component: NotificationsPage },
+      {
+        path: 'account',
+        children: [
+          { index: true, Component: ProfilePage },
+          { path: 'profile', Component: ProfilePage },
+          { path: 'address', Component: AddressPage },
+          { path: 'orders', Component: OrdersPage },
+          { path: 'wishlist', Component: WishListPage },
+          { path: 'notifications', Component: NotificationsPage },
+          { path: 'password', Component: ChangePasswordPage },
+        ]
+      }
 
     ],
 

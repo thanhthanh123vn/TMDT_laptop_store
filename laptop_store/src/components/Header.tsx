@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom'; // Thêm useLocation để nhận biết route hiện tại
-import { ShoppingCart, Heart, GitCompare, Search, Menu } from 'lucide-react';
+import { ShoppingCart, Heart, GitCompare, Search, Menu, User } from 'lucide-react';
 import { useStore } from '../context/StoreContext';
 import { Badge } from './ui/badge';
 import { cn } from './ui/utils'; // Giả sử bạn có hàm cn để nối class chuyên nghiệp
@@ -105,6 +105,11 @@ export const Header: React.FC = () => {
                   {cartCount}
                 </Badge>
               )}
+            </Link>
+
+            {/* User Account */}
+            <Link to="/account" className="p-2.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-all duration-300 group">
+              <User className="w-5 h-5 group-hover:scale-110 transition-transform" />
             </Link>
 
             {/* Nút Menu cho màn hình điện thoại */}
