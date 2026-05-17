@@ -104,38 +104,40 @@ public class AuthService {
         return issueTokens(user);
     }
 
-    public AuthResponse loginFirebase(String idToken) throws Exception {
-        FirebaseToken decoded = FirebaseAuth.getInstance().verifyIdToken(idToken);
+    public AuthResponse loginFirebase(String idToken) {
+        try {
+            FirebaseToken decoded = FirebaseAuth.getInstance().verifyIdToken(idToken);
 
-        String email = decoded.getEmail();
-        String name = (String) decoded.getClaims().get("name");
-        Object firebaseClaimsObj = decoded.getClaims().get("firebase");
+            String email = decoded.getEmail();
+            String nameFromClaim = (String) decoded.getClaims().get("name");
+            final String name = nameFromClaim != null ? nameFromClaim : (email != null ? email.split("@")[0] : "User");
+            Object firebaseClaimsObj = decoded.getClaims().get("firebase");
 
-        String provider = "password";
-        if (firebaseClaimsObj instanceof Map<?, ?> firebaseClaims) {
-            Object signInProvider = firebaseClaims.get("sign_in_provider");
-            if (signInProvider instanceof String providerValue) {
-                provider = providerValue;
+            String provider = "password";
+            if (firebaseClaimsObj instanceof Map<?, ?> firebaseClaims) {
+                Object signInProvider = firebaseClaims.get("sign_in_provider");
+                if (signInProvider instanceof String providerValue) {
+                    provider = providerValue;
+                }
             }
+
+            AuthProvider authProvider = provider.equals("google.com") ? AuthProvider.GOOGLE : AuthProvider.FACEBOOK;
+
+            User user = repo.findByEmail(email).orElseGet(() -> {
+                User u = new User();
+                u.setEmail(email);
+                u.setFullName(name);
+                u.setRole(Role.USER);
+                u.setProvider(authProvider);
+                u.setEnabled(true);
+                return repo.save(u);
+            });
+
+            return issueTokens(user);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Lỗi xác thực Firebase: " + e.getMessage());
         }
-
-        AuthProvider authProvider = provider.equals("google.com") ? AuthProvider.GOOGLE : AuthProvider.FACEBOOK;
-
-        User user = repo.findByEmail(email).orElseGet(() -> {
-            User u = new User();
-            u.setEmail(email);
-            u.setFullName(name);
-            u.setRole(Role.USER);
-            u.setProvider(authProvider);
-            u.setEnabled(true);
-            u.setRegisterOtp(null);
-            u.setRegisterOtpExpiry(null);
-            u.setPasswordResetOtp(null);
-            u.setPasswordResetOtpExpiry(null);
-            return repo.save(u);
-        });
-
-        return issueTokens(user);
     }
 
     public AuthResponse refreshToken(RefreshTokenReq req) {
