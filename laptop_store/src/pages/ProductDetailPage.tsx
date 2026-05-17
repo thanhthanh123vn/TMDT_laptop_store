@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router';
 import { ShoppingCart, Heart } from 'lucide-react';
-import { getLaptopById, getReviewsByLaptopId } from '../data/laptops';
+import { getLaptopById as getMockLaptopById, getReviewsByLaptopId } from '../data/laptops';
 import { useStore } from '../context/StoreContext';
-import type { Review } from '../types';
+import { productApi } from '../api/productApi';
+import type { Review, Laptop } from '../types';
 
 export const ProductDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -17,7 +18,42 @@ export const ProductDetailPage: React.FC = () => {
 
   const { addToCart, toggleWishlist, wishlist } = useStore();
 
-  const laptop = getLaptopById(id || '');
+  const [laptop, setLaptop] = useState<Laptop | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchLaptop = async () => {
+      try {
+        const res = await productApi.getProductById(id || '');
+        if (res.data) {
+          const p = res.data;
+          setLaptop({
+            ...p,
+            id: p.id.toString(),
+            image: p.imageUrl || '/placeholder.svg',
+            price: Number(p.price),
+            category: p.category ? p.category.split(',') : []
+          });
+        } else {
+          setLaptop(getMockLaptopById(id || '') || null);
+        }
+      } catch (err) {
+        console.error("Failed to fetch product:", err);
+        setLaptop(getMockLaptopById(id || '') || null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchLaptop();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-16 text-center text-gray-500">
+        Loading...
+      </div>
+    );
+  }
 
   if (!laptop) {
     return (

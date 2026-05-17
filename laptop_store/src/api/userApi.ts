@@ -9,5 +9,14 @@ export const userApi = {
     },
     changePassword: (data: any) => {
         return axiosClient.post('/api/users/me/change-password', data);
+    },
+    uploadAvatar: (file: File) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        return axiosClient.post('/api/users/me/avatar', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
     }
 };

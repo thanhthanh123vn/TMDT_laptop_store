@@ -7,7 +7,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import java.util.Map;
+import java.io.IOException;
 
 @RestController
 @RequestMapping("/api/users")
@@ -15,6 +17,7 @@ import java.util.Map;
 public class UserController {
 
     private final UserRepository userRepository;
+    private final com.fit.nlu.laptop.service.FileService fileService;
 
     @GetMapping("/me")
     public ResponseEntity<?> getMyProfile(@AuthenticationPrincipal UserPrincipal principal) {
@@ -48,5 +51,17 @@ public class UserController {
     public ResponseEntity<?> changePassword(@AuthenticationPrincipal UserPrincipal principal, @RequestBody ChangePasswordReq req) {
         if (principal == null) return ResponseEntity.status(401).build();
         return ResponseEntity.ok(Map.of("message", authService.changePassword(principal.getId().longValue(), req.oldPassword(), req.newPassword())));
+    }
+
+    @PostMapping("/me/avatar")
+    public ResponseEntity<?> uploadAvatar(@AuthenticationPrincipal UserPrincipal principal, @RequestParam("file") MultipartFile file) throws IOException {
+        if (principal == null) return ResponseEntity.status(401).build();
+        String url = fileService.saveAvatar(file);
+        
+        User user = userRepository.findById(principal.getId().longValue()).orElseThrow();
+        user.setAvatarUrl(url);
+        userRepository.save(user);
+        
+        return ResponseEntity.ok(Map.of("url", url));
     }
 }

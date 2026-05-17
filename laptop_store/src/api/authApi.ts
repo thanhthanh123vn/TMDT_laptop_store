@@ -24,5 +24,8 @@ export const authApi = {
     },
     refreshToken: (data: any) => {
         return axiosClient.post('/auth/refresh', data);
+    },
+    loginFirebase: (idToken: string) => {
+        return axiosClient.post('/auth/firebase', { idToken });
     }
 };

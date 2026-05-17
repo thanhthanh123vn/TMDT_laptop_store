@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import { notificationApi } from "../api/notificationApi"
+import { userApi } from "../api/userApi"
 import {
     LayoutGrid,
     UserPen,
@@ -50,6 +51,7 @@ interface Notification {
 export default function NotificationsPage() {
     const [notifications, setNotifications] = useState<Notification[]>([])
     const [loading, setLoading] = useState(true)
+    const [userProfile, setUserProfile] = useState<{ fullName: string; avatarUrl: string }>({ fullName: "Tài khoản của tôi", avatarUrl: "" })
 
     useEffect(() => {
         const fetchNotifs = async () => {
@@ -72,7 +74,21 @@ export default function NotificationsPage() {
                 setLoading(false);
             }
         };
+        const fetchProfile = async () => {
+            try {
+                const res = await userApi.getMyProfile();
+                const user = res.data;
+                const BASE_URL = "http://localhost:8080";
+                setUserProfile({
+                    fullName: user.fullName || "Tài khoản của tôi",
+                    avatarUrl: user.avatarUrl ? (user.avatarUrl.startsWith('http') ? user.avatarUrl : BASE_URL + user.avatarUrl) : ""
+                });
+            } catch (err) {
+                console.error(err);
+            }
+        };
         fetchNotifs();
+        fetchProfile();
     }, []);
 
     const orderNotifications = notifications.filter((n) => n.type === "order")
@@ -138,9 +154,22 @@ export default function NotificationsPage() {
                     {/* Sidebar */}
                     <aside className="w-full lg:w-64 shrink-0">
                         <div className="bg-card rounded-lg p-6 shadow-sm border">
-                            <div className="mb-6">
-                                <h2 className="font-semibold text-foreground">Tài khoản của tôi</h2>
-                                <p className="text-sm text-muted-foreground">Quản lý thông tin cá nhân</p>
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="w-10 h-10 rounded-full bg-muted overflow-hidden flex items-center justify-center shrink-0">
+                                    {userProfile.avatarUrl ? (
+                                        <img
+                                            src={userProfile.avatarUrl}
+                                            alt="Avatar"
+                                            className="w-full h-full object-cover"
+                                        />
+                                    ) : (
+                                        <User className="h-5 w-5 text-muted-foreground" />
+                                    )}
+                                </div>
+                                <div>
+                                    <h2 className="font-semibold text-foreground text-sm">{userProfile.fullName}</h2>
+                                    <p className="text-xs text-muted-foreground">Quản lý thông tin cá nhân</p>
+                                </div>
                             </div>
 
                             <nav className="space-y-1">

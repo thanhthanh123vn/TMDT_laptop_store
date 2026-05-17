@@ -3,6 +3,7 @@
 import { Link } from "react-router-dom"
 import { useState, useEffect } from "react"
 import { wishlistApi } from "../api/wishlistApi"
+import { userApi } from "../api/userApi"
 import {
     Search,
     ShoppingCart,
@@ -39,6 +40,7 @@ const menuItems = [
 export default function WishlistPage() {
     const [wishlistItems, setWishlistItems] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
+    const [userProfile, setUserProfile] = useState<{ fullName: string; avatarUrl: string }>({ fullName: "Tài khoản của tôi", avatarUrl: "" })
 
     useEffect(() => {
         const fetchWishlist = async () => {
@@ -61,7 +63,21 @@ export default function WishlistPage() {
                 setLoading(false);
             }
         };
+        const fetchProfile = async () => {
+            try {
+                const res = await userApi.getMyProfile();
+                const user = res.data;
+                const BASE_URL = "http://localhost:8080";
+                setUserProfile({
+                    fullName: user.fullName || "Tài khoản của tôi",
+                    avatarUrl: user.avatarUrl ? (user.avatarUrl.startsWith('http') ? user.avatarUrl : BASE_URL + user.avatarUrl) : ""
+                });
+            } catch (err) {
+                console.error(err);
+            }
+        };
         fetchWishlist();
+        fetchProfile();
     }, []);
 
     const removeFromWishlist = async (id: number) => {
@@ -129,15 +145,19 @@ export default function WishlistPage() {
                     <aside className="lg:w-64 flex-shrink-0">
                         <div className="bg-card rounded-lg border p-6">
                             <div className="flex items-center gap-3 mb-6">
-                                <div className="w-12 h-12 rounded-full bg-muted overflow-hidden">
-                                    <img
-                                        src="/placeholder.svg?height=48&width=48"
-                                        alt="Avatar"
-                                        className="w-full h-full object-cover"
-                                    />
+                                <div className="w-12 h-12 rounded-full bg-muted overflow-hidden flex items-center justify-center">
+                                    {userProfile.avatarUrl ? (
+                                        <img
+                                            src={userProfile.avatarUrl}
+                                            alt="Avatar"
+                                            className="w-full h-full object-cover"
+                                        />
+                                    ) : (
+                                        <User className="h-6 w-6 text-muted-foreground" />
+                                    )}
                                 </div>
                                 <div>
-                                    <p className="font-semibold text-foreground">Tài khoản của tôi</p>
+                                    <p className="font-semibold text-foreground">{userProfile.fullName}</p>
                                     <p className="text-sm text-muted-foreground">Quản lý thông tin cá nhân</p>
                                 </div>
                             </div>
