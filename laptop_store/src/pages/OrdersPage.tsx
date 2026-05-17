@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import { orderApi } from "../api/orderApi"
+import { userApi } from "../api/userApi"
 import {
     LayoutDashboard,
     UserPen,
@@ -86,6 +87,7 @@ export default function OrderHistoryPage() {
     const [dateFilter, setDateFilter] = useState("30days")
     const [ordersData, setOrdersData] = useState<Order[]>([])
     const [loading, setLoading] = useState(true)
+    const [userProfile, setUserProfile] = useState<{ fullName: string; avatarUrl: string }>({ fullName: "Tài khoản của tôi", avatarUrl: "" })
 
     useEffect(() => {
         const fetchOrders = async () => {
@@ -110,7 +112,21 @@ export default function OrderHistoryPage() {
                 setLoading(false);
             }
         };
+        const fetchProfile = async () => {
+            try {
+                const res = await userApi.getMyProfile();
+                const user = res.data;
+                const BASE_URL = "http://localhost:8080";
+                setUserProfile({
+                    fullName: user.fullName || "Tài khoản của tôi",
+                    avatarUrl: user.avatarUrl ? (user.avatarUrl.startsWith('http') ? user.avatarUrl : BASE_URL + user.avatarUrl) : ""
+                });
+            } catch (err) {
+                console.error(err);
+            }
+        };
         fetchOrders();
+        fetchProfile();
     }, []);
 
     return (
@@ -165,15 +181,19 @@ export default function OrderHistoryPage() {
                     <aside className="lg:w-64 shrink-0">
                         <div className="bg-primary text-primary-foreground rounded-t-xl p-4">
                             <div className="flex items-center gap-3">
-                                <div className="w-12 h-12 rounded-full overflow-hidden bg-white/20">
-                                    <img
-                                        src="/placeholder.svg?height=48&width=48"
-                                        alt="Avatar"
-                                        className="w-12 h-12 object-cover"
-                                    />
+                                <div className="w-12 h-12 rounded-full overflow-hidden bg-white/20 flex items-center justify-center">
+                                    {userProfile.avatarUrl ? (
+                                        <img
+                                            src={userProfile.avatarUrl}
+                                            alt="Avatar"
+                                            className="w-full h-full object-cover"
+                                        />
+                                    ) : (
+                                        <User className="h-6 w-6 text-white" />
+                                    )}
                                 </div>
                                 <div>
-                                    <h3 className="font-semibold">Tài khoản của tôi</h3>
+                                    <h3 className="font-semibold">{userProfile.fullName}</h3>
                                     <p className="text-sm text-white/70">Quản lý thông tin cá nhân</p>
                                 </div>
                             </div>

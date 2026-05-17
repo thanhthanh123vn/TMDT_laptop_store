@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { 
   Search, 
   User, // Icon của bạn bè
@@ -33,8 +33,9 @@ import {
   CarouselPrevious,
 } from "../components/ui/carousel";
 import type { FilterOptions, SortOption } from "../types";
-import { laptops, getLaptopsByIds } from "../data/laptops.ts";
+import { laptops as mockLaptops, getLaptopsByIds } from "../data/laptops.ts";
 import { useStore } from "../context/StoreContext";
+import { productApi } from "../api/productApi";
 
 // Cấu hình giá trị mặc định
 const initialFilters: FilterOptions & { brand: string } = {
@@ -61,6 +62,33 @@ export const HomePage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [sortBy, setSortBy] = useState<SortOption>("best-selling");
+  const [laptops, setLaptops] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const res = await productApi.getAllProducts();
+        if (res.data && res.data.length > 0) {
+          setLaptops(res.data.map((p: any) => ({
+            ...p,
+            id: p.id.toString(),
+            image: p.imageUrl || '/placeholder.svg',
+            price: Number(p.price)
+          })));
+        } else {
+          // Fallback to mock data if BE is empty
+          setLaptops(mockLaptops);
+        }
+      } catch (err) {
+        console.error("Failed to fetch products:", err);
+        setLaptops(mockLaptops);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProducts();
+  }, []);
 
   const [filters, setFilters] = useState(initialFilters);
 
@@ -167,10 +195,10 @@ export const HomePage: React.FC = () => {
 
   // Các list dùng cho UI section dưới cùng
   const recentlyViewedLaptops = getLaptopsByIds(recentlyViewed).slice(0, 4);
-  const bestSellers = useMemo(() => laptops.filter((l) => l.isBestSeller).slice(0, 4), []);
-  const hotDeals = useMemo(() => laptops.filter((l) => l.isHot).slice(0, 4), []);
-  const newestLaptops = useMemo(() => [...laptops].sort((a, b) => String(b.id).localeCompare(String(a.id))).slice(0, 4), []);
-  const recommendedLaptops = useMemo(() => laptops.slice(2, 6), []); // Giả lập data gợi ý
+  const bestSellers = useMemo(() => laptops.filter((l: any) => l.isBestSeller).slice(0, 4), [laptops]);
+  const hotDeals = useMemo(() => laptops.filter((l: any) => l.isHot).slice(0, 4), [laptops]);
+  const newestLaptops = useMemo(() => [...laptops].sort((a, b) => String(b.id).localeCompare(String(a.id))).slice(0, 4), [laptops]);
+  const recommendedLaptops = useMemo(() => laptops.slice(2, 6), [laptops]); // Giả lập data gợi ý
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans">

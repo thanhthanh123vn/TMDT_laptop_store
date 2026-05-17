@@ -3,6 +3,8 @@ import { Eye, EyeOff, User, Lock, Phone, Mail, MapPin, Share2, MessageSquare, Sh
 import { Link, useNavigate } from "react-router-dom"
 import { authApi } from "../api/authApi"
 import { getErrorMessage } from "../utils/errorUtils";
+import { signInWithPopup } from "firebase/auth";
+import { auth, googleProvider, facebookProvider } from "../api/firebaseConfig";
 
 export default function LoginPage() {
     const [showPassword, setShowPassword] = useState(false)
@@ -28,6 +30,31 @@ export default function LoginPage() {
             }
         } catch (err: any) {
             setError(getErrorMessage(err, "Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin."));
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    const handleSocialLogin = async (provider: any) => {
+        setError("");
+        setLoading(true);
+        try {
+            const result = await signInWithPopup(auth, provider);
+            const idToken = await result.user.getIdToken();
+            
+            // Gửi idToken lên Backend
+            const response = await authApi.loginFirebase(idToken);
+            
+            if (response.data && response.data.token) {
+                localStorage.setItem("token", response.data.token);
+                localStorage.setItem("refreshToken", response.data.refreshToken);
+                navigate("/");
+            } else {
+                navigate("/");
+            }
+        } catch (err: any) {
+            console.error(err);
+            setError(getErrorMessage(err, "Đăng nhập mạng xã hội thất bại."));
         } finally {
             setLoading(false);
         }
@@ -151,11 +178,19 @@ export default function LoginPage() {
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
-                            <button className="flex items-center justify-center gap-2 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                            <button 
+                                onClick={() => handleSocialLogin(googleProvider)}
+                                disabled={loading}
+                                className="flex items-center justify-center gap-2 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                            >
                                 <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-5 h-5" alt="Google" />
                                 <span className="text-sm font-medium">Google</span>
                             </button>
-                            <button className="flex items-center justify-center gap-2 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                            <button 
+                                onClick={() => handleSocialLogin(facebookProvider)}
+                                disabled={loading}
+                                className="flex items-center justify-center gap-2 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                            >
                                 <img src="https://www.svgrepo.com/show/475647/facebook-color.svg" className="w-5 h-5" alt="Facebook" />
                                 <span className="text-sm font-medium">Facebook</span>
                             </button>
