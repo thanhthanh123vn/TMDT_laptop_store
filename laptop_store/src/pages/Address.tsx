@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import { addressApi } from "../api/addressApi"
+import { userApi } from "../api/userApi"
 import {
     LayoutDashboard,
     UserPen,
@@ -19,6 +20,7 @@ import {
     MapPinPlus,
     Info,
     CheckCircle2,
+    X,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
@@ -45,10 +47,70 @@ const menuItems = [
 export default function AddressesPage() {
     const [addresses, setAddresses] = useState<Address[]>([])
     const [loading, setLoading] = useState(true);
+    const [userProfile, setUserProfile] = useState<{ fullName: string; avatarUrl: string }>({ fullName: "Tài khoản của tôi", avatarUrl: "" })
+
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [formFullName, setFormFullName] = useState("");
+    const [formPhone, setFormPhone] = useState("");
+    const [formProvince, setFormProvince] = useState("");
+    const [formDistrict, setFormDistrict] = useState("");
+    const [formWard, setFormWard] = useState("");
+    const [formStreet, setFormStreet] = useState("");
+    const [formType, setFormType] = useState<"HOME" | "OFFICE">("HOME");
+    const [formIsDefault, setFormIsDefault] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
+
+    const handleAddAddress = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setSubmitting(true);
+        try {
+            await addressApi.addAddress({
+                fullName: formFullName,
+                phone: formPhone,
+                province: formProvince,
+                district: formDistrict,
+                ward: formWard,
+                streetAddress: formStreet,
+                isDefault: formIsDefault,
+                addressType: formType,
+            });
+            setIsModalOpen(false);
+            // Reset form
+            setFormFullName("");
+            setFormPhone("");
+            setFormProvince("");
+            setFormDistrict("");
+            setFormWard("");
+            setFormStreet("");
+            setFormType("HOME");
+            setFormIsDefault(false);
+            // Re-fetch addresses
+            fetchAddresses();
+        } catch (err) {
+            console.error("Error adding address:", err);
+        } finally {
+            setSubmitting(false);
+        }
+    };
 
     useEffect(() => {
         fetchAddresses();
+        fetchProfile();
     }, []);
+
+    const fetchProfile = async () => {
+        try {
+            const res = await userApi.getMyProfile();
+            const user = res.data;
+            const BASE_URL = "http://localhost:8080";
+            setUserProfile({
+                fullName: user.fullName || "Tài khoản của tôi",
+                avatarUrl: user.avatarUrl ? (user.avatarUrl.startsWith('http') ? user.avatarUrl : BASE_URL + user.avatarUrl) : ""
+            });
+        } catch (err) {
+            console.error(err);
+        }
+    };
 
     const fetchAddresses = async () => {
         try {
@@ -135,15 +197,19 @@ export default function AddressesPage() {
                         <div className="bg-card rounded-lg p-4 lg:p-6 border border-border">
                             {/* User Info */}
                             <div className="flex items-center gap-3 mb-6">
-                                <div className="relative w-12 h-12 rounded-full overflow-hidden bg-muted">
-                                    <img
-                                        src="/placeholder.svg?height=48&width=48"
-                                        alt="Avatar"
-                                        className="w-full h-full object-cover"
-                                    />
+                                <div className="relative w-12 h-12 rounded-full overflow-hidden bg-muted flex items-center justify-center">
+                                    {userProfile.avatarUrl ? (
+                                        <img
+                                            src={userProfile.avatarUrl}
+                                            alt="Avatar"
+                                            className="w-full h-full object-cover"
+                                        />
+                                    ) : (
+                                        <User className="w-6 h-6 text-muted-foreground" />
+                                    )}
                                 </div>
                                 <div>
-                                    <h3 className="font-semibold text-foreground">Tài khoản của tôi</h3>
+                                    <h3 className="font-semibold text-foreground">{userProfile.fullName}</h3>
                                     <p className="text-sm text-muted-foreground">Quản lý thông tin cá nhân</p>
                                 </div>
                             </div>
@@ -178,7 +244,10 @@ export default function AddressesPage() {
                                     Thêm hoặc quản lý các địa chỉ giao hàng của bạn.
                                 </p>
                             </div>
-                            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2 w-full sm:w-auto">
+                            <Button 
+                                onClick={() => setIsModalOpen(true)}
+                                className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2 w-full sm:w-auto"
+                            >
                                 <Plus className="w-4 h-4" />
                                 Thêm địa chỉ mới
                             </Button>
@@ -246,7 +315,10 @@ export default function AddressesPage() {
                             ))}
 
                             {/* Add New Address Card */}
-                            <button className="w-full border-2 border-dashed border-border rounded-lg p-8 flex flex-col items-center justify-center gap-3 hover:border-primary/50 hover:bg-muted/50 transition-colors group">
+                            <button 
+                                onClick={() => setIsModalOpen(true)}
+                                className="w-full border-2 border-dashed border-border rounded-lg p-8 flex flex-col items-center justify-center gap-3 hover:border-primary/50 hover:bg-muted/50 transition-colors group"
+                            >
                                 <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center group-hover:bg-primary/10 transition-colors">
                                     <MapPinPlus className="w-6 h-6 text-muted-foreground group-hover:text-primary transition-colors" />
                                 </div>
@@ -304,6 +376,165 @@ export default function AddressesPage() {
                     </div>
                 </div>
             </footer>
+
+            {isModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                    <div className="bg-white rounded-xl shadow-xl max-w-lg w-full overflow-hidden border border-border animate-in fade-in zoom-in duration-200">
+                        {/* Modal Header */}
+                        <div className="flex items-center justify-between p-6 border-b border-border">
+                            <h2 className="text-xl font-bold text-primary flex items-center gap-2">
+                                <MapPinPlus className="w-5 h-5 text-primary" />
+                                Thêm địa chỉ mới
+                            </h2>
+                            <button
+                                onClick={() => setIsModalOpen(false)}
+                                className="p-1.5 hover:bg-muted rounded-full transition-colors"
+                            >
+                                <X className="w-5 h-5 text-muted-foreground" />
+                            </button>
+                        </div>
+
+                        {/* Modal Body / Form */}
+                        <form onSubmit={handleAddAddress}>
+                            <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div className="space-y-1.5">
+                                        <label className="text-sm font-medium text-foreground">Họ và tên</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={formFullName}
+                                            onChange={(e) => setFormFullName(e.target.value)}
+                                            placeholder="Nguyễn Văn A"
+                                            className="w-full h-11 px-3.5 rounded-lg border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                                        />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-sm font-medium text-foreground">Số điện thoại</label>
+                                        <input
+                                            type="tel"
+                                            required
+                                            value={formPhone}
+                                            onChange={(e) => setFormPhone(e.target.value)}
+                                            placeholder="09XXXXXXXX"
+                                            className="w-full h-11 px-3.5 rounded-lg border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                    <div className="space-y-1.5">
+                                        <label className="text-sm font-medium text-foreground">Tỉnh / Thành phố</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={formProvince}
+                                            onChange={(e) => setFormProvince(e.target.value)}
+                                            placeholder="Hồ Chí Minh"
+                                            className="w-full h-11 px-3.5 rounded-lg border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                                        />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-sm font-medium text-foreground">Quận / Huyện</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={formDistrict}
+                                            onChange={(e) => setFormDistrict(e.target.value)}
+                                            placeholder="Thủ Đức"
+                                            className="w-full h-11 px-3.5 rounded-lg border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                                        />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-sm font-medium text-foreground">Phường / Xã</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={formWard}
+                                            onChange={(e) => setFormWard(e.target.value)}
+                                            placeholder="Linh Trung"
+                                            className="w-full h-11 px-3.5 rounded-lg border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <label className="text-sm font-medium text-foreground">Địa chỉ cụ thể (Tòa nhà, số nhà, đường)</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={formStreet}
+                                        onChange={(e) => setFormStreet(e.target.value)}
+                                        placeholder="Khu phố 6, Linh Trung"
+                                        className="w-full h-11 px-3.5 rounded-lg border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                                    <div className="space-y-1.5">
+                                        <label className="text-sm font-medium text-foreground">Loại địa chỉ</label>
+                                        <div className="flex gap-3">
+                                            <button
+                                                type="button"
+                                                onClick={() => setFormType("HOME")}
+                                                className={`flex-1 h-11 rounded-lg border text-sm font-medium transition-all ${
+                                                    formType === "HOME"
+                                                        ? "border-primary bg-primary/5 text-primary"
+                                                        : "border-border bg-background text-muted-foreground hover:bg-muted"
+                                                }`}
+                                            >
+                                                Nhà riêng
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setFormType("OFFICE")}
+                                                className={`flex-1 h-11 rounded-lg border text-sm font-medium transition-all ${
+                                                    formType === "OFFICE"
+                                                        ? "border-primary bg-primary/5 text-primary"
+                                                        : "border-border bg-background text-muted-foreground hover:bg-muted"
+                                                }`}
+                                            >
+                                                Văn phòng
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-2.5 pt-7">
+                                        <input
+                                            type="checkbox"
+                                            id="isDefault"
+                                            checked={formIsDefault}
+                                            onChange={(e) => setFormIsDefault(e.target.checked)}
+                                            className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
+                                        />
+                                        <label htmlFor="isDefault" className="text-sm font-medium text-foreground cursor-pointer select-none">
+                                            Đặt làm mặc định
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Modal Footer */}
+                            <div className="flex items-center justify-end gap-3 p-6 border-t border-border bg-muted/20">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsModalOpen(false)}
+                                    className="px-5 h-11 text-sm font-medium border border-border rounded-lg hover:bg-muted transition-colors"
+                                >
+                                    Hủy bỏ
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={submitting}
+                                    className="px-6 h-11 text-sm font-medium bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg disabled:opacity-50 transition-colors"
+                                >
+                                    {submitting ? "Đang lưu..." : "Lưu địa chỉ"}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

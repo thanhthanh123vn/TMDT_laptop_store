@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import {
   LayoutDashboard,
@@ -46,6 +46,24 @@ export default function ChangePasswordPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
+  const [userProfile, setUserProfile] = useState<{ fullName: string; avatarUrl: string }>({ fullName: "Tài khoản của tôi", avatarUrl: "" })
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+        try {
+            const res = await userApi.getMyProfile();
+            const user = res.data;
+            const BASE_URL = "http://localhost:8080";
+            setUserProfile({
+                fullName: user.fullName || "Tài khoản của tôi",
+                avatarUrl: user.avatarUrl ? (user.avatarUrl.startsWith('http') ? user.avatarUrl : BASE_URL + user.avatarUrl) : ""
+            });
+        } catch (err) {
+            console.error(err);
+        }
+    };
+    fetchProfile();
+  }, []);
 
   // Password validation
   const hasMinLength = newPassword.length >= 8
@@ -135,11 +153,19 @@ export default function ChangePasswordPage() {
             <aside className="w-full lg:w-64 shrink-0">
               <div className="bg-white rounded-xl p-6 shadow-sm">
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center">
-                    <User className="w-6 h-6 text-primary-foreground" />
+                  <div className="w-12 h-12 rounded-full overflow-hidden bg-muted flex items-center justify-center">
+                    {userProfile.avatarUrl ? (
+                      <img
+                        src={userProfile.avatarUrl}
+                        alt="Avatar"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <User className="w-6 h-6 text-muted-foreground" />
+                    )}
                   </div>
                   <div>
-                    <h3 className="font-semibold text-foreground">Tài khoản của tôi</h3>
+                    <h3 className="font-semibold text-foreground">{userProfile.fullName}</h3>
                     <p className="text-sm text-muted-foreground">Quản lý thông tin cá nhân</p>
                   </div>
                 </div>

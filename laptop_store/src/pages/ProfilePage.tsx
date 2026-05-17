@@ -42,6 +42,9 @@ export default function ProfilePage() {
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
+    const [avatarUrl, setAvatarUrl] = useState("");
+
+    const BASE_URL = "http://localhost:8080";
 
     useEffect(() => {
         fetchProfile();
@@ -57,6 +60,9 @@ export default function ProfilePage() {
                 phone: user.phone || "",
                 gender: "Nam" 
             });
+            if (user.avatarUrl) {
+                setAvatarUrl(user.avatarUrl.startsWith('http') ? user.avatarUrl : BASE_URL + user.avatarUrl);
+            }
         } catch (err) {
             setError("Không thể tải thông tin người dùng. Vui lòng đăng nhập lại.");
         } finally {
@@ -77,6 +83,25 @@ export default function ProfilePage() {
             setSuccess("Cập nhật hồ sơ thành công!");
         } catch (err) {
             setError("Có lỗi xảy ra khi cập nhật hồ sơ.");
+        } finally {
+            setSaving(false);
+        }
+    }
+
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setSaving(true);
+        setError("");
+        setSuccess("");
+        try {
+            const res = await userApi.uploadAvatar(file);
+            const newUrl = res.data.url;
+            setAvatarUrl(newUrl.startsWith('http') ? newUrl : BASE_URL + newUrl);
+            setSuccess("Cập nhật ảnh đại diện thành công!");
+        } catch (err) {
+            setError("Không thể tải ảnh lên. Vui lòng thử lại.");
         } finally {
             setSaving(false);
         }
@@ -138,12 +163,16 @@ export default function ProfilePage() {
                         <div className="bg-card rounded-xl p-6 border border-border">
                             {/* User Info */}
                             <div className="flex items-center gap-3 mb-6">
-                                <div className="relative w-12 h-12 rounded-full overflow-hidden bg-muted">
-                                    <img
-                                        src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Chi%CC%89nh%20su%CC%9B%CC%89a%20ho%CC%82%CC%80%20so%CC%9B%20-%20LAPTOPRE-rHmPziui8KK5tlvkbrWmaQTrXM5W7w.png"
-                                        alt="Avatar"
-                                        className="w-full h-full object-cover"
-                                    />
+                                <div className="relative w-12 h-12 rounded-full overflow-hidden bg-muted flex items-center justify-center">
+                                    {avatarUrl ? (
+                                        <img
+                                            src={avatarUrl}
+                                            alt="Avatar"
+                                            className="w-full h-full object-cover"
+                                        />
+                                    ) : (
+                                        <User className="h-6 w-6 text-muted-foreground" />
+                                    )}
                                 </div>
                                 <div>
                                     <h3 className="font-semibold text-foreground text-sm">Tài khoản của tôi</h3>
@@ -186,13 +215,17 @@ export default function ProfilePage() {
                                 {/* Avatar Section */}
                                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 mb-8">
                                     <div className="relative">
-                                        <div className="w-24 h-24 rounded-xl overflow-hidden bg-primary/10">
+                                    <div className="w-24 h-24 rounded-xl overflow-hidden bg-primary/10 flex items-center justify-center">
+                                        {avatarUrl ? (
                                             <img
-                                                src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Chi%CC%89nh%20su%CC%9B%CC%89a%20ho%CC%82%CC%80%20so%CC%9B%20-%20LAPTOPRE-rHmPziui8KK5tlvkbrWmaQTrXM5W7w.png"
+                                                src={avatarUrl}
                                                 alt="Profile"
                                                 className="w-full h-full object-cover"
                                             />
-                                        </div>
+                                        ) : (
+                                            <User className="h-10 w-10 text-primary" />
+                                        )}
+                                    </div>
                                         <button
                                             type="button"
                                             className="absolute -bottom-1 -right-1 w-7 h-7 bg-primary text-primary-foreground rounded-full flex items-center justify-center"
@@ -206,10 +239,29 @@ export default function ProfilePage() {
                                             Dung lượng tối đa 1MB. Định dạng: .JPG, .PNG
                                         </p>
                                         <div className="flex gap-3">
-                                            <Button type="button" size="sm" className="bg-primary hover:bg-primary/90">
-                                                Chọn hình mới
+                                            <input
+                                                type="file"
+                                                id="avatar-upload"
+                                                className="hidden"
+                                                accept="image/*"
+                                                onChange={handleFileChange}
+                                            />
+                                            <Button 
+                                                type="button" 
+                                                size="sm" 
+                                                className="bg-primary hover:bg-primary/90"
+                                                onClick={() => document.getElementById('avatar-upload')?.click()}
+                                                disabled={saving}
+                                            >
+                                                {saving ? "Đang tải..." : "Chọn hình mới"}
                                             </Button>
-                                            <Button type="button" variant="outline" size="sm">
+                                            <Button 
+                                                type="button" 
+                                                variant="outline" 
+                                                size="sm"
+                                                onClick={() => setAvatarUrl("")}
+                                                disabled={saving}
+                                            >
                                                 Gỡ bỏ
                                             </Button>
                                         </div>

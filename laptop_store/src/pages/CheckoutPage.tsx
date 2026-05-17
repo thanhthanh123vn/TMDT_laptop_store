@@ -5,6 +5,7 @@ import { useStore } from '../context/StoreContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
+import { orderApi } from '../api/orderApi';
 
 type PaymentMethod = 'cod' | 'banking';
 
@@ -54,9 +55,29 @@ const CheckoutPage: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validate()) return;
-    setShowSuccess(true);
+    
+    try {
+      const orderData = {
+        totalAmount: total,
+        fullName: form.fullName,
+        phone: form.phone,
+        address: form.address,
+        paymentMethod: paymentMethod.toUpperCase(),
+        items: cart.map(item => ({
+          productId: item.laptop.id,
+          quantity: item.quantity,
+          price: item.laptop.price
+        }))
+      };
+      
+      await orderApi.createOrder(orderData);
+      setShowSuccess(true);
+    } catch (err) {
+      console.error("Failed to create order:", err);
+      alert("Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại.");
+    }
   };
 
   const handleSuccessClose = () => {

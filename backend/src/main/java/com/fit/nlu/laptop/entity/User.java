@@ -4,6 +4,9 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,6 +15,7 @@ import java.util.List;
 @Table(name = "users")
 @Getter
 @Setter
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class User {
 
     @Id
@@ -21,6 +25,7 @@ public class User {
     @Column(unique = true)
     private String email;
 
+    @JsonIgnore
     private String password;
 
     @Column(name = "full_name")
@@ -39,21 +44,27 @@ public class User {
     private boolean enabled = true;
 
     @Column(name = "register_otp")
+    @JsonIgnore
     private String registerOtp;
 
     @Column(name = "register_otp_expiry")
+    @JsonIgnore
     private LocalDateTime registerOtpExpiry;
 
     @Column(name = "password_reset_otp")
+    @JsonIgnore
     private String passwordResetOtp;
 
     @Column(name = "password_reset_otp_expiry")
+    @JsonIgnore
     private LocalDateTime passwordResetOtpExpiry;
 
     @Column(name = "refresh_token_hash", length = 64)
+    @JsonIgnore
     private String refreshTokenHash;
 
     @Column(name = "refresh_token_expiry")
+    @JsonIgnore
     private LocalDateTime refreshTokenExpiry;
 
     @Column(name = "avatar_url")
