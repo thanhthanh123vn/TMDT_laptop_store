@@ -1,513 +1,260 @@
-import React, { useState, useMemo, useEffect } from "react";
-import { 
-  Search, 
-  User, // Icon của bạn bè
-  Laptop, 
-  Gamepad2, 
-  Briefcase, 
-  GraduationCap, 
-  Filter, 
-  X, 
-  Flame, 
-  Clock, 
+import React, { useState, useMemo, useEffect, useCallback } from "react";
+import {
   Star,
-  Sparkles,
-  Lightbulb
+  ArrowRight,
+  ShieldCheck,
+  Truck,
+  RotateCcw,
+  ChevronRight,
+  ChevronLeft,
+  BadgeCheck,
 } from "lucide-react";
-import { Link } from "react-router"; // Import của bạn bè
+import { Link, useNavigate } from "react-router";
 import { ProductCard } from "../components/ProductCard";
-import { Button } from "../components/ui/button";
-import { Input } from "../components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../components/ui/select";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "../components/ui/carousel";
-import type { FilterOptions, SortOption } from "../types";
-import { laptops as mockLaptops, getLaptopsByIds } from "../data/laptops.ts";
-import { useStore } from "../context/StoreContext";
+import { laptops as mockLaptops } from "../data/laptops";
 import { productApi } from "../api/productApi";
+import { categoryApi, type Category } from "../api/categoryApi";
 
-// Cấu hình giá trị mặc định
-const initialFilters: FilterOptions & { brand: string } = {
-  priceRange: [0, 99999],
-  ram: [],
-  cpu: [],
-  gpu: [],
-  storageType: [],
-  condition: [],
-  category: "All",
-  brand: "All",
-};
-
-// Cấu hình danh mục visual (UI Mới)
-const categoryCards = [
-  { id: "Office", label: "Văn phòng", icon: Briefcase, desc: "Mỏng nhẹ, pin trâu", color: "bg-blue-50 text-blue-600" },
-  { id: "Gaming", label: "Gaming", icon: Gamepad2, desc: "Hiệu năng cực đỉnh", color: "bg-red-50 text-red-600" },
-  { id: "Design", label: "Đồ họa", icon: Laptop, desc: "Màn hình chuẩn màu", color: "bg-purple-50 text-purple-600" },
-  { id: "Student", label: "Học tập", icon: GraduationCap, desc: "Giá tốt cho SV", color: "bg-green-50 text-green-600" },
+const trustItems = [
+  { icon: BadgeCheck, color: "text-blue-600 bg-blue-50", title: "100% chính hãng", desc: "Kiểm định 30 bước nghiêm ngặt" },
+  { icon: ShieldCheck, color: "text-emerald-600 bg-emerald-50", title: "Bảo hành 12 tháng", desc: "Lỗi 1 đổi 1 trong 30 ngày" },
+  { icon: RotateCcw, color: "text-orange-600 bg-orange-50", title: "Đổi trả 7 ngày", desc: "Miễn phí, không cần lý do" },
+  { icon: Truck, color: "text-purple-600 bg-purple-50", title: "Giao hàng toàn quốc", desc: "Miễn phí đơn trên 5 triệu" },
 ];
 
+function mapProduct(p: any) {
+  return {
+    ...p,
+    id: p.id?.toString(),
+    image: p.imageUrl || "/placeholder.svg",
+    price: Number(p.price),
+    originalPrice: p.oldPrice ? Number(p.oldPrice) : undefined,
+    category: p.categoryId ? [String(p.categoryId)] : [],
+    isBestSeller: p.bestSeller,
+    isHot: p.hot,
+    isSale: p.sale,
+    reviewCount: p.reviews,
+    seller: { name: p.brand, rating: p.rating, soldCount: p.reviews },
+    images: [p.imageUrl || "/placeholder.svg"],
+    weight: p.weight || "N/A",
+    batteryCondition: p.batteryCondition || "N/A",
+  };
+}
+
+const VISIBLE = 4; // số danh mục hiển thị cùng lúc
+
 export const HomePage: React.FC = () => {
-  const { recentlyViewed } = useStore();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string>("All");
-  const [sortBy, setSortBy] = useState<SortOption>("best-selling");
   const [laptops, setLaptops] = useState<any[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [catOffset, setCatOffset] = useState(0);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const res = await productApi.getAllProducts();
-        if (res.data && res.data.length > 0) {
-          setLaptops(res.data.map((p: any) => ({
-            ...p,
-            id: p.id.toString(),
-            image: p.imageUrl || '/placeholder.svg',
-            price: Number(p.price)
-          })));
-        } else {
-          // Fallback to mock data if BE is empty
-          setLaptops(mockLaptops);
-        }
-      } catch (err) {
-        console.error("Failed to fetch products:", err);
-        setLaptops(mockLaptops);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProducts();
+    Promise.all([
+      productApi.getAllProducts().then((res) => {
+        if (res.data?.length > 0) setLaptops(res.data.map(mapProduct));
+        else setLaptops(mockLaptops);
+      }).catch(() => setLaptops(mockLaptops)),
+      categoryApi.getAllCategories().then((res) => {
+        setCategories(res.data || []);
+      }).catch(() => setCategories([])),
+    ]).finally(() => setLoading(false));
   }, []);
 
-  const [filters, setFilters] = useState(initialFilters);
+  const bestSellers = useMemo(
+    () => laptops.filter((l) => l.isBestSeller).slice(0, 4),
+    [laptops]
+  );
 
-  // Hàm dọn dẹp bộ lọc khi bấm "Xóa bộ lọc"
-  const handleClearAllFilters = () => {
-    setFilters(initialFilters);
-    setSearchQuery("");
-    setSelectedCategory("All");
-    setSortBy("best-selling");
-  };
+  // Carousel helpers — infinite loop
+  const total = categories.length;
+  const visibleCats = useMemo(() => {
+    if (total === 0) return [];
+    return Array.from({ length: VISIBLE }, (_, i) => categories[(catOffset + i) % total]);
+  }, [categories, catOffset, total]);
 
-  // Kiểm tra xem có bộ lọc nào đang được áp dụng hay không
-  const hasActiveFilters =
-      searchQuery !== "" ||
-      selectedCategory !== "All" ||
-      filters.brand !== "All" ||
-      filters.priceRange[0] !== 0 ||
-      filters.priceRange[1] !== 99999 ||
-      filters.ram.length > 0 ||
-      filters.cpu.length > 0 ||
-      sortBy !== "best-selling";
-
-  // Xử lý Lọc và Sắp xếp (Giữ nguyên logic của bạn bè)
-  const filteredLaptops = useMemo(() => {
-    if (!laptops || laptops.length === 0) return [];
-
-    let result = [...laptops];
-
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter(
-          (laptop) =>
-              laptop.name.toLowerCase().includes(query) ||
-              laptop.brand.toLowerCase().includes(query) ||
-              laptop.cpu.toLowerCase().includes(query) ||
-              laptop.gpu.toLowerCase().includes(query),
-      );
-    }
-
-    if (selectedCategory !== "All") {
-      result = result.filter((laptop) =>
-          laptop.category.includes(selectedCategory),
-      );
-    }
-
-    if (filters.brand !== "All") {
-      result = result.filter((laptop) =>
-          laptop.brand.toLowerCase() === filters.brand.toLowerCase()
-      );
-    }
-
-    result = result.filter(
-        (laptop) =>
-            Number(laptop.price || 0) >= filters.priceRange[0] &&
-            Number(laptop.price || 0) <= filters.priceRange[1],
-    );
-
-    if (filters.ram.length > 0) {
-      result = result.filter((laptop) => filters.ram.includes(laptop.ram));
-    }
-
-    if (filters.cpu.length > 0) {
-      result = result.filter((laptop) =>
-          filters.cpu.some((cpu) =>
-              laptop.cpu.includes(cpu.replace("Intel ", "i").replace("AMD ", "")),
-          ),
-      );
-    }
-
-    if (filters.gpu.length > 0) {
-      result = result.filter((laptop) =>
-          filters.gpu.some((gpu) => laptop.gpu.includes(gpu)),
-      );
-    }
-
-    if (filters.storageType.length > 0) {
-      result = result.filter((laptop) =>
-          filters.storageType.includes(laptop.storageType),
-      );
-    }
-
-    if (filters.condition.length > 0) {
-      result = result.filter((laptop) =>
-          filters.condition.includes(laptop.condition),
-      );
-    }
-
-    switch (sortBy) {
-      case "price-low": result.sort((a, b) => Number(a.price || 0) - Number(b.price || 0)); break;
-      case "price-high": result.sort((a, b) => Number(b.price || 0) - Number(a.price || 0)); break;
-      case "top-rated": result.sort((a, b) => Number(b.rating || 0) - Number(a.rating || 0)); break;
-      case "newest": result.sort((a, b) => String(b.id).localeCompare(String(a.id))); break;
-      case "best-selling":
-        result.sort((a, b) => {
-          if (a.isBestSeller && !b.isBestSeller) return -1;
-          if (!a.isBestSeller && b.isBestSeller) return 1;
-          return Number(b.reviewCount || 0) - Number(a.reviewCount || 0);
-        });
-        break;
-    }
-
-    return result;
-  }, [searchQuery, selectedCategory, filters, sortBy]);
-
-  // Các list dùng cho UI section dưới cùng
-  const recentlyViewedLaptops = getLaptopsByIds(recentlyViewed).slice(0, 4);
-  const bestSellers = useMemo(() => laptops.filter((l: any) => l.isBestSeller).slice(0, 4), [laptops]);
-  const hotDeals = useMemo(() => laptops.filter((l: any) => l.isHot).slice(0, 4), [laptops]);
-  const newestLaptops = useMemo(() => [...laptops].sort((a, b) => String(b.id).localeCompare(String(a.id))).slice(0, 4), [laptops]);
-  const recommendedLaptops = useMemo(() => laptops.slice(2, 6), [laptops]); // Giả lập data gợi ý
+  const prev = useCallback(() => setCatOffset((o) => (o - 1 + total) % total), [total]);
+  const next = useCallback(() => setCatOffset((o) => (o + 1) % total), [total]);
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans">
-      
-      {/* 1. HERO SECTION & SEARCH */}
-      <section className="bg-slate-900 text-white pt-20 pb-24 px-4 relative overflow-hidden">
-        
-        {/* NÚT TÀI KHOẢN (Đã fix UI cho hợp với nền tối) */}
-        <div className="absolute top-4 right-4 sm:top-6 sm:right-8 z-50">
-          <Link
-            to="/profile"
-            className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2.5 rounded-full backdrop-blur-md transition-all font-medium border border-white/20 shadow-sm"
-          >
-            <User className="w-5 h-5" />
-            <span className="hidden sm:inline">Tài khoản của tôi</span>
-          </Link>
-        </div>
+    <div className="min-h-screen bg-slate-50">
 
-        {/* Abstract background effect */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl opacity-30 pointer-events-none">
-          <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-blue-600 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob"></div>
-          <div className="absolute top-[-10%] right-[-10%] w-96 h-96 bg-indigo-600 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob animation-delay-2000"></div>
-        </div>
-
-        <div className="max-w-4xl mx-auto text-center relative z-10">
-          <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight mb-6">
-            Tìm Laptop Cũ <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">Chất Lượng</span>
-          </h1>
-          <p className="text-lg md:text-xl text-slate-300 mb-10 max-w-2xl mx-auto">
-            Khám phá hàng ngàn mẫu laptop đã qua sử dụng với mức giá tốt nhất, bảo hành dài hạn và chất lượng được kiểm định nghiêm ngặt.
-          </p>
-
-          <div className="relative max-w-2xl mx-auto shadow-2xl rounded-2xl">
-            <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-              <Search className="h-6 w-6 text-slate-400" />
+      {/* ── HERO ── */}
+      <section className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white relative overflow-hidden">
+        <div className="absolute inset-0 opacity-[0.03]" style={{
+          backgroundImage: 'linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px)',
+          backgroundSize: '40px 40px',
+        }} />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 lg:py-12 relative z-10">
+          <div className="flex flex-col lg:flex-row items-center gap-8">
+            <div className="flex-1 text-center lg:text-left">
+              <div className="inline-flex items-center gap-2 bg-blue-500/15 border border-blue-500/25 text-blue-300 text-xs font-semibold px-3 py-1.5 rounded-full mb-4">
+                <BadgeCheck className="w-3.5 h-3.5" />
+                Chuyên gia laptop cũ chính hãng
+              </div>
+              <h1 className="text-3xl md:text-4xl lg:text-[2.6rem] font-extrabold leading-tight mb-3">
+                Mua bán laptop cũ{" "}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">
+                  an tâm tuyệt đối
+                </span>
+              </h1>
+              <p className="text-slate-400 text-base mb-6 max-w-md mx-auto lg:mx-0">
+                Mỗi sản phẩm trải qua kiểm định 30 bước nghiêm ngặt trước khi đến tay bạn.
+              </p>
+              <div className="flex flex-wrap gap-3 justify-center lg:justify-start">
+                <Link to="/products" className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-semibold text-sm transition-colors shadow-lg shadow-blue-900/30">
+                  Mua ngay <ArrowRight className="w-4 h-4" />
+                </Link>
+                <Link to="/products" className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/15 text-white px-5 py-2.5 rounded-lg font-semibold text-sm transition-colors border border-white/15">
+                  Bán laptop của bạn
+                </Link>
+              </div>
             </div>
-            <Input
-              type="text"
-              placeholder="Nhập tên máy, CPU, hoặc hãng..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-14 pr-6 py-7 text-lg rounded-2xl bg-white text-slate-900 border-none focus-visible:ring-4 focus-visible:ring-blue-500/50 shadow-inner"
-            />
+            <div className="hidden lg:grid grid-cols-2 gap-3 shrink-0">
+              {[
+                { value: "200+", label: "Sản phẩm" },
+                { value: "12T", label: "Bảo hành" },
+                { value: "4.9★", label: "Đánh giá" },
+                { value: "24/7", label: "Hỗ trợ" },
+              ].map(({ value, label }) => (
+                <div key={label} className="bg-white/8 border border-white/10 rounded-xl px-5 py-4 text-center backdrop-blur-sm">
+                  <p className="text-2xl font-extrabold text-white">{value}</p>
+                  <p className="text-xs text-slate-400 mt-0.5">{label}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
+        <div className="absolute top-0 right-1/4 w-72 h-72 bg-blue-600/15 rounded-full blur-3xl pointer-events-none" />
       </section>
 
-      {/* 2. VISUAL CATEGORIES (Thẻ phân loại trực quan) */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-10 relative z-20 mb-12">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-          {categoryCards.map((cat) => (
-            <div
-              key={cat.id}
-              onClick={() => setSelectedCategory(selectedCategory === cat.id ? "All" : cat.id)}
-              className={`p-6 rounded-2xl cursor-pointer transition-all duration-300 border-2 bg-white hover:shadow-lg hover:-translate-y-1 ${
-                selectedCategory === cat.id ? "border-blue-500 shadow-md" : "border-transparent shadow-sm"
-              }`}
-            >
-              <div className={`w-14 h-14 rounded-xl flex items-center justify-center mb-4 ${cat.color}`}>
-                <cat.icon className="w-7 h-7" />
-              </div>
-              <h3 className="font-bold text-slate-900 text-lg">{cat.label}</h3>
-              <p className="text-sm text-slate-500 mt-1">{cat.desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* 3. PROMO CAROUSEL */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-16">
-        <Carousel className="w-full rounded-2xl overflow-hidden shadow-sm border border-slate-200">
-          <CarouselContent>
-            <CarouselItem>
-              <div className="bg-gradient-to-r from-indigo-600 to-blue-500 text-white p-8 md:p-12 text-center flex flex-col items-center justify-center min-h-[200px]">
-                <Flame className="w-10 h-10 mb-3 text-orange-300" />
-                <h2 className="text-3xl font-bold mb-2">Xả Kho Laptop Gaming</h2>
-                <p className="text-lg text-indigo-100">Giảm sâu lên đến 30% cho các dòng RTX 3000 Series</p>
-              </div>
-            </CarouselItem>
-            <CarouselItem>
-              <div className="bg-gradient-to-r from-emerald-600 to-teal-500 text-white p-8 md:p-12 text-center flex flex-col items-center justify-center min-h-[200px]">
-                <Briefcase className="w-10 h-10 mb-3 text-teal-200" />
-                <h2 className="text-3xl font-bold mb-2">Tuần Lễ Doanh Nhân</h2>
-                <p className="text-lg text-teal-100">Mua ThinkPad & Latitude tặng ngay túi chống sốc</p>
-              </div>
-            </CarouselItem>
-          </CarouselContent>
-          <CarouselPrevious className="left-4 bg-white/20 text-white border-none hover:bg-white/40" />
-          <CarouselNext className="right-4 bg-white/20 text-white border-none hover:bg-white/40" />
-        </Carousel>
-      </section>
-
-      {/* 4. MAIN SHOP AREA (Filters & Grid) */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
-        
-        <div className="flex items-center gap-2 mb-6">
-          <h2 className="text-2xl font-bold text-slate-900">Tất cả sản phẩm</h2>
-          <span className="bg-slate-200 text-slate-700 text-sm font-semibold px-3 py-1 rounded-full">
-            {filteredLaptops.length}
-          </span>
-        </div>
-
-        {/* Filter Control Center */}
-        <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-8 flex flex-col lg:flex-row gap-4 justify-between items-center z-30 relative">
-          
-          <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
-            <div className="flex items-center text-slate-500 font-medium text-sm mr-2">
-              <Filter className="w-4 h-4 mr-2" />
-              Bộ lọc:
-            </div>
-
-            <Select value={filters.brand} onValueChange={(val) => setFilters({ ...filters, brand: val })}>
-              <SelectTrigger className="w-[130px] bg-slate-50 border-slate-200 focus:ring-blue-500 rounded-xl">
-                <SelectValue placeholder="Hãng" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="All">Tất cả hãng</SelectItem>
-                <SelectItem value="Apple">Apple</SelectItem>
-                <SelectItem value="Dell">Dell</SelectItem>
-                <SelectItem value="HP">HP</SelectItem>
-                <SelectItem value="Asus">Asus</SelectItem>
-                <SelectItem value="Lenovo">Lenovo</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select 
-              value={filters.priceRange[1] === 500 ? "under-500" : filters.priceRange[0] === 500 ? "500-1000" : filters.priceRange[0] === 1000 ? "over-1000" : "All"}
-              onValueChange={(val) => {
-                let range: [number, number] = [0, 99999];
-                if (val === "under-500") range = [0, 500];
-                if (val === "500-1000") range = [500, 1000];
-                if (val === "over-1000") range = [1000, 99999];
-                setFilters({ ...filters, priceRange: range });
-              }}
-            >
-              <SelectTrigger className="w-[150px] bg-slate-50 border-slate-200 focus:ring-blue-500 rounded-xl">
-                <SelectValue placeholder="Mức giá" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="All">Mọi mức giá</SelectItem>
-                <SelectItem value="under-500">Dưới $500</SelectItem>
-                <SelectItem value="500-1000">$500 - $1000</SelectItem>
-                <SelectItem value="over-1000">Trên $1000</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select 
-              value={filters.ram.length > 0 ? filters.ram[0] : "All"} 
-              onValueChange={(val) => setFilters({ ...filters, ram: val === "All" ? [] : [val] })}
-            >
-              <SelectTrigger className="w-[120px] bg-slate-50 border-slate-200 focus:ring-blue-500 rounded-xl">
-                <SelectValue placeholder="RAM" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="All">Mọi RAM</SelectItem>
-                <SelectItem value="8GB">8 GB</SelectItem>
-                <SelectItem value="16GB">16 GB</SelectItem>
-                <SelectItem value="32GB">32 GB</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {hasActiveFilters && (
-              <Button 
-                variant="ghost" 
-                onClick={handleClearAllFilters}
-                className="text-red-500 hover:text-red-600 hover:bg-red-50 rounded-xl px-4 transition-colors"
+      {/* ── DANH MỤC ── */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-4">
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="text-xl font-bold text-slate-900">Danh mục sản phẩm</h2>
+          {total > VISIBLE && (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={prev}
+                className="w-8 h-8 rounded-full border border-slate-200 bg-white hover:bg-slate-50 hover:border-blue-300 flex items-center justify-center transition-colors"
+                aria-label="Trước"
               >
-                <X className="w-4 h-4 mr-1.5" />
-                Bỏ lọc
-              </Button>
-            )}
-          </div>
-
-          <div className="flex items-center gap-3 w-full lg:w-auto border-t lg:border-t-0 pt-4 lg:pt-0 border-slate-100">
-            <span className="text-sm font-medium text-slate-500 hidden sm:block whitespace-nowrap">
-              Sắp xếp theo:
-            </span>
-            <Select value={sortBy} onValueChange={(value: SortOption) => setSortBy(value)}>
-              <SelectTrigger className="w-full sm:w-[200px] border-slate-200 focus:ring-blue-500 rounded-xl font-medium">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="best-selling">Bán chạy nhất</SelectItem>
-                <SelectItem value="newest">Sản phẩm mới</SelectItem>
-                <SelectItem value="price-low">Giá: Thấp đến Cao</SelectItem>
-                <SelectItem value="price-high">Giá: Cao đến Thấp</SelectItem>
-                <SelectItem value="top-rated">Đánh giá cao nhất</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+                <ChevronLeft className="w-4 h-4 text-slate-600" />
+              </button>
+              <button
+                onClick={next}
+                className="w-8 h-8 rounded-full border border-slate-200 bg-white hover:bg-slate-50 hover:border-blue-300 flex items-center justify-center transition-colors"
+                aria-label="Tiếp"
+              >
+                <ChevronRight className="w-4 h-4 text-slate-600" />
+              </button>
+            </div>
+          )}
         </div>
 
-        {/* Product Grid */}
-        {filteredLaptops.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredLaptops.map((laptop) => (
-              <ProductCard key={laptop.id} laptop={laptop} />
+        {loading ? (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="rounded-xl aspect-[5/3] bg-slate-200 animate-pulse" />
+            ))}
+          </div>
+        ) : visibleCats.length > 0 ? (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+            {visibleCats.map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => navigate(`/products?categoryId=${cat.id}`)}
+                className="relative rounded-xl overflow-hidden aspect-[5/3] group focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <img
+                  src={cat.imageUrl}
+                  alt={cat.name}
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/20 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-3">
+                  <p className="text-white font-bold text-sm">{cat.name}</p>
+                </div>
+              </button>
             ))}
           </div>
         ) : (
-          <div className="text-center py-24 bg-white rounded-3xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center">
-            <div className="bg-slate-50 p-4 rounded-full mb-4">
-              <Search className="w-10 h-10 text-slate-400" />
-            </div>
-            <h3 className="text-xl font-bold text-slate-900 mb-2">Không tìm thấy sản phẩm</h3>
-            <p className="text-slate-500 mb-6 max-w-md">
-              Rất tiếc, chúng tôi không có sản phẩm nào khớp với bộ lọc hiện tại của bạn. Hãy thử thay đổi tiêu chí hoặc xóa bộ lọc.
-            </p>
-            <Button onClick={handleClearAllFilters} className="bg-blue-600 hover:bg-blue-700 rounded-xl px-6">
-              Xóa tất cả bộ lọc
-            </Button>
+          // fallback static
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+            {[
+              { label: "Laptop Văn Phòng", img: "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=600&q=80" },
+              { label: "Laptop Gaming", img: "https://images.unsplash.com/photo-1603302576837-37561b2e2302?w=600&q=80" },
+              { label: "Laptop Đồ Họa", img: "https://images.unsplash.com/photo-1593642632823-8f785ba67e45?w=600&q=80" },
+              { label: "Macbook", img: "https://images.unsplash.com/photo-1611186871525-9c4a3b5e3e3e?w=600&q=80" },
+            ].map((cat) => (
+              <button key={cat.label} onClick={() => navigate('/products')} className="relative rounded-xl overflow-hidden aspect-[5/3] group focus:outline-none">
+                <img src={cat.img} alt={cat.label} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/20 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-3">
+                  <p className="text-white font-bold text-sm">{cat.label}</p>
+                </div>
+              </button>
+            ))}
           </div>
         )}
-      </div>
+      </section>
 
-      {/* 5. BOTTOM SECTIONS */}
-      {!hasActiveFilters && (
-        <div className="bg-white border-t border-slate-200 py-16">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
-            
-            {/* Sản Phẩm Nổi Bật */}
-            {bestSellers.length > 0 && (
-              <section>
-                <div className="flex items-center gap-3 mb-8">
-                  <div className="bg-yellow-100 p-2 rounded-lg text-yellow-600">
-                    <Star className="w-6 h-6" />
-                  </div>
-                  <h2 className="text-2xl font-bold text-slate-900">Sản phẩm nổi bật</h2>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {bestSellers.map((laptop) => (
-                    <ProductCard key={laptop.id} laptop={laptop} />
-                  ))}
-                </div>
-              </section>
-            )}
+      {/* ── SẢN PHẨM NỔI BẬT ── */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-2.5">
+            <div className="w-1 h-6 bg-blue-600 rounded-full" />
+            <h2 className="text-xl font-bold text-slate-900">Sản phẩm nổi bật</h2>
+          </div>
+          <Link to="/products" className="flex items-center gap-1 text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors group">
+            Xem tất cả <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+          </Link>
+        </div>
 
-            {/* Sản Phẩm Mới */}
-            {newestLaptops.length > 0 && (
-              <section>
-                <div className="flex items-center gap-3 mb-8">
-                  <div className="bg-indigo-100 p-2 rounded-lg text-indigo-600">
-                    <Sparkles className="w-6 h-6" />
-                  </div>
-                  <h2 className="text-2xl font-bold text-slate-900">Sản phẩm mới về</h2>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {newestLaptops.map((laptop) => (
-                    <ProductCard key={laptop.id} laptop={laptop} />
-                  ))}
-                </div>
-              </section>
-            )}
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="bg-white rounded-xl h-80 animate-pulse" />
+            ))}
+          </div>
+        ) : bestSellers.length > 0 ? (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              {bestSellers.map((laptop) => (
+                <ProductCard key={laptop.id} laptop={laptop} />
+              ))}
+            </div>
+            <div className="text-center mt-8">
+              <Link to="/products" className="inline-flex items-center gap-2 border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white px-7 py-2.5 rounded-lg font-semibold text-sm transition-all">
+                Xem tất cả sản phẩm <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </>
+        ) : (
+          <p className="text-center py-12 text-slate-400">Chưa có sản phẩm nổi bật</p>
+        )}
+      </section>
 
-            {/* Hot Deals */}
-            {hotDeals.length > 0 && (
-              <section>
-                <div className="flex items-center gap-3 mb-8">
-                  <div className="bg-red-100 p-2 rounded-lg text-red-600">
-                    <Flame className="w-6 h-6" />
-                  </div>
-                  <h2 className="text-2xl font-bold text-slate-900">Khuyến mãi cực nóng</h2>
+      {/* ── TRUST BADGES ── */}
+      <section className="bg-white border-t border-slate-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {trustItems.map(({ icon: Icon, color, title, desc }) => (
+              <div key={title} className="flex items-start gap-3 p-4 rounded-xl hover:bg-slate-50 transition-colors">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${color}`}>
+                  <Icon className="w-5 h-5" />
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {hotDeals.map((laptop) => (
-                    <ProductCard key={laptop.id} laptop={laptop} />
-                  ))}
+                <div>
+                  <h4 className="font-bold text-slate-900 text-sm mb-0.5">{title}</h4>
+                  <p className="text-xs text-slate-500 leading-relaxed">{desc}</p>
                 </div>
-              </section>
-            )}
-
-            {/* Gợi ý cho bạn */}
-            {recommendedLaptops.length > 0 && (
-              <section>
-                <div className="flex items-center gap-3 mb-8">
-                  <div className="bg-green-100 p-2 rounded-lg text-green-600">
-                    <Lightbulb className="w-6 h-6" />
-                  </div>
-                  <h2 className="text-2xl font-bold text-slate-900">Gợi ý cho bạn</h2>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {recommendedLaptops.map((laptop) => (
-                    <ProductCard key={laptop.id} laptop={laptop} />
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {/* Recently Viewed */}
-            {recentlyViewedLaptops.length > 0 && (
-              <section>
-                <div className="flex items-center gap-3 mb-8">
-                  <div className="bg-blue-100 p-2 rounded-lg text-blue-600">
-                    <Clock className="w-6 h-6" />
-                  </div>
-                  <h2 className="text-2xl font-bold text-slate-900">Sản phẩm bạn vừa xem</h2>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {recentlyViewedLaptops.map((laptop) => (
-                    <ProductCard key={laptop.id} laptop={laptop} />
-                  ))}
-                </div>
-              </section>
-            )}
-
+              </div>
+            ))}
           </div>
         </div>
-      )}
-      
+      </section>
+
     </div>
   );
 };
