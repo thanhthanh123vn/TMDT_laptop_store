@@ -59,7 +59,8 @@ public class Product {
     @Column(name = "`condition`")
     private String condition;
     
-    private String category; // Có thể lưu dạng string cách nhau bởi dấu phẩy
+    @Column(name = "category_id")
+    private Long categoryId;
     
     @Column(columnDefinition = "TEXT")
     private String description;

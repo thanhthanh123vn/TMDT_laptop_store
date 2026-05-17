@@ -16,7 +16,10 @@ public class ProductController {
     private final ProductRepository productRepository;
 
     @GetMapping
-    public List<Product> getAllProducts() {
+    public List<Product> getAllProducts(@RequestParam(required = false) Long categoryId) {
+        if (categoryId != null) {
+            return productRepository.findByCategoryId(categoryId);
+        }
         return productRepository.findAll();
     }
 
