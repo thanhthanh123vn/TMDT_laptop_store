@@ -10,7 +10,6 @@ import {
   Bell,
   ClipboardList,
   Heart,
-  ShoppingCart,
   User,
   Eye,
   EyeOff,
@@ -42,7 +41,7 @@ export default function ChangePasswordPage() {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false)
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  
+
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
@@ -50,17 +49,17 @@ export default function ChangePasswordPage() {
 
   useEffect(() => {
     const fetchProfile = async () => {
-        try {
-            const res = await userApi.getMyProfile();
-            const user = res.data;
-            const BASE_URL = "http://localhost:8080";
-            setUserProfile({
-                fullName: user.fullName || "Tài khoản của tôi",
-                avatarUrl: user.avatarUrl ? (user.avatarUrl.startsWith('http') ? user.avatarUrl : BASE_URL + user.avatarUrl) : ""
-            });
-        } catch (err) {
-            console.error(err);
-        }
+      try {
+        const res = await userApi.getMyProfile();
+        const user = res.data;
+        const BASE_URL = "http://localhost:8080";
+        setUserProfile({
+          fullName: user.fullName || "Tài khoản của tôi",
+          avatarUrl: user.avatarUrl ? (user.avatarUrl.startsWith('http') ? user.avatarUrl : BASE_URL + user.avatarUrl) : ""
+        });
+      } catch (err) {
+        console.error(err);
+      }
     };
     fetchProfile();
   }, []);
@@ -77,26 +76,26 @@ export default function ChangePasswordPage() {
     setSuccess("")
 
     if (newPassword !== confirmPassword) {
-        setError("Mật khẩu xác nhận không khớp.")
-        return
+      setError("Mật khẩu xác nhận không khớp.")
+      return
     }
 
     if (!hasMinLength || !hasSpecialChar || !hasNumberAndUppercase) {
-        setError("Mật khẩu không đạt yêu cầu bảo mật.")
-        return
+      setError("Mật khẩu không đạt yêu cầu bảo mật.")
+      return
     }
 
     setLoading(true)
     try {
-        const res = await userApi.changePassword({ oldPassword: currentPassword, newPassword })
-        setSuccess(res.data.message || "Đổi mật khẩu thành công!")
-        setCurrentPassword("")
-        setNewPassword("")
-        setConfirmPassword("")
+      const res = await userApi.changePassword({ oldPassword: currentPassword, newPassword })
+      setSuccess(res.data.message || "Đổi mật khẩu thành công!")
+      setCurrentPassword("")
+      setNewPassword("")
+      setConfirmPassword("")
     } catch (err) {
-        setError(getErrorMessage(err, "Đổi mật khẩu thất bại. Vui lòng kiểm tra lại mật khẩu hiện tại."))
+      setError(getErrorMessage(err, "Đổi mật khẩu thất bại. Vui lòng kiểm tra lại mật khẩu hiện tại."))
     } finally {
-        setLoading(false)
+      setLoading(false)
     }
   }
 
@@ -109,178 +108,143 @@ export default function ChangePasswordPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
-      <header className="bg-white border-b border-border sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <Link to="/" className="text-xl font-bold text-primary">
-              LAPTOPRE
-            </Link>
+      <div className="min-h-[calc(100vh-160px)] bg-transparent flex flex-col justify-center">
+        {/* Main Content */}
+        <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+          <div className="flex flex-col lg:flex-row gap-8 items-start">
 
-            <nav className="hidden md:flex items-center gap-8">
-              <Link to="/products" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Sản phẩm
-              </Link>
-              <Link to="/promotions" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Khuyến mãi
-              </Link>
-              <Link to="/news" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Tin công nghệ
-              </Link>
-              <Link to="/about" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Về chúng tôi
-              </Link>
-            </nav>
-
-            <div className="flex items-center gap-4">
-              <Link to="/cart" className="p-2 hover:bg-muted rounded-full transition-colors">
-                <ShoppingCart className="w-5 h-5 text-foreground" />
-              </Link>
-              <Link to="/account" className="p-2 hover:bg-muted rounded-full transition-colors">
-                <User className="w-5 h-5 text-foreground" />
-              </Link>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="flex-1 bg-muted/30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex flex-col lg:flex-row gap-8">
-            {/* Sidebar */}
+            {/* Sidebar bên trái */}
             <aside className="w-full lg:w-64 shrink-0">
-              <div className="bg-white rounded-xl p-6 shadow-sm">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-12 h-12 rounded-full overflow-hidden bg-muted flex items-center justify-center">
+              <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+                <div className="flex items-center gap-3 mb-6 border-b border-gray-50 pb-4">
+                  <div className="relative w-11 h-11 rounded-xl overflow-hidden bg-muted flex items-center justify-center border border-gray-100">
                     {userProfile.avatarUrl ? (
-                      <img
-                        src={userProfile.avatarUrl}
-                        alt="Avatar"
-                        className="w-full h-full object-cover"
-                      />
+                        <img
+                            src={userProfile.avatarUrl}
+                            alt="Avatar"
+                            className="w-full h-full object-cover"
+                        />
                     ) : (
-                      <User className="w-6 h-6 text-muted-foreground" />
+                        <User className="h-5 w-5 text-muted-foreground" />
                     )}
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-foreground">{userProfile.fullName}</h3>
-                    <p className="text-sm text-muted-foreground">Quản lý thông tin cá nhân</p>
+                  <div className="truncate">
+                    <h3 className="font-semibold text-gray-900 text-sm truncate">{userProfile.fullName}</h3>
+                    <p className="text-xs text-muted-foreground">Quản lý cá nhân</p>
                   </div>
                 </div>
 
                 <nav className="space-y-1">
                   {menuItems.map((item) => (
-                    <Link
-                      key={item.href}
-                      to={item.href}
-                      className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                        item.active
-                          ? "bg-primary text-primary-foreground"
-                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                      }`}
-                    >
-                      <item.icon className="w-5 h-5" />
-                      <span className="text-sm font-medium">{item.label}</span>
-                    </Link>
+                      <Link
+                          key={item.href}
+                          to={item.href}
+                          className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                              item.active
+                                  ? "bg-primary text-primary-foreground shadow-sm"
+                                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                          }`}
+                      >
+                        <item.icon className="w-4 h-4" />
+                        <span>{item.label}</span>
+                      </Link>
                   ))}
                 </nav>
               </div>
             </aside>
 
-            {/* Main Form */}
-            <div className="flex-1">
-              <div className="bg-white rounded-xl p-6 lg:p-8 shadow-sm">
-                <h1 className="text-2xl lg:text-3xl font-bold text-primary mb-2">Đổi mật khẩu</h1>
-                <p className="text-muted-foreground mb-8">
-                  Đảm bảo tài khoản của bạn luôn được bảo mật bằng mật khẩu mạnh.
+            {/* Form đổi mật khẩu chính */}
+            <div className="flex-1 w-full">
+              <div className="bg-white rounded-2xl p-6 lg:p-8 border border-gray-100 shadow-sm">
+                <h1 className="text-2xl font-bold text-gray-900 mb-2">Đổi mật khẩu</h1>
+                <p className="text-muted-foreground text-sm mb-8">
+                  Đảm bảo tài khoản của bạn luôn được an toàn bằng cách thiết lập một mật khẩu mạnh.
                 </p>
 
                 {error && <div className="p-4 mb-6 bg-red-50 text-red-600 rounded-xl border border-red-100 text-sm">{error}</div>}
                 {success && <div className="p-4 mb-6 bg-green-50 text-green-600 rounded-xl border border-green-100 text-sm">{success}</div>}
 
-                <form onSubmit={handleSubmit} className="space-y-6 max-w-lg">
-                  {/* Current Password */}
+                <form onSubmit={handleSubmit} className="space-y-5 max-w-lg">
+                  {/* Mật khẩu hiện tại */}
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">Mật khẩu hiện tại</label>
+                    <label className="text-sm font-medium text-gray-700">Mật khẩu hiện tại</label>
                     <div className="relative">
                       <Input
-                        type={showCurrentPassword ? "text" : "password"}
-                        value={currentPassword}
-                        onChange={(e) => setCurrentPassword(e.target.value)}
-                        className="h-12 pr-12 bg-muted/50 border-border"
-                        placeholder="Nhập mật khẩu hiện tại"
-                        required
+                          type={showCurrentPassword ? "text" : "password"}
+                          value={currentPassword}
+                          onChange={(e) => setCurrentPassword(e.target.value)}
+                          className="h-12 pr-12 bg-muted/40 border-gray-200 rounded-xl focus-visible:ring-primary/20"
+                          placeholder="Nhập mật khẩu hiện tại"
+                          required
                       />
                       <button
-                        type="button"
-                        onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                          type="button"
+                          onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                          className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                       >
                         {showCurrentPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                       </button>
                     </div>
                   </div>
 
-                  {/* New Password */}
+                  {/* Mật khẩu mới */}
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">Mật khẩu mới</label>
+                    <label className="text-sm font-medium text-gray-700">Mật khẩu mới</label>
                     <div className="relative">
                       <Input
-                        type={showNewPassword ? "text" : "password"}
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                        className="h-12 pr-12 bg-muted/50 border-border"
-                        placeholder="Nhập mật khẩu mới"
-                        required
+                          type={showNewPassword ? "text" : "password"}
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          className="h-12 pr-12 bg-muted/40 border-gray-200 rounded-xl focus-visible:ring-primary/20"
+                          placeholder="Nhập mật khẩu mới"
+                          required
                       />
                       <button
-                        type="button"
-                        onClick={() => setShowNewPassword(!showNewPassword)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                          type="button"
+                          onClick={() => setShowNewPassword(!showNewPassword)}
+                          className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                       >
                         {showNewPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                       </button>
                     </div>
                   </div>
 
-                  {/* Confirm Password */}
+                  {/* Xác nhận mật khẩu */}
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">Xác nhận mật khẩu mới</label>
+                    <label className="text-sm font-medium text-gray-700">Xác nhận mật khẩu mới</label>
                     <div className="relative">
                       <Input
-                        type={showConfirmPassword ? "text" : "password"}
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="h-12 pr-12 bg-muted/50 border-border"
-                        placeholder="Nhập lại mật khẩu mới"
-                        required
+                          type={showConfirmPassword ? "text" : "password"}
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          className="h-12 pr-12 bg-muted/40 border-gray-200 rounded-xl focus-visible:ring-primary/20"
+                          placeholder="Nhập lại mật khẩu mới"
+                          required
                       />
                       <button
-                        type="button"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                          type="button"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                       >
                         {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                       </button>
                     </div>
                   </div>
 
-                  {/* Action Buttons */}
-                  <div className="flex items-center gap-4 pt-4">
-                    <Button 
-                        type="submit" 
+                  {/* Nút tác vụ */}
+                  <div className="flex items-center gap-3 pt-4 border-t border-gray-50">
+                    <Button
+                        type="submit"
                         disabled={loading}
-                        className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 h-12"
+                        className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 h-11 rounded-xl font-medium shadow-sm"
                     >
                       {loading ? "Đang xử lý..." : "Cập nhật mật khẩu"}
                     </Button>
                     <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handleCancel}
-                      className="border-border text-foreground hover:bg-muted px-8 h-12"
+                        type="button"
+                        variant="outline"
+                        onClick={handleCancel}
+                        className="border-gray-200 text-gray-600 hover:bg-gray-50 px-6 h-11 rounded-xl font-medium"
                     >
                       Hủy bỏ
                     </Button>
@@ -289,134 +253,102 @@ export default function ChangePasswordPage() {
               </div>
             </div>
 
-            {/* Right Sidebar */}
+            {/* Sidebar kiểm tra điều kiện bảo mật bên phải */}
             <aside className="w-full lg:w-80 shrink-0 space-y-6">
-              {/* Password Requirements */}
-              <div className="bg-white rounded-xl p-6 shadow-sm">
-                <div className="flex items-center gap-2 mb-4">
-                  <Shield className="w-5 h-5 text-primary" />
-                  <h3 className="font-semibold text-foreground">Yêu cầu bảo mật</h3>
+              {/* Yêu cầu bảo mật */}
+              <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+                <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-50">
+                  <Shield className="w-4 h-4 text-primary" />
+                  <h3 className="font-semibold text-gray-900 text-sm">Yêu cầu bảo mật</h3>
                 </div>
 
                 <div className="space-y-4">
                   <div className="flex items-start gap-3">
                     {hasMinLength ? (
-                      <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
+                        <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0 mt-0.5" />
                     ) : (
-                      <XCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+                        <XCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
                     )}
                     <div>
-                      <p className="text-sm font-medium text-foreground">Độ dài tối thiểu</p>
-                      <p className="text-xs text-muted-foreground">Mật khẩu phải có ít nhất 8 ký tự.</p>
+                      <p className="text-xs font-semibold text-gray-800">Độ dài tối thiểu</p>
+                      <p className="text-[11px] text-muted-foreground">Mật khẩu phải có ít nhất 8 ký tự.</p>
                     </div>
                   </div>
 
                   <div className="flex items-start gap-3">
                     {hasSpecialChar ? (
-                      <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
+                        <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0 mt-0.5" />
                     ) : (
-                      <Circle className="w-5 h-5 text-muted-foreground shrink-0 mt-0.5" />
+                        <Circle className="w-4 h-4 text-gray-300 shrink-0 mt-0.5" />
                     )}
                     <div>
-                      <p className="text-sm font-medium text-foreground">Ký tự đặc biệt</p>
-                      <p className="text-xs text-muted-foreground">{"Bao gồm ít nhất một ký tự (!@#$%^&*)."}</p>
+                      <p className="text-xs font-semibold text-gray-800">Ký tự đặc biệt</p>
+                      <p className="text-[11px] text-muted-foreground">Bao gồm ít nhất một ký tự (!@#$%^&*).</p>
                     </div>
                   </div>
 
                   <div className="flex items-start gap-3">
                     {hasNumberAndUppercase ? (
-                      <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
+                        <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0 mt-0.5" />
                     ) : (
-                      <Circle className="w-5 h-5 text-muted-foreground shrink-0 mt-0.5" />
+                        <Circle className="w-4 h-4 text-gray-300 shrink-0 mt-0.5" />
                     )}
                     <div>
-                      <p className="text-sm font-medium text-foreground">Số và chữ hoa</p>
-                      <p className="text-xs text-muted-foreground">Sử dụng hỗn hợp các chữ số và chữ cái viết hoa.</p>
+                      <p className="text-xs font-semibold text-gray-800">Số và chữ hoa</p>
+                      <p className="text-[11px] text-muted-foreground">Sử dụng kết hợp chữ số và chữ viết hoa (A-Z).</p>
                     </div>
                   </div>
 
                   <div className="flex items-start gap-3">
                     {isNotSameAsOld ? (
-                      <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
+                        <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0 mt-0.5" />
                     ) : (
-                      <Circle className="w-5 h-5 text-muted-foreground shrink-0 mt-0.5" />
+                        <Circle className="w-4 h-4 text-gray-300 shrink-0 mt-0.5" />
                     )}
                     <div>
-                      <p className="text-sm font-medium text-foreground">Không trùng mật khẩu cũ</p>
-                      <p className="text-xs text-muted-foreground">Mật khẩu mới phải khác mật khẩu hiện tại.</p>
+                      <p className="text-xs font-semibold text-gray-800">Không trùng mật khẩu cũ</p>
+                      <p className="text-[11px] text-muted-foreground">Mật khẩu mới phải khác mật khẩu hiện tại.</p>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* 2FA Promotion */}
-              <div className="bg-primary rounded-xl p-6 text-primary-foreground relative overflow-hidden">
+              {/* Khuyên dùng 2FA */}
+              <div className="bg-primary rounded-2xl p-6 text-primary-foreground relative overflow-hidden shadow-sm">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
                 <div className="absolute bottom-0 right-0 w-24 h-24 bg-white/5 rounded-full translate-y-1/2 translate-x-1/2" />
-                
-                <h3 className="text-lg font-bold mb-2 relative z-10">Bảo mật đa lớp</h3>
-                <p className="text-sm text-primary-foreground/80 mb-4 relative z-10">
-                  Chúng tôi khuyến khích bạn kích hoạt xác thực 2 yếu tố (2FA) để tăng cường bảo vệ tối đa cho tài khoản LAPTOPRE của mình.
+
+                <h3 className="text-base font-bold mb-2 relative z-10">Bảo mật đa lớp</h3>
+                <p className="text-xs text-primary-foreground/80 mb-4 relative z-10 leading-relaxed">
+                  Kích hoạt bảo mật 2 yếu tố (2FA) để nhận mã OTP qua thiết bị di động khi đăng nhập tài khoản.
                 </p>
-                <Link 
-                  to="/account/2fa" 
-                  className="inline-flex items-center text-sm font-medium text-primary-foreground hover:underline relative z-10"
+                <Link
+                    to="/account/2fa"
+                    className="inline-flex items-center text-xs font-semibold text-white hover:underline relative z-10"
                 >
-                  Tìm hiểu thêm về 2FA
-                  <ChevronRight className="w-4 h-4 ml-1" />
+                  Tìm hiểu về 2FA
+                  <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
                 </Link>
               </div>
 
-              {/* Security Status */}
-              <div className="bg-white rounded-xl p-6 shadow-sm">
-                <h3 className="font-semibold text-foreground mb-4">Tình trạng bảo mật</h3>
+              {/* Tình trạng tài khoản */}
+              <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+                <h3 className="font-semibold text-gray-900 text-xs mb-3 uppercase tracking-wider">Tình trạng bảo mật</h3>
                 <div className="flex flex-wrap gap-2">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-600 text-sm font-medium rounded-full border border-green-200">
-                    <CheckCircle2 className="w-4 h-4" />
-                    Đã xác minh Email
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 text-amber-600 text-sm font-medium rounded-full border border-amber-200">
-                    <XCircle className="w-4 h-4" />
-                    Chưa bật 2FA
-                  </span>
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-green-50 text-green-600 text-xs font-semibold rounded-xl border border-green-100">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  Đã xác minh Email
+                </span>
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-50 text-amber-600 text-xs font-semibold rounded-xl border border-amber-100">
+                  <XCircle className="w-3.5 h-3.5" />
+                  Chưa bật 2FA
+                </span>
                 </div>
               </div>
             </aside>
-          </div>
-        </div>
-      </main>
 
-      {/* Footer */}
-      <footer className="bg-primary text-primary-foreground">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <Link to="/" className="text-xl font-bold">
-              LAPTOPRE
-            </Link>
-
-            <nav className="flex flex-wrap items-center justify-center gap-6">
-              <Link to="/warranty" className="text-sm text-primary-foreground/80 hover:text-primary-foreground transition-colors">
-                Chính sách bảo hành
-              </Link>
-              <Link to="/inspection" className="text-sm text-primary-foreground/80 hover:text-primary-foreground transition-colors">
-                Quy trình kiểm định
-              </Link>
-              <Link to="/payment" className="text-sm text-primary-foreground/80 hover:text-primary-foreground transition-colors">
-                Hướng dẫn thanh toán
-              </Link>
-              <Link to="/support" className="text-sm text-primary-foreground/80 hover:text-primary-foreground transition-colors">
-                Liên hệ hỗ trợ
-              </Link>
-            </nav>
           </div>
-
-          <div className="border-t border-primary-foreground/20 mt-6 pt-6 text-center">
-            <p className="text-sm text-primary-foreground/60">
-              © 2024 LAPTOPRE. Certified Refurbished Excellence.
-            </p>
-          </div>
-        </div>
-      </footer>
-    </div>
+        </main>
+      </div>
   )
 }

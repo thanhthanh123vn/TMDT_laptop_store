@@ -15,7 +15,6 @@ import AddressPage from './pages/Address';
 import OrdersPage from './pages/OrdersPage';
 import WishListPage from './pages/WishListPage';
 import NotificationsPage from './pages/NotificationsPage';
-import ResetPasswordPage from './pages/ResetPasswordPage';
 import {AdminLayout} from "./pages/admin/AdminLayout.tsx";
 import {AdminProductFormPage} from "./pages/admin/AdminProductFormPage.tsx";
 import {AdminProductsPage} from "./pages/admin/AdminProductsPage.tsx";
@@ -37,7 +36,6 @@ export const router = createBrowserRouter([
       { path: 'login', Component: LoginPage },
       { path: 'register', Component: RegisterPage },
       { path: 'forgot-password', Component: ForgotPasswordPage },
-      { path: 'reset-password', Component: ResetPasswordPage },
       { path: 'profile', Component: ProfilePage },
       { path: 'wishlist', Component: WishListPage },
       { path: 'notifications', Component: NotificationsPage },
