@@ -1,0 +1,106 @@
+package com.fit.nlu.laptop.controller;
+
+import com.fit.nlu.laptop.config.VNPayConfig;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
+import java.util.*;
+
+@RestController
+@RequestMapping("/api/payment")
+@CrossOrigin("*")
+public class PaymentController {
+
+    @GetMapping("/vnpay/create")
+    public ResponseEntity<?> createPayment(HttpServletRequest request,
+                                           @RequestParam("amount") long amount,
+                                           @RequestParam("orderInfo") String orderInfo) {
+        try {
+            long amountVNPay = amount * 100;
+            Map<String, String> vnp_Params = new HashMap<>();
+
+            vnp_Params.put("vnp_Version", "2.1.0");
+            vnp_Params.put("vnp_Command", "pay");
+            vnp_Params.put("vnp_TmnCode", VNPayConfig.vnp_TmnCode);
+            vnp_Params.put("vnp_Amount", String.valueOf(amountVNPay));
+            vnp_Params.put("vnp_CurrCode", "VND");
+            vnp_Params.put("vnp_TxnRef", VNPayConfig.getRandomNumber(8));
+            vnp_Params.put("vnp_OrderInfo", orderInfo);
+            vnp_Params.put("vnp_OrderType", "other");
+            vnp_Params.put("vnp_Locale", "vn");
+            vnp_Params.put("vnp_ReturnUrl", VNPayConfig.vnp_ReturnUrl);
+            vnp_Params.put("vnp_IpAddr", VNPayConfig.getIpAddress(request));
+
+            Calendar cld = Calendar.getInstance(TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
+            SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
+            String vnp_CreateDate = formatter.format(cld.getTime());
+            vnp_Params.put("vnp_CreateDate", vnp_CreateDate);
+
+            cld.add(Calendar.MINUTE, 15);
+            String vnp_ExpireDate = formatter.format(cld.getTime());
+            vnp_Params.put("vnp_ExpireDate", vnp_ExpireDate);
+
+            // Sắp xếp tham số
+            List<String> fieldNames = new ArrayList<>(vnp_Params.keySet());
+            Collections.sort(fieldNames);
+            StringBuilder hashData = new StringBuilder();
+            StringBuilder query = new StringBuilder();
+            Iterator<String> itr = fieldNames.iterator();
+
+            while (itr.hasNext()) {
+                String fieldName = itr.next();
+                String fieldValue = vnp_Params.get(fieldName);
+                if ((fieldValue != null) && (fieldValue.length() > 0)) {
+
+                    String encodedValue = URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII.toString()).replace("+", "%20");
+                    String encodedName = URLEncoder.encode(fieldName, StandardCharsets.US_ASCII.toString()).replace("+", "%20");
+
+                    // Build hash data
+                    hashData.append(encodedName);
+                    hashData.append('=');
+                    hashData.append(encodedValue);
+
+                    // Build query
+                    query.append(encodedName);
+                    query.append('=');
+                    query.append(encodedValue);
+
+                    if (itr.hasNext()) {
+                        query.append('&');
+                        hashData.append('&');
+                    }
+                }
+            }
+
+            // secure hash
+            String vnp_SecureHash = VNPayConfig.hmacSHA512(VNPayConfig.secretKey, hashData.toString());
+            query.append("&vnp_SecureHash=");
+            query.append(vnp_SecureHash);
+
+            String paymentUrl = VNPayConfig.vnp_PayUrl + "?" + query.toString();
+
+            Map<String, String> response = new HashMap<>();
+            response.put("paymentUrl", paymentUrl);
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body("Create payment failed");
+        }
+    }
+
+    @GetMapping("/vnpay/return")
+    public ResponseEntity<?> paymentReturn(HttpServletRequest request) {
+        String responseCode = request.getParameter("vnp_ResponseCode");
+        if ("00".equals(responseCode)) {
+            return ResponseEntity.ok("Thanh toán thành công");
+        } else {
+            return ResponseEntity.badRequest().body("Thanh toán thất bại");
+        }
+    }
+}
