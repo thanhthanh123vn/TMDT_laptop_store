@@ -11,8 +11,6 @@ import {
     Bell,
     Package,
     Heart,
-    Search,
-    ShoppingCart,
     User,
     Camera,
     CheckCircle2,
@@ -58,7 +56,7 @@ export default function ProfilePage() {
                 fullName: user.fullName || "",
                 email: user.email || "",
                 phone: user.phone || "",
-                gender: "Nam" 
+                gender: "Nam"
             });
             if (user.avatarUrl) {
                 setAvatarUrl(user.avatarUrl.startsWith('http') ? user.avatarUrl : BASE_URL + user.avatarUrl);
@@ -107,63 +105,36 @@ export default function ProfilePage() {
         }
     }
 
+    const handleRemoveAvatar = async () => {
+        setSaving(true);
+        setError("");
+        setSuccess("");
+        try {
+            // Đồng bộ xóa ảnh lên thẳng Database của Sơn
+            await userApi.updateProfile({ ...formData, avatarUrl: "" });
+            setAvatarUrl("");
+            setSuccess("Đã gỡ bỏ ảnh đại diện thành công!");
+        } catch (err) {
+            setError("Có lỗi xảy ra khi gỡ bỏ ảnh đại diện.");
+        } finally {
+            setSaving(false);
+        }
+    }
+
     return (
-        <div className="min-h-screen bg-background flex flex-col">
-            {/* Header */}
-            <header className="bg-card border-b border-border">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex items-center justify-between h-16">
-                        {/* Logo */}
-                        <Link to="/" className="text-xl font-bold text-primary">
-                            LAPTOPRE
-                        </Link>
-
-                        {/* Navigation */}
-                        <nav className="hidden md:flex items-center gap-8">
-                            <Link to="/products" className="text-sm text-foreground hover:text-primary transition-colors">
-                                Sản phẩm
-                            </Link>
-                            <Link to="/promotions" className="text-sm text-foreground hover:text-primary transition-colors">
-                                Khuyến mãi
-                            </Link>
-                            <Link to="/news" className="text-sm text-foreground hover:text-primary transition-colors">
-                                Tin công nghệ
-                            </Link>
-                            <Link to="/about" className="text-sm text-foreground hover:text-primary transition-colors">
-                                Về chúng tôi
-                            </Link>
-                        </nav>
-
-                        {/* Search and Icons */}
-                        <div className="flex items-center gap-4">
-                            <div className="hidden sm:flex items-center bg-muted rounded-lg px-3 py-2">
-                                <Input
-                                    type="text"
-                                    placeholder="Tìm kiếm laptop..."
-                                    className="border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 w-40 lg:w-56"
-                                />
-                                <Search className="h-4 w-4 text-muted-foreground" />
-                            </div>
-                            <button className="p-2 hover:bg-muted rounded-lg transition-colors">
-                                <ShoppingCart className="h-5 w-5 text-foreground" />
-                            </button>
-                            <button className="p-2 hover:bg-muted rounded-lg transition-colors">
-                                <User className="h-5 w-5 text-foreground" />
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </header>
+        // Sử dụng min-h vừa vặn để trừ hao không gian trống của Layout bọc ngoài
+        <div className="min-h-[calc(100vh-160px)] bg-transparent flex flex-col justify-center">
 
             {/* Main Content */}
-            <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
-                <div className="flex flex-col lg:flex-row gap-8">
-                    {/* Sidebar */}
-                    <aside className="lg:w-64 shrink-0">
-                        <div className="bg-card rounded-xl p-6 border border-border">
+            <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
+                <div className="flex flex-col lg:flex-row gap-8 items-start">
+
+                    {/* Sidebar bên trái */}
+                    <aside className="w-full lg:w-64 shrink-0">
+                        <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
                             {/* User Info */}
-                            <div className="flex items-center gap-3 mb-6">
-                                <div className="relative w-12 h-12 rounded-full overflow-hidden bg-muted flex items-center justify-center">
+                            <div className="flex items-center gap-3 mb-6 border-b border-gray-50 pb-4">
+                                <div className="relative w-11 h-11 rounded-xl overflow-hidden bg-muted flex items-center justify-center border border-gray-100">
                                     {avatarUrl ? (
                                         <img
                                             src={avatarUrl}
@@ -171,25 +142,25 @@ export default function ProfilePage() {
                                             className="w-full h-full object-cover"
                                         />
                                     ) : (
-                                        <User className="h-6 w-6 text-muted-foreground" />
+                                        <User className="h-5 w-5 text-muted-foreground" />
                                     )}
                                 </div>
-                                <div>
-                                    <h3 className="font-semibold text-foreground text-sm">Tài khoản của tôi</h3>
-                                    <p className="text-xs text-muted-foreground">Quản lý thông tin cá nhân</p>
+                                <div className="truncate">
+                                    <h3 className="font-semibold text-gray-900 text-sm truncate">{formData.fullName || "Tài khoản cá nhân"}</h3>
+                                    <p className="text-xs text-muted-foreground">Quản lý tài khoản</p>
                                 </div>
                             </div>
 
-                            {/* Navigation */}
+                            {/* Navigation List */}
                             <nav className="space-y-1">
                                 {sidebarItems.map((item) => (
                                     <Link
                                         key={item.href}
                                         to={item.href}
-                                        className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                                        className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
                                             item.active
-                                                ? "bg-primary text-primary-foreground"
-                                                : "text-foreground hover:bg-muted"
+                                                ? "bg-primary text-primary-foreground shadow-sm"
+                                                : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                                         }`}
                                     >
                                         <item.icon className="h-4 w-4" />
@@ -200,45 +171,47 @@ export default function ProfilePage() {
                         </div>
                     </aside>
 
-                    {/* Form Content */}
-                    <div className="flex-1">
-                        <div className="bg-card rounded-xl p-6 lg:p-8 border border-border">
-                            <h1 className="text-2xl lg:text-3xl font-bold text-primary mb-2">Chỉnh sửa hồ sơ</h1>
-                            <p className="text-muted-foreground mb-8">
-                                Cập nhật thông tin tài khoản của bạn để nhận các ưu đãi tốt nhất từ LAPTOPRE.
+                    {/* Form chỉnh sửa chính bên phải */}
+                    <div className="flex-1 w-full">
+                        <div className="bg-white rounded-2xl p-6 lg:p-8 border border-gray-100 shadow-sm">
+                            <h1 className="text-2xl font-bold text-gray-900 mb-2">Chỉnh sửa hồ sơ</h1>
+                            <p className="text-muted-foreground text-sm mb-8">
+                                Cập nhật thông tin tài khoản của bạn để bảo mật và quản lý đơn hàng tốt hơn.
                             </p>
 
                             <form onSubmit={handleSubmit}>
-                                {error && <div className="p-3 mb-6 bg-red-100 text-red-600 rounded-lg text-sm">{error}</div>}
-                                {success && <div className="p-3 mb-6 bg-green-100 text-green-600 rounded-lg text-sm">{success}</div>}
-                                {loading && <div className="p-3 mb-6 bg-blue-50 text-blue-600 rounded-lg text-sm">Đang tải dữ liệu...</div>}
+                                {error && <div className="p-3 mb-5 bg-red-50 text-red-600 border border-red-100 rounded-xl text-sm">{error}</div>}
+                                {success && <div className="p-3 mb-5 bg-green-50 text-green-600 border border-green-100 rounded-xl text-sm">{success}</div>}
+                                {loading && <div className="p-3 mb-5 bg-blue-50 text-blue-600 border border-blue-100 rounded-xl text-sm">Đang tải dữ liệu tài khoản...</div>}
+
                                 {/* Avatar Section */}
-                                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 mb-8">
+                                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 mb-8 bg-gray-50/50 p-4 rounded-2xl border border-gray-100/50">
                                     <div className="relative">
-                                    <div className="w-24 h-24 rounded-xl overflow-hidden bg-primary/10 flex items-center justify-center">
-                                        {avatarUrl ? (
-                                            <img
-                                                src={avatarUrl}
-                                                alt="Profile"
-                                                className="w-full h-full object-cover"
-                                            />
-                                        ) : (
-                                            <User className="h-10 w-10 text-primary" />
-                                        )}
-                                    </div>
+                                        <div className="w-20 h-20 rounded-2xl overflow-hidden bg-primary/10 flex items-center justify-center border border-gray-200">
+                                            {avatarUrl ? (
+                                                <img
+                                                    src={avatarUrl}
+                                                    alt="Profile"
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            ) : (
+                                                <User className="h-9 w-9 text-primary" />
+                                            )}
+                                        </div>
                                         <button
                                             type="button"
-                                            className="absolute -bottom-1 -right-1 w-7 h-7 bg-primary text-primary-foreground rounded-full flex items-center justify-center"
+                                            onClick={() => document.getElementById('avatar-upload')?.click()}
+                                            className="absolute -bottom-1 -right-1 w-7 h-7 bg-primary text-primary-foreground rounded-full flex items-center justify-center shadow-md hover:scale-105 transition-transform"
                                         >
                                             <Camera className="h-3.5 w-3.5" />
                                         </button>
                                     </div>
                                     <div>
-                                        <h3 className="font-semibold text-foreground mb-1">Ảnh đại diện</h3>
-                                        <p className="text-sm text-muted-foreground mb-3">
-                                            Dung lượng tối đa 1MB. Định dạng: .JPG, .PNG
+                                        <h3 className="font-semibold text-gray-900 text-sm mb-1">Ảnh đại diện</h3>
+                                        <p className="text-xs text-muted-foreground mb-3">
+                                            Dung lượng tối đa 1MB. Định dạng hỗ trợ: .JPG, .PNG
                                         </p>
-                                        <div className="flex gap-3">
+                                        <div className="flex gap-2">
                                             <input
                                                 type="file"
                                                 id="avatar-upload"
@@ -246,21 +219,22 @@ export default function ProfilePage() {
                                                 accept="image/*"
                                                 onChange={handleFileChange}
                                             />
-                                            <Button 
-                                                type="button" 
-                                                size="sm" 
-                                                className="bg-primary hover:bg-primary/90"
+                                            <Button
+                                                type="button"
+                                                size="sm"
+                                                className="bg-primary hover:bg-primary/90 rounded-xl"
                                                 onClick={() => document.getElementById('avatar-upload')?.click()}
                                                 disabled={saving}
                                             >
                                                 {saving ? "Đang tải..." : "Chọn hình mới"}
                                             </Button>
-                                            <Button 
-                                                type="button" 
-                                                variant="outline" 
+                                            <Button
+                                                type="button"
+                                                variant="outline"
                                                 size="sm"
-                                                onClick={() => setAvatarUrl("")}
-                                                disabled={saving}
+                                                className="rounded-xl border-gray-200 text-gray-600 hover:bg-gray-100"
+                                                onClick={handleRemoveAvatar}
+                                                disabled={saving || !avatarUrl}
                                             >
                                                 Gỡ bỏ
                                             </Button>
@@ -269,86 +243,98 @@ export default function ProfilePage() {
                                 </div>
 
                                 {/* Form Fields */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
                                     <div>
-                                        <label className="block text-sm font-medium text-foreground mb-2">
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
                                             Họ và tên
                                         </label>
                                         <Input
                                             type="text"
                                             value={formData.fullName}
                                             onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                                            className="h-12"
+                                            className="h-12 rounded-xl border-gray-200 focus-visible:ring-primary/20"
+                                            placeholder="Nhập đầy đủ họ tên"
+                                            required
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-foreground mb-2">
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
                                             Địa chỉ Email
                                         </label>
                                         <Input
                                             type="email"
                                             value={formData.email}
                                             disabled
-                                            className="h-12 bg-muted"
+                                            className="h-12 bg-gray-50 border-gray-200 rounded-xl text-gray-500 cursor-not-allowed"
                                         />
-                                        <p className="text-xs text-amber-600 mt-1 flex items-center gap-1">
-                                            <span className="inline-block w-3 h-3 rounded-full border border-amber-600 text-[8px] flex items-center justify-center">i</span>
-                                            Liên hệ hỗ trợ để thay đổi email
+                                        <p className="text-[11px] text-amber-600 mt-1.5 flex items-center gap-1 font-medium">
+                                            <span className="inline-block w-3.5 h-3.5 rounded-full border border-amber-600 text-[9px] flex items-center justify-center font-bold">i</span>
+                                            Liên hệ CSKH để thay đổi địa chỉ email của bạn
                                         </p>
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-foreground mb-2">
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
                                             Số điện thoại
                                         </label>
-                                        <div className="flex">
-                      <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-input bg-muted text-muted-foreground text-sm">
-                        +84
-                      </span>
+                                        <div className="flex shadow-sm rounded-xl overflow-hidden">
+                                            <span className="inline-flex items-center px-3.5 border border-r-0 border-gray-200 bg-gray-50 text-gray-500 text-sm font-medium">
+                                                +84
+                                            </span>
                                             <Input
                                                 type="tel"
                                                 value={formData.phone}
                                                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                                                className="h-12 rounded-l-none"
+                                                className="h-12 rounded-l-none border-gray-200 rounded-r-xl focus-visible:ring-primary/20"
+                                                placeholder="Nhập số điện thoại"
                                             />
                                         </div>
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-foreground mb-2">
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
                                             Giới tính
                                         </label>
                                         <div className="relative">
                                             <select
                                                 value={formData.gender}
                                                 onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-                                                className="w-full h-12 px-3 rounded-md border border-input bg-background text-foreground appearance-none focus:outline-none focus:ring-2 focus:ring-ring"
+                                                className="w-full h-12 px-3 rounded-xl border border-gray-200 bg-white text-gray-900 appearance-none focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-medium shadow-sm"
                                             >
                                                 <option value="Nam">Nam</option>
                                                 <option value="Nữ">Nữ</option>
                                                 <option value="Khác">Khác</option>
                                             </select>
-                                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* Status Badges */}
-                                <div className="bg-muted/50 rounded-lg p-4 mb-8 flex flex-wrap gap-3">
-                  <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-card rounded-full text-sm border border-border">
-                    <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                    Tài khoản xác thực
-                  </span>
-                                    <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-card rounded-full text-sm border border-border">
-                    <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                    SĐT đã liên kết
-                  </span>
+                                <div className="bg-gray-50/50 rounded-xl p-4 mb-8 border border-gray-100 flex flex-wrap gap-3">
+                                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-xl text-xs font-semibold text-emerald-700 border border-emerald-100 shadow-sm">
+                                        <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                                        Tài khoản đã xác thực
+                                    </span>
+                                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-xl text-xs font-semibold text-emerald-700 border border-emerald-100 shadow-sm">
+                                        <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                                        Số điện thoại đã liên kết
+                                    </span>
                                 </div>
 
                                 {/* Action Buttons */}
-                                <div className="flex justify-end gap-4">
-                                    <Button type="button" variant="ghost" onClick={() => fetchProfile()}>
+                                <div className="flex justify-end gap-3 border-t border-gray-50 pt-4">
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        className="rounded-xl text-gray-500 hover:bg-gray-50"
+                                        onClick={() => fetchProfile()}
+                                    >
                                         Hủy thay đổi
                                     </Button>
-                                    <Button type="submit" disabled={saving || loading} className="bg-primary hover:bg-primary/90 disabled:opacity-50">
+                                    <Button
+                                        type="submit"
+                                        disabled={saving || loading}
+                                        className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl shadow-sm px-6"
+                                    >
                                         {saving ? "Đang lưu..." : "Lưu thông tin"}
                                     </Button>
                                 </div>
@@ -357,36 +343,6 @@ export default function ProfilePage() {
                     </div>
                 </div>
             </main>
-
-            {/* Footer */}
-            <footer className="bg-card border-t border-border mt-auto">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                    <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
-                        <Link to="/" className="text-xl font-bold text-primary">
-                            LAPTOPRE
-                        </Link>
-                        <nav className="flex flex-wrap justify-center gap-6">
-                            <Link to="/warranty" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                                Chính sách bảo hành
-                            </Link>
-                            <Link to="/inspection" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                                Quy trình kiểm định
-                            </Link>
-                            <Link to="/payment" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                                Hướng dẫn thanh toán
-                            </Link>
-                            <Link to="/support" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                                Liên hệ hỗ trợ
-                            </Link>
-                        </nav>
-                    </div>
-                    <div className="border-t border-border pt-6">
-                        <p className="text-center text-sm text-muted-foreground">
-                            © 2024 LAPTOPRE. Certified Refurbished Excellence.
-                        </p>
-                    </div>
-                </div>
-            </footer>
         </div>
     )
 }
