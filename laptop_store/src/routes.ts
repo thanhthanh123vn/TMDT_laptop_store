@@ -11,6 +11,7 @@ import ProfilePage from './pages/ProfilePage';
 import ChangePasswordPage from './pages/ChangePasswordPage';
 import CartPage from './pages/CartPage';
 import CheckoutPage from './pages/CheckoutPage';
+import CheckoutSuccessPage from './pages/CheckoutSuccessPage.tsx';
 import AddressPage from './pages/Address';
 import OrdersPage from './pages/OrdersPage';
 import WishListPage from './pages/WishListPage';
@@ -32,6 +33,7 @@ export const router = createBrowserRouter([
       { path: 'product/:id', Component: ProductDetailPage },
       { path: 'cart', Component: CartPage },
       { path: 'checkout', Component: CheckoutPage },
+      { path: 'checkout/success', Component: CheckoutSuccessPage },
       { path: 'orders', Component: ProfilePage },
       { path: 'login', Component: LoginPage },
       { path: 'register', Component: RegisterPage },

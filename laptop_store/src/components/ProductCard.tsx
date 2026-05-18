@@ -1,6 +1,6 @@
 import React from 'react';
-import { Link } from 'react-router';
-import { Heart, GitCompare, ShoppingCart } from 'lucide-react';
+import {Link, useNavigate} from 'react-router';
+import {Heart, GitCompare, ShoppingCart, CreditCard} from 'lucide-react';
 import type { Laptop } from '../types';
 import { Rating } from './Rating';
 import { useStore } from '../context/StoreContext';
@@ -19,12 +19,19 @@ export const ProductCard: React.FC<ProductCardProps> = ({ laptop }) => {
 
   const isInWishlist = wishlist.includes(laptop.id);
   const isInCompare = compare.includes(laptop.id);
+  const navigate = useNavigate();
+  // const handleAddToCart = (e: React.MouseEvent) => {
+  //   e.preventDefault();
+  //   addToCart(laptop);
+  // };
 
-  const handleAddToCart = (e: React.MouseEvent) => {
+  const handleBuyNow = (e: React.MouseEvent) => {
     e.preventDefault();
-    addToCart(laptop);
-  };
+    e.stopPropagation();
 
+    addToCart(laptop, 1);
+    navigate('/checkout');
+  };
   const handleToggleWishlist = (e: React.MouseEvent) => {
     e.preventDefault();
     toggleWishlist(laptop.id);
@@ -111,11 +118,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ laptop }) => {
           {/* ── Actions ── */}
           <div className="flex gap-2 mt-auto">
             <button
-              onClick={handleAddToCart}
+                onClick={handleBuyNow}
               className="flex-1 flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold py-2 rounded-lg transition-colors"
             >
-              <ShoppingCart className="w-3.5 h-3.5" />
-              Thêm vào giỏ
+              <CreditCard  className="w-3.5 h-3.5" />
+              Mua Ngay
             </button>
             <button
               onClick={handleToggleCompare}

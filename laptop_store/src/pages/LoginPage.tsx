@@ -23,6 +23,7 @@ export default function LoginPage() {
             const response = await authApi.login({ email, password });
             if (response.data && response.data.token) {
                 localStorage.setItem("token", response.data.token);
+                localStorage.setItem("user", JSON.stringify(response.data.user));
                 localStorage.setItem("refreshToken", response.data.refreshToken);
                 navigate("/");
             } else {
