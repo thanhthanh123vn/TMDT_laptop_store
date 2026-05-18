@@ -5,9 +5,6 @@ import { useState, useEffect } from "react"
 import { wishlistApi } from "../api/wishlistApi"
 import { userApi } from "../api/userApi"
 import {
-    Search,
-    ShoppingCart,
-    User,
     LayoutGrid,
     UserCog,
     KeyRound,
@@ -17,14 +14,10 @@ import {
     Heart,
     X,
     Star,
-    Cpu,
-    MemoryStick,
-    Monitor,
-    Battery,
+    User,
     ShoppingBasket,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 
 const menuItems = [
     { icon: LayoutGrid, label: "Tổng quan", href: "/account" },
@@ -35,7 +28,6 @@ const menuItems = [
     { icon: ClipboardList, label: "Lịch sử đơn hàng", href: "/account/orders" },
     { icon: Heart, label: "Danh sách yêu thích", href: "/account/wishlist", active: true },
 ]
-
 
 export default function WishlistPage() {
     const [wishlistItems, setWishlistItems] = useState<any[]>([])
@@ -94,58 +86,16 @@ export default function WishlistPage() {
     }
 
     return (
-        <div className="min-h-screen bg-background flex flex-col">
-            {/* Header */}
-            <header className="bg-primary text-primary-foreground">
-                <div className="container mx-auto px-4 py-4">
-                    <div className="flex items-center justify-between gap-8">
-                        <Link to="/" className="text-xl font-bold tracking-tight">
-                            LAPTOPRE
-                        </Link>
-
-                        <nav className="hidden md:flex items-center gap-8">
-                            <Link to="/products" className="text-sm hover:text-white/80 transition-colors">
-                                Sản phẩm
-                            </Link>
-                            <Link to="/promotions" className="text-sm hover:text-white/80 transition-colors">
-                                Khuyến mãi
-                            </Link>
-                            <Link to="/news" className="text-sm hover:text-white/80 transition-colors">
-                                Tin công nghệ
-                            </Link>
-                            <Link to="/about" className="text-sm hover:text-white/80 transition-colors">
-                                Về chúng tôi
-                            </Link>
-                        </nav>
-
-                        <div className="flex items-center gap-4">
-                            <div className="relative hidden md:block">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                <Input
-                                    type="text"
-                                    placeholder="Tìm kiếm laptop..."
-                                    className="pl-10 w-64 bg-white/10 border-white/20 text-white placeholder:text-white/60 focus:bg-white/20"
-                                />
-                            </div>
-                            <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
-                                <ShoppingCart className="h-5 w-5" />
-                            </Button>
-                            <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
-                                <User className="h-5 w-5" />
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-            </header>
-
+        <div className="min-h-[calc(100vh-160px)] bg-transparent flex flex-col justify-center">
             {/* Main Content */}
-            <main className="flex-1 container mx-auto px-4 py-8">
-                <div className="flex flex-col lg:flex-row gap-8">
-                    {/* Sidebar */}
-                    <aside className="lg:w-64 flex-shrink-0">
-                        <div className="bg-card rounded-lg border p-6">
-                            <div className="flex items-center gap-3 mb-6">
-                                <div className="w-12 h-12 rounded-full bg-muted overflow-hidden flex items-center justify-center">
+            <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+                <div className="flex flex-col lg:flex-row gap-8 items-start">
+
+                    {/* Sidebar bên trái */}
+                    <aside className="w-full lg:w-64 shrink-0">
+                        <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+                            <div className="flex items-center gap-3 mb-6 border-b border-gray-50 pb-4">
+                                <div className="relative w-11 h-11 rounded-xl overflow-hidden bg-muted flex items-center justify-center border border-gray-100">
                                     {userProfile.avatarUrl ? (
                                         <img
                                             src={userProfile.avatarUrl}
@@ -153,12 +103,12 @@ export default function WishlistPage() {
                                             className="w-full h-full object-cover"
                                         />
                                     ) : (
-                                        <User className="h-6 w-6 text-muted-foreground" />
+                                        <User className="h-5 w-5 text-muted-foreground" />
                                     )}
                                 </div>
-                                <div>
-                                    <p className="font-semibold text-foreground">{userProfile.fullName}</p>
-                                    <p className="text-sm text-muted-foreground">Quản lý thông tin cá nhân</p>
+                                <div className="truncate">
+                                    <p className="font-semibold text-gray-900 text-sm truncate">{userProfile.fullName}</p>
+                                    <p className="text-xs text-muted-foreground">Quản lý cá nhân</p>
                                 </div>
                             </div>
 
@@ -167,85 +117,91 @@ export default function WishlistPage() {
                                     <Link
                                         key={item.href}
                                         to={item.href}
-                                        className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                                        className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
                                             item.active
-                                                ? "bg-rose-500 text-white"
-                                                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                                                ? "bg-primary text-primary-foreground shadow-sm"
+                                                : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                                         }`}
                                     >
-                                        <item.icon className="h-5 w-5" />
-                                        {item.label}
+                                        <item.icon className="h-4 w-4" />
+                                        <span>{item.label}</span>
                                     </Link>
                                 ))}
                             </nav>
                         </div>
                     </aside>
 
-                    {/* Content */}
-                    <div className="flex-1">
+                    {/* Content chính sản phẩm yêu thích */}
+                    <div className="flex-1 w-full">
                         <div className="mb-6">
-                            <h1 className="text-2xl md:text-3xl font-bold text-primary mb-2">Danh sách yêu thích</h1>
-                            <p className="text-muted-foreground">
+                            <h1 className="text-2xl font-bold text-gray-900">Danh sách yêu thích</h1>
+                            <p className="text-muted-foreground text-sm mt-0.5">
                                 Bạn đang lưu trữ {wishlistItems.length} sản phẩm trong danh sách quan tâm.
                             </p>
                         </div>
 
-                        {loading && <div className="p-4 bg-blue-50 text-blue-600 rounded-lg mb-6">Đang tải dữ liệu...</div>}
+                        {loading && (
+                            <div className="p-4 bg-blue-50 text-blue-600 border border-blue-100 rounded-xl text-sm font-medium mb-6">
+                                Đang tải danh sách yêu thích...
+                            </div>
+                        )}
 
                         {!loading && wishlistItems.length === 0 ? (
-                            <div className="bg-card rounded-lg border p-12 text-center">
-                                <Heart className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                                <h3 className="text-lg font-semibold mb-2">Danh sách yêu thích trống</h3>
-                                <p className="text-muted-foreground mb-4">
-                                    Bạn chưa có sản phẩm nào trong danh sách yêu thích.
+                            <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center shadow-sm">
+                                <Heart className="h-14 w-14 text-gray-300 mx-auto mb-4" />
+                                <h3 className="text-base font-bold text-gray-900 mb-1">Danh sách yêu thích trống</h3>
+                                <p className="text-muted-foreground text-sm mb-5">
+                                    Hãy thêm những sản phẩm bạn ưng ý vào danh sách này nhé.
                                 </p>
-                                <Button asChild>
+                                <Button asChild className="rounded-xl h-10 px-5 shadow-sm font-semibold">
                                     <Link to="/products">Khám phá sản phẩm</Link>
                                 </Button>
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                                 {wishlistItems.map((item) => (
-                                    <div key={item.id} className="bg-card rounded-lg border overflow-hidden group">
-                                        <div className="relative p-4 bg-muted/30">
-                      <span
-                          className={`absolute top-4 left-4 px-2 py-1 text-xs font-medium text-white rounded ${item.badgeColor}`}
-                      >
-                        {item.badge}
-                      </span>
+                                    <div key={item.id} className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md/50 hover:border-gray-200 transition-all group relative flex flex-col">
+
+                                        {/* Phần ảnh & Badge */}
+                                        <div className="relative p-4 bg-gray-50/50 flex items-center justify-center border-b border-gray-50">
+                                            <span className={`absolute top-3 left-3 px-2 py-0.5 text-[10px] font-bold text-white rounded-md shadow-sm ${item.badgeColor}`}>
+                                                {item.badge}
+                                            </span>
                                             <button
                                                 onClick={() => removeFromWishlist(item.id)}
-                                                className="absolute top-4 right-4 p-1 hover:bg-muted rounded transition-colors"
+                                                className="absolute top-3 right-3 p-1.5 bg-white/80 hover:bg-white text-gray-400 hover:text-red-500 rounded-xl border border-gray-100 shadow-sm transition-colors z-10"
                                             >
-                                                <X className="h-5 w-5 text-muted-foreground" />
+                                                <X className="h-4 w-4" />
                                             </button>
-                                            <div className="aspect-[4/3] relative">
+                                            <div className="aspect-[4/3] w-full max-h-40 relative flex items-center justify-center p-2">
                                                 <img
                                                     src={item.image}
                                                     alt={item.name}
-                                                    className="w-full h-full object-contain"
+                                                    className="max-w-full max-h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-300"
                                                 />
                                             </div>
                                         </div>
 
-                                        <div className="p-4">
+                                        {/* Thông tin sản phẩm */}
+                                        <div className="p-5 flex flex-col flex-1">
                                             <div className="flex items-center gap-1 mb-2">
-                                                <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                                                <span className="text-sm font-medium">{item.rating}</span>
-                                                <span className="text-sm text-muted-foreground">
-                          ({item.reviews} đánh giá)
-                        </span>
+                                                <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                                                <span className="text-xs font-bold text-gray-700">{item.rating}</span>
+                                                <span className="text-xs text-muted-foreground">
+                                                    ({item.reviews} đánh giá)
+                                                </span>
                                             </div>
 
-                                            <h3 className="font-semibold text-sm mb-3 line-clamp-2 min-h-[40px]">
+                                            <h3 className="font-semibold text-gray-900 text-sm mb-3 line-clamp-2 min-h-[40px] leading-relaxed group-hover:text-primary transition-colors">
                                                 {item.name}
                                             </h3>
 
-                                            <div className="flex gap-2 mb-4">
+                                            {/* Specs tags */}
+                                            <div className="flex flex-wrap gap-1.5 mb-4">
                                                 {item.specs?.map((spec: any, index: number) => (
                                                     <div
                                                         key={index}
-                                                        className="flex items-center gap-1 px-2 py-1 bg-muted rounded text-xs text-muted-foreground"
+                                                        className="flex items-center gap-1 px-2 py-0.5 bg-gray-50 border border-gray-100 rounded-md text-[11px] text-gray-500"
                                                     >
                                                         {spec.icon && <spec.icon className="h-3 w-3" />}
                                                         {spec.label}
@@ -253,105 +209,26 @@ export default function WishlistPage() {
                                                 ))}
                                             </div>
 
-                                            <p className="text-xl font-bold text-primary mb-4">
-                                                {formatPrice(item.price)}
-                                            </p>
+                                            {/* Giá & Button hành động */}
+                                            <div className="mt-auto pt-2 border-t border-gray-50 flex flex-col gap-3">
+                                                <p className="text-lg font-bold text-primary">
+                                                    {formatPrice(item.price)}
+                                                </p>
 
-                                            <Button className="w-full gap-2">
-                                                <ShoppingBasket className="h-4 w-4" />
-                                                Thêm vào giỏ
-                                            </Button>
+                                                <Button className="w-full gap-2 rounded-xl h-10 text-xs font-semibold shadow-sm">
+                                                    <ShoppingBasket className="h-4 w-4" />
+                                                    Thêm vào giỏ hàng
+                                                </Button>
+                                            </div>
                                         </div>
                                     </div>
                                 ))}
                             </div>
                         )}
                     </div>
+
                 </div>
             </main>
-
-            {/* Footer */}
-            <footer className="bg-primary text-primary-foreground mt-auto">
-                <div className="container mx-auto px-4 py-12">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        <div>
-                            <h3 className="text-xl font-bold mb-4">LAPTOPRE</h3>
-                            <p className="text-sm text-white/70 leading-relaxed">
-                                Cung cấp giải pháp máy tính xách tay Certified Refurbished uy tín hàng đầu, đảm bảo
-                                quy trình kiểm định khắt khe và chế độ hậu mãi tận tâm.
-                            </p>
-                        </div>
-
-                        <div>
-                            <h4 className="font-semibold mb-4">Dịch vụ</h4>
-                            <ul className="space-y-2 text-sm text-white/70">
-                                <li>
-                                    <Link to="/warranty" className="hover:text-white transition-colors">
-                                        Chính sách bảo hành
-                                    </Link>
-                                </li>
-                                <li>
-                                    <Link to="/inspection" className="hover:text-white transition-colors">
-                                        Quy trình kiểm định
-                                    </Link>
-                                </li>
-                                <li>
-                                    <Link to="/payment" className="hover:text-white transition-colors">
-                                        Hướng dẫn thanh toán
-                                    </Link>
-                                </li>
-                            </ul>
-                        </div>
-
-                        <div>
-                            <h4 className="font-semibold mb-4">Kết nối</h4>
-                            <div className="flex gap-3 mb-4">
-                                <Button variant="outline" size="icon" className="bg-transparent border-white/30 hover:bg-white/10">
-                                    <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-                                    </svg>
-                                </Button>
-                                <Button variant="outline" size="icon" className="bg-transparent border-white/30 hover:bg-white/10">
-                                    <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
-                                    </svg>
-                                </Button>
-                                <Button variant="outline" size="icon" className="bg-transparent border-white/30 hover:bg-white/10">
-                                    <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M1.5 8.67v8.58a3 3 0 003 3h15a3 3 0 003-3V8.67l-8.928 5.493a3 3 0 01-3.144 0L1.5 8.67z" />
-                                        <path d="M22.5 6.908V6.75a3 3 0 00-3-3h-15a3 3 0 00-3 3v.158l9.714 5.978a1.5 1.5 0 001.572 0L22.5 6.908z" />
-                                    </svg>
-                                </Button>
-                                <Button variant="outline" size="icon" className="bg-transparent border-white/30 hover:bg-white/10">
-                                    <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z" />
-                                    </svg>
-                                </Button>
-                            </div>
-                            <div className="flex gap-2">
-                                <img
-                                    src="/placeholder.svg?height=32&width=48"
-                                    alt="Momo"
-                                    className="h-8 w-auto rounded"
-                                />
-                                <img
-                                    src="/placeholder.svg?height=32&width=48"
-                                    alt="Shopee Pay"
-                                    className="h-8 w-auto rounded"
-                                />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="border-t border-white/10">
-                    <div className="container mx-auto px-4 py-4">
-                        <p className="text-sm text-white/60 text-center">
-                            © 2024 LAPTOPRE. Certified Refurbished Excellence.
-                        </p>
-                    </div>
-                </div>
-            </footer>
         </div>
     )
 }
