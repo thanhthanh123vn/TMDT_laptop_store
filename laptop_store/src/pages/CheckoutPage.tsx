@@ -2,6 +2,8 @@ import React, {useEffect, useState} from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useStore } from '../context/StoreContext';
 import {addressApi} from "@/api/addressApi.ts";
+import {orderApi} from "@/api/orderApi.ts";
+import {useLocation} from "react-router";
 
 
 function formatVND(price: number): string {
@@ -12,30 +14,58 @@ export default function CheckoutPage() {
   const navigate = useNavigate();
 
 
-  const { cart } = useStore();
+  const { cart ,clearCart} = useStore();
 
   const [addresses, setAddresses] = useState<any[]>([]);
   const [addressId, setAddressId] = useState<number | null>(null);
   const [shippingMethod, setShippingMethod] = useState<string>('fast');
   const [paymentMethod, setPaymentMethod] = useState<string>('cod');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [provinces, setProvinces] = useState<any[]>([]);
+  const [districts, setDistricts] = useState<any[]>([]);
+  const [selectedProvince, setSelectedProvince] = useState<{code: number, name: string} | null>(null);
+  const [selectedDistrict, setSelectedDistrict] = useState<{code: number, name: string} | null>(null);
 
-
-  const user = JSON.parse(localStorage.getItem("user"));
-
-  const userId = user?.id;
-
+  // const user = JSON.parse(localStorage.getItem("user"));
+  const location = useLocation();
+  // const userId = user?.id;
+  const isBuyNow = location.state?.isBuyNow;
+  const buyNowItem = location.state?.item;
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newAddress, setNewAddress] = useState({ type: 'Nhà riêng', name: '', phone: '', address: '', city: '' });
+  const checkoutItems = isBuyNow && buyNowItem ? [buyNowItem] : cart;
 
-
-  const subtotal = cart.reduce((sum, item) => sum + item.laptop.price * (item.quantity || 1), 0);
+  const subtotal = checkoutItems.reduce((sum, item) => sum + item.laptop.price * (item.quantity || 1), 0);
   const shippingFee = shippingMethod === 'fast' ? 40000 : 0;
   const discountAmount = 0;
   const total = subtotal + shippingFee - discountAmount;
+
+  useEffect(() => {
+    if (isModalOpen) {
+      fetch('https://provinces.open-api.vn/api/p/')
+          .then(res => res.json())
+          .then(data => setProvinces(data))
+          .catch(err => console.error("Lỗi tải tỉnh thành:", err));
+    }
+  }, [isModalOpen]);
+
+  // Gọi API lấy danh sách Quận/Huyện khi Tỉnh/Thành thay đổi
+  useEffect(() => {
+    if (selectedProvince) {
+      fetch(`https://provinces.open-api.vn/api/p/${selectedProvince.code}?depth=2`)
+          .then(res => res.json())
+          .then(data => setDistricts(data.districts))
+          .catch(err => console.error("Lỗi tải quận huyện:", err));
+    } else {
+      setDistricts([]);
+    }
+    // Reset lại quận huyện nếu đổi tỉnh thành khác
+    setSelectedDistrict(null);
+  }, [selectedProvince]);
+
   const handleCheckout = async () => {
-    if (cart.length === 0) {
-      alert("Giỏ hàng của bạn đang trống!");
+    if (checkoutItems.length === 0) {
+      alert("Không có sản phẩm nào để thanh toán!");
       return;
     }
 
@@ -85,15 +115,28 @@ export default function CheckoutPage() {
         }
       }else {
         if (paymentMethod === 'cod') {
+          try {
+            await orderApi.createOrder(orderPayload);
 
 
+            if (!isBuyNow) {
+              clearCart();
+            }
 
+            setIsProcessing(false);
+            navigate('/checkout/success');
+
+          } catch (error) {
+            console.error("Lỗi lưu đơn hàng:", error);
+            alert("Có lỗi xảy ra khi lưu đơn hàng. Vui lòng thử lại!");
+            setIsProcessing(false);
+          }
+        }else{
           setTimeout(() => {
             setIsProcessing(false);
             console.log("Đã tạo đơn hàng COD:", orderPayload);
             navigate('/checkout/success');
           }, 1500);
-        }else{
 
         }
       }
@@ -140,7 +183,7 @@ export default function CheckoutPage() {
     };
 
     try {
-      // Gọi hàm thêm địa chỉ từ file API
+
       const res = await addressApi.addAddress(payload);
       const savedAddr = res.data || res;
 
@@ -151,6 +194,8 @@ export default function CheckoutPage() {
 
 
       setNewAddress({ type: 'Nhà riêng', name: '', phone: '', address: '', city: '' });
+      setSelectedProvince(null);
+      setSelectedDistrict(null);
 
     } catch (error) {
       console.error("Lỗi lưu địa chỉ:", error);
@@ -158,21 +203,6 @@ export default function CheckoutPage() {
     }
   };
 
-  // Xử lý nút Đặt hàng
-  // const handleCheckout = () => {
-  //   if (cart.length === 0) {
-  //     alert("Giỏ hàng của bạn đang trống!");
-  //     return;
-  //   }
-  //
-  //   setIsProcessing(true);
-  //   // Giả lập delay gọi API 1.5 giây
-  //   setTimeout(() => {
-  //     setIsProcessing(false);
-  //     // Ở đây bạn có thể gọi thêm hàm clearCart() để xóa giỏ hàng sau khi mua thành công
-  //     navigate('/checkout/success');
-  //   }, 1500);
-  // };
 
 
 
@@ -383,8 +413,8 @@ export default function CheckoutPage() {
 
               {/* Product List Rendered from Context */}
               <div className="p-6 space-y-4 max-h-[350px] overflow-y-auto custom-scrollbar">
-                {cart && cart.length > 0 ? (
-                    cart.map((item) => (
+                {checkoutItems && checkoutItems.length > 0 ? (
+                    checkoutItems.map((item) => (
                         <div key={item.laptop.id} className="flex gap-4 group">
                           <div className="w-20 h-20 bg-surface-container-low border border-outline-variant/50 rounded-xl p-2 flex-shrink-0 group-hover:border-primary/50 transition-colors">
                             <img alt={item.laptop.name} className="w-full h-full object-contain mix-blend-multiply" src={item.laptop.image} />
@@ -420,7 +450,7 @@ export default function CheckoutPage() {
               {/* Price Calculation DYNAMIC */}
               <div className="p-6 space-y-3 border-b border-outline-variant/30">
                 <div className="flex justify-between text-sm font-medium text-secondary">
-                  <span>Tạm tính ({cart.length} sản phẩm)</span>
+                  <span>Tạm tính ({checkoutItems.length} sản phẩm)</span>
                   <span className="text-on-surface">{formatVND(subtotal)}</span>
                 </div>
                 <div className="flex justify-between text-sm font-medium text-secondary">
@@ -447,7 +477,7 @@ export default function CheckoutPage() {
 
                 <button
                     onClick={handleCheckout}
-                    disabled={isProcessing || cart.length === 0}
+                    disabled={isProcessing || checkoutItems.length === 0}
                     className="relative w-full py-4 bg-primary text-white text-[16px] font-bold rounded-xl hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/30 transition-all duration-300 flex items-center justify-center gap-2 overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isProcessing ? (
@@ -495,30 +525,75 @@ export default function CheckoutPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                       <label className="text-sm font-semibold text-on-surface">Họ và tên</label>
-                      <input required className="w-full px-4 py-2.5 border border-outline-variant rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none bg-white transition-all" placeholder="Nhập họ tên" type="text" value={newAddress.name} onChange={(e) => setNewAddress({...newAddress, name: e.target.value})} />
+                      <input required
+                             className="w-full px-4 py-2.5 border border-outline-variant rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none bg-white transition-all"
+                             placeholder="Nhập họ tên" type="text" value={newAddress.name}
+                             onChange={(e) => setNewAddress({...newAddress, name: e.target.value})}/>
                     </div>
                     <div className="space-y-1.5">
                       <label className="text-sm font-semibold text-on-surface">Số điện thoại</label>
-                      <input required className="w-full px-4 py-2.5 border border-outline-variant rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none bg-white transition-all" placeholder="Nhập SĐT" type="tel" value={newAddress.phone} onChange={(e) => setNewAddress({...newAddress, phone: e.target.value})} />
+                      <input required
+                             className="w-full px-4 py-2.5 border border-outline-variant rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none bg-white transition-all"
+                             placeholder="Nhập SĐT" type="tel" value={newAddress.phone}
+                             onChange={(e) => setNewAddress({...newAddress, phone: e.target.value})}/>
                     </div>
                   </div>
 
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-semibold text-on-surface">Tỉnh/Thành phố, Quận/Huyện</label>
-                    <input required className="w-full px-4 py-2.5 border border-outline-variant rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none bg-white transition-all" placeholder="VD: TP. Hồ Chí Minh, Quận 1" type="text" value={newAddress.city} onChange={(e) => setNewAddress({...newAddress, city: e.target.value})} />
-                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* Dropdown Tỉnh/Thành phố */}
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-semibold text-on-surface">Tỉnh/Thành phố</label>
+                      <select
+                          required
+                          className="w-full px-4 py-2.5 border border-outline-variant rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none bg-white transition-all appearance-none cursor-pointer"
+                          value={selectedProvince?.code || ''}
+                          onChange={(e) => {
+                            const prov = provinces.find(p => p.code == e.target.value);
+                            setSelectedProvince(prov);
+                            // Gán tạm tên tỉnh vào city
+                            setNewAddress({...newAddress, city: prov ? prov.name : ''});
+                          }}
+                      >
+                        <option value="" disabled>Chọn Tỉnh/Thành</option>
+                        {provinces.map(p => (
+                            <option key={p.code} value={p.code}>{p.name}</option>
+                        ))}
+                      </select>
+                    </div>
 
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-semibold text-on-surface">Địa chỉ cụ thể (Số nhà, Tên đường)</label>
-                    <input required className="w-full px-4 py-2.5 border border-outline-variant rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none bg-white transition-all" placeholder="VD: 123 Đường ABC, Phường 10" type="text" value={newAddress.address} onChange={(e) => setNewAddress({...newAddress, address: e.target.value})} />
+                    {/* Dropdown Quận/Huyện */}
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-semibold text-on-surface">Quận/Huyện</label>
+                      <select
+                          required
+                          className="w-full px-4 py-2.5 border border-outline-variant rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all appearance-none cursor-pointer disabled:bg-surface-container-low disabled:cursor-not-allowed disabled:opacity-70 bg-white"
+                          disabled={!selectedProvince}
+                          value={selectedDistrict?.code || ''}
+                          onChange={(e) => {
+                            const dist = districts.find(d => d.code == e.target.value);
+                            setSelectedDistrict(dist);
+
+                            if (selectedProvince && dist) {
+                              setNewAddress({...newAddress, city: `${dist.name}, ${selectedProvince.name}`});
+                            }
+                          }}
+                      >
+                        <option value="" disabled>Chọn Quận/Huyện</option>
+                        {districts.map(d => (
+                            <option key={d.code} value={d.code}>{d.name}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
 
                   <div className="space-y-1.5 pb-2">
                     <label className="text-sm font-semibold text-on-surface block mb-2">Loại địa chỉ</label>
                     <div className="flex gap-3">
                       {['Nhà riêng', 'Văn phòng'].map((type) => (
-                          <label key={type} className={`flex-1 py-2 text-center rounded-lg border cursor-pointer font-medium text-sm transition-all ${newAddress.type === type ? 'bg-primary border-primary text-white' : 'border-outline-variant text-secondary hover:bg-surface-container-low'}`}>
-                            <input type="radio" name="addressType" className="hidden" checked={newAddress.type === type} onChange={() => setNewAddress({...newAddress, type})} />
+                          <label key={type}
+                                 className={`flex-1 py-2 text-center rounded-lg border cursor-pointer font-medium text-sm transition-all ${newAddress.type === type ? 'bg-primary border-primary text-white' : 'border-outline-variant text-secondary hover:bg-surface-container-low'}`}>
+                            <input type="radio" name="addressType" className="hidden" checked={newAddress.type === type}
+                                   onChange={() => setNewAddress({...newAddress, type})}/>
                             {type}
                           </label>
                       ))}
@@ -526,8 +601,14 @@ export default function CheckoutPage() {
                   </div>
 
                   <div className="flex justify-end gap-3 pt-5 border-t border-outline-variant/50">
-                    <button type="button" onClick={() => setIsModalOpen(false)} className="px-6 py-2.5 rounded-xl font-bold text-secondary bg-surface-container-high hover:bg-outline-variant/40 transition-colors">Hủy bỏ</button>
-                    <button type="submit" className="px-6 py-2.5 rounded-xl font-bold bg-primary text-white hover:bg-primary/90 transition-colors shadow-md shadow-primary/20">Lưu địa chỉ</button>
+                    <button type="button" onClick={() => setIsModalOpen(false)}
+                            className="px-6 py-2.5 rounded-xl font-bold text-secondary bg-surface-container-high hover:bg-outline-variant/40 transition-colors">Hủy
+                      bỏ
+                    </button>
+                    <button type="submit"
+                            className="px-6 py-2.5 rounded-xl font-bold bg-primary text-white hover:bg-primary/90 transition-colors shadow-md shadow-primary/20">Lưu
+                      địa chỉ
+                    </button>
                   </div>
                 </form>
               </div>
