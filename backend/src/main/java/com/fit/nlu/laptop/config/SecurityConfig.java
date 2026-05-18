@@ -42,6 +42,8 @@ public class SecurityConfig {
                                 "/auth/**",
                                 "/uploads/**",
                                 "/error",
+                                "/api/payment/**",
+                                "/api/addresses",
                                 "/api/payment/webhook",
                                 "/api/home",
                                 "/api/products/**",
