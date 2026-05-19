@@ -28,10 +28,18 @@ export const ProductCard: React.FC<ProductCardProps> = ({ laptop }) => {
   const handleBuyNow = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-
-    addToCart(laptop, 1);
-    navigate('/checkout');
+    navigate('/checkout', {
+      state: {
+        isBuyNow: true,
+        item: {
+          laptop: laptop,
+          quantity: 1
+        }
+      }
+    })
   };
+
+
   const handleToggleWishlist = (e: React.MouseEvent) => {
     e.preventDefault();
     toggleWishlist(laptop.id);
