@@ -36,7 +36,8 @@
     --color-on-primary-fixed-variant: #2d476f;
 
     /* Các màu quan trọng nhất */
-    --color-primary: #002045;
+    --color-primary: #6366f1;
+    --color-primary-foreground: #ffffff;
     --color-secondary: #545f72;
 
     --color-outline: #74777f;

@@ -2,7 +2,7 @@ import { createBrowserRouter } from 'react-router';
 import { Layout } from './components/Layout';
 import { HomePage } from './pages/HomePage';
 import { AllProductsPage } from './pages/AllProductsPage';
-import { ComparePage } from './pages/ComparePage';
+import ProductCompare from './pages/ProductCompare';
 import { ProductDetailPage } from './pages/ProductDetailPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
@@ -29,7 +29,7 @@ export const router = createBrowserRouter([
     children: [
       { index: true, Component: HomePage },
       { path: 'products', Component: AllProductsPage },
-      { path: 'compare', Component: ComparePage },
+      { path: 'compare', Component: ProductCompare },
       { path: 'product/:id', Component: ProductDetailPage },
       { path: 'cart', Component: CartPage },
       { path: 'checkout', Component: CheckoutPage },
