@@ -23,6 +23,11 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
+// --- Định nghĩa Interfaces cho API Tỉnh Thành ---
+interface APIWard { code: string; name: string; }
+interface APIDistrict { code: string; name: string; wards: APIWard[]; }
+interface APIProvince { code: string; name: string; districts: APIDistrict[]; }
+
 interface Address {
     id: number
     name: string
@@ -48,6 +53,11 @@ export default function AddressesPage() {
     const [loading, setLoading] = useState(true);
     const [userProfile, setUserProfile] = useState<{ fullName: string; avatarUrl: string }>({ fullName: "Tài khoản của tôi", avatarUrl: "" })
 
+    // --- State quản lý dữ liệu cây Tỉnh Thành từ API ngoài ---
+    const [apiProvinces, setApiProvinces] = useState<APIProvince[]>([]);
+    const [apiDistricts, setApiDistricts] = useState<APIDistrict[]>([]);
+    const [apiWards, setApiWards] = useState<APIWard[]>([]);
+
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [formFullName, setFormFullName] = useState("");
     const [formPhone, setFormPhone] = useState("");
@@ -58,6 +68,40 @@ export default function AddressesPage() {
     const [formType, setFormType] = useState<"HOME" | "OFFICE">("HOME");
     const [formIsDefault, setFormIsDefault] = useState(false);
     const [submitting, setSubmitting] = useState(false);
+
+    // Fetch dữ liệu tỉnh thành 1 lần duy nhất từ API công cộng khi mở trang
+    useEffect(() => {
+        fetch("https://provinces.open-api.vn/api/?depth=3")
+            .then((res) => res.json())
+            .then((data: APIProvince[]) => setApiProvinces(data))
+            .catch((err) => console.error("Không thể tải danh sách tỉnh thành", err));
+    }, []);
+
+    // Xử lý logic thay đổi Tỉnh / Thành phố
+    const handleProvinceChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const provinceName = e.target.value;
+        setFormProvince(provinceName);
+
+        // Reset dữ liệu cấp dưới
+        setFormDistrict("");
+        setFormWard("");
+        setApiWards([]);
+
+        const selectedProv = apiProvinces.find((p) => p.name === provinceName);
+        setApiDistricts(selectedProv ? selectedProv.districts : []);
+    };
+
+    // Xử lý logic thay đổi Quận / Huyện
+    const handleDistrictChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const districtName = e.target.value;
+        setFormDistrict(districtName);
+
+        // Reset dữ liệu cấp xã
+        setFormWard("");
+
+        const selectedDist = apiDistricts.find((d) => d.name === districtName);
+        setApiWards(selectedDist ? selectedDist.wards : []);
+    };
 
     const handleAddAddress = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -83,6 +127,8 @@ export default function AddressesPage() {
             setFormStreet("");
             setFormType("HOME");
             setFormIsDefault(false);
+            setApiDistricts([]);
+            setApiWards([]);
             // Re-fetch addresses
             fetchAddresses();
         } catch (err) {
@@ -362,41 +408,54 @@ export default function AddressesPage() {
                                     </div>
                                 </div>
 
+                                {/* --- ĐOẠN ĐÃ ĐƯỢC THAY THẾ SANG THẺ SELECT CASCADING ĐỒNG BỘ --- */}
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                     <div className="space-y-1.5">
                                         <label className="text-xs font-semibold text-gray-700">Tỉnh / Thành phố</label>
-                                        <input
-                                            type="text"
+                                        <select
                                             required
                                             value={formProvince}
-                                            onChange={(e) => setFormProvince(e.target.value)}
-                                            placeholder="Hồ Chí Minh"
-                                            className="w-full h-11 px-3.5 rounded-xl border border-gray-200 bg-white text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                                        />
+                                            onChange={handleProvinceChange}
+                                            className="w-full h-11 px-3 rounded-xl border border-gray-200 bg-white text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all cursor-pointer"
+                                        >
+                                            <option value="">-- Chọn Tỉnh/Thành --</option>
+                                            {apiProvinces.map((p) => (
+                                                <option key={p.code} value={p.name}>{p.name}</option>
+                                            ))}
+                                        </select>
                                     </div>
                                     <div className="space-y-1.5">
                                         <label className="text-xs font-semibold text-gray-700">Quận / Huyện</label>
-                                        <input
-                                            type="text"
+                                        <select
                                             required
                                             value={formDistrict}
-                                            onChange={(e) => setFormDistrict(e.target.value)}
-                                            placeholder="Thủ Đức"
-                                            className="w-full h-11 px-3.5 rounded-xl border border-gray-200 bg-white text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                                        />
+                                            onChange={handleDistrictChange}
+                                            disabled={!formProvince}
+                                            className="w-full h-11 px-3 rounded-xl border border-gray-200 bg-white text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all cursor-pointer disabled:bg-gray-50 disabled:text-gray-400"
+                                        >
+                                            <option value="">-- Chọn Quận/Huyện --</option>
+                                            {apiDistricts.map((d) => (
+                                                <option key={d.code} value={d.name}>{d.name}</option>
+                                            ))}
+                                        </select>
                                     </div>
                                     <div className="space-y-1.5">
                                         <label className="text-xs font-semibold text-gray-700">Phường / Xã</label>
-                                        <input
-                                            type="text"
+                                        <select
                                             required
                                             value={formWard}
                                             onChange={(e) => setFormWard(e.target.value)}
-                                            placeholder="Linh Trung"
-                                            className="w-full h-11 px-3.5 rounded-xl border border-gray-200 bg-white text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                                        />
+                                            disabled={!formDistrict}
+                                            className="w-full h-11 px-3 rounded-xl border border-gray-200 bg-white text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all cursor-pointer disabled:bg-gray-50 disabled:text-gray-400"
+                                        >
+                                            <option value="">-- Chọn Phường/Xã --</option>
+                                            {apiWards.map((w) => (
+                                                <option key={w.code} value={w.name}>{w.name}</option>
+                                            ))}
+                                        </select>
                                     </div>
                                 </div>
+                                {/* ------------------------------------------------------------- */}
 
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-semibold text-gray-700">Địa chỉ cụ thể (Số nhà, tên đường, tòa nhà)</label>
