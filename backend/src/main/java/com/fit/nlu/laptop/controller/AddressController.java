@@ -57,4 +57,10 @@ public class AddressController {
         addressRepository.deleteById(id);
         return ResponseEntity.ok().build();
     }
+    @GetMapping("/locations")
+    public ResponseEntity<?> getProvincesData() {
+        // Để tiện nhất, bạn có thể gọi sang API public từ Backend hoặc đọc file JSON tĩnh
+        // như hướng dẫn trước rồi trả về cho React tại đây.
+        // Nếu chọn Cách 1 (gọi thẳng từ React) thì BỎ QUA endpoint này.
+    }
 }
