@@ -5,7 +5,7 @@ import { useStore } from '../context/StoreContext';
 import { Badge } from './ui/badge';
 
 export const Header: React.FC = () => {
-  const { cart, wishlist } = useStore();
+  const { cart, wishlist, compare } = useStore();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
@@ -58,10 +58,12 @@ export const Header: React.FC = () => {
     }
   };
 
+  const compareLink = compare.length > 0 ? `/compare?ids=${compare.join(',')}` : '/compare';
+
   const navLinks = [
     { to: '/', label: 'Trang chủ' },
     { to: '/products', label: 'Sản phẩm' },
-    { to: '/compare', label: 'So sánh' },
+    { to: compareLink, label: 'So sánh' },
     { to: '/wishlist', label: 'Yêu thích' },
   ];
 
