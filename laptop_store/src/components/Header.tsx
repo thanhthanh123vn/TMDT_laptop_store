@@ -1,11 +1,22 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { ShoppingCart, Heart, Search, Menu, User, LogOut, Package, Settings, X, ChevronDown } from 'lucide-react';
+import {
+  ShoppingCart,
+  Search,
+  Menu,
+  User,
+  LogOut,
+  Package,
+  Settings,
+  X,
+  ChevronDown,
+  MessageCircle
+} from 'lucide-react';
 import { useStore } from '../context/StoreContext';
 import { Badge } from './ui/badge';
 
 export const Header: React.FC = () => {
-  const { cart, wishlist, compare } = useStore();
+  const { cart, compare } = useStore();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
@@ -126,18 +137,13 @@ export const Header: React.FC = () => {
               <Search className="w-5 h-5" />
             </button>
 
-            {/* Wishlist */}
+            {/* Chat */}
             <Link
-              to="/wishlist"
+              to="/#"
               className="relative p-2 text-slate-500 hover:text-pink-600 hover:bg-pink-50 rounded-lg transition-all"
-              aria-label="Yêu thích"
+              aria-label="Chat"
             >
-              <Heart className="w-5 h-5" />
-              {wishlist.length > 0 && (
-                <Badge className="absolute -top-0.5 -right-0.5 w-4 h-4 flex items-center justify-center p-0 bg-pink-500 text-white text-[9px] font-bold border border-white rounded-full">
-                  {wishlist.length}
-                </Badge>
-              )}
+              <MessageCircle className="w-5 h-5" />
             </Link>
 
             {/* Cart */}

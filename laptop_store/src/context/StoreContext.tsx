@@ -1,11 +1,16 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router';
 import type { Laptop } from '../types';
+import { cartApi } from '../api/cartApi';
 
 interface StoreContextType {
   cart: CartItem[];
   wishlist: string[];
   compare: string[];
   recentlyViewed: string[];
+  cartLoading: boolean;
+  loginPromptOpen: boolean;
+  setLoginPromptOpen: (open: boolean) => void;
   addToCart: (laptop: Laptop, quantity?: number) => void;
   removeFromCart: (laptopId: string) => void;
   updateCartQuantity: (laptopId: string, quantity: number) => void;
@@ -14,11 +19,46 @@ interface StoreContextType {
   addToRecentlyViewed: (laptopId: string) => void;
   clearCart: () => void;
   getCartTotal: () => number;
+  syncCartFromServer: () => Promise<void>;
 }
 
 export interface CartItem {
   laptop: Laptop;
   quantity: number;
+}
+
+// Map server CartItem → frontend CartItem
+function mapServerItem(item: any): CartItem {
+  const p = item.product;
+  return {
+    quantity: item.quantity,
+    laptop: {
+      id: String(p.id),
+      name: p.name,
+      brand: p.brand ?? '',
+      price: Number(p.price),
+      originalPrice: p.oldPrice ? Number(p.oldPrice) : undefined,
+      image: p.imageUrl ?? '',
+      images: p.imageUrl ? [p.imageUrl] : [],
+      cpu: p.cpu ?? '',
+      gpu: p.gpu ?? '',
+      ram: p.ram ?? '',
+      storage: p.storage ?? '',
+      storageType: p.storageType ?? 'SSD',
+      screenSize: p.screenSize ?? '',
+      weight: p.weight ?? '',
+      batteryCondition: p.batteryCondition ?? '',
+      condition: p.condition ?? 'Good',
+      rating: p.rating ?? 5,
+      reviewCount: p.reviews ?? 0,
+      category: p.categoryId ? [String(p.categoryId)] : [],
+      description: p.description ?? '',
+      seller: { name: '', rating: 5, soldCount: 0 },
+      isBestSeller: p.isBestSeller,
+      isHot: p.isHot,
+      isSale: p.isSale,
+    },
+  };
 }
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
@@ -28,41 +68,65 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [wishlist, setWishlist] = useState<string[]>([]);
   const [compare, setCompare] = useState<string[]>([]);
   const [recentlyViewed, setRecentlyViewed] = useState<string[]>([]);
+  const [cartLoading, setCartLoading] = useState(false);
+  const [loginPromptOpen, setLoginPromptOpen] = useState(false);
 
-  // Load from localStorage on mount
+  const isLoggedIn = () => !!localStorage.getItem('token');
+
+  // Sync cart from server (called on mount if logged in)
+  const syncCartFromServer = useCallback(async () => {
+    if (!isLoggedIn()) return;
+    try {
+      setCartLoading(true);
+      const res = await cartApi.getCart();
+      setCart((res.data as any[]).map(mapServerItem));
+    } catch {
+      // fallback: keep local cart
+    } finally {
+      setCartLoading(false);
+    }
+  }, []);
+
+  // Load non-cart state from localStorage on mount
   useEffect(() => {
-    const savedCart = localStorage.getItem('cart');
     const savedWishlist = localStorage.getItem('wishlist');
     const savedCompare = localStorage.getItem('compare');
     const savedRecentlyViewed = localStorage.getItem('recentlyViewed');
-
-    if (savedCart) setCart(JSON.parse(savedCart));
     if (savedWishlist) setWishlist(JSON.parse(savedWishlist));
     if (savedCompare) setCompare(JSON.parse(savedCompare));
     if (savedRecentlyViewed) setRecentlyViewed(JSON.parse(savedRecentlyViewed));
+
+    // Load cart: from server if logged in, else from localStorage
+    if (isLoggedIn()) {
+      syncCartFromServer();
+    } else {
+      const savedCart = localStorage.getItem('cart');
+      if (savedCart) setCart(JSON.parse(savedCart));
+    }
   }, []);
 
-  // Save to localStorage when state changes
+  // Persist non-cart state
+  useEffect(() => { localStorage.setItem('wishlist', JSON.stringify(wishlist)); }, [wishlist]);
+  useEffect(() => { localStorage.setItem('compare', JSON.stringify(compare)); }, [compare]);
+  useEffect(() => { localStorage.setItem('recentlyViewed', JSON.stringify(recentlyViewed)); }, [recentlyViewed]);
+
+  // Persist cart to localStorage only when NOT logged in
   useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(cart));
+    if (!isLoggedIn()) {
+      localStorage.setItem('cart', JSON.stringify(cart));
+    }
   }, [cart]);
 
-  useEffect(() => {
-    localStorage.setItem('wishlist', JSON.stringify(wishlist));
-  }, [wishlist]);
-
-  useEffect(() => {
-    localStorage.setItem('compare', JSON.stringify(compare));
-  }, [compare]);
-
-  useEffect(() => {
-    localStorage.setItem('recentlyViewed', JSON.stringify(recentlyViewed));
-  }, [recentlyViewed]);
-
   const addToCart = (laptop: Laptop, quantity: number = 1) => {
+    if (!isLoggedIn()) {
+      setLoginPromptOpen(true);
+      return;
+    }
+
+    // Optimistic update
     setCart((prev) => {
-      const existingItem = prev.find((item) => item.laptop.id === laptop.id);
-      if (existingItem) {
+      const existing = prev.find((item) => item.laptop.id === laptop.id);
+      if (existing) {
         return prev.map((item) =>
           item.laptop.id === laptop.id
             ? { ...item, quantity: item.quantity + quantity }
@@ -71,10 +135,20 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
       return [...prev, { laptop, quantity }];
     });
+
+    // Sync to server
+    cartApi.addToCart(laptop.id, quantity).catch(() => {
+      // Revert on error
+      syncCartFromServer();
+    });
   };
 
   const removeFromCart = (laptopId: string) => {
     setCart((prev) => prev.filter((item) => item.laptop.id !== laptopId));
+
+    if (isLoggedIn()) {
+      cartApi.removeFromCart(laptopId).catch(() => syncCartFromServer());
+    }
   };
 
   const updateCartQuantity = (laptopId: string, quantity: number) => {
@@ -82,48 +156,47 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       removeFromCart(laptopId);
       return;
     }
+
     setCart((prev) =>
       prev.map((item) =>
         item.laptop.id === laptopId ? { ...item, quantity } : item
       )
     );
+
+    if (isLoggedIn()) {
+      cartApi.updateQuantity(laptopId, quantity).catch(() => syncCartFromServer());
+    }
+  };
+
+  const clearCart = () => {
+    setCart([]);
+    if (isLoggedIn()) {
+      cartApi.clearCart().catch(() => {});
+    } else {
+      localStorage.removeItem('cart');
+    }
   };
 
   const toggleWishlist = (laptopId: string) => {
     setWishlist((prev) =>
-      prev.includes(laptopId)
-        ? prev.filter((id) => id !== laptopId)
-        : [...prev, laptopId]
+      prev.includes(laptopId) ? prev.filter((id) => id !== laptopId) : [...prev, laptopId]
     );
   };
 
   const toggleCompare = (laptopId: string) => {
     setCompare((prev) => {
-      if (prev.includes(laptopId)) {
-        return prev.filter((id) => id !== laptopId);
-      }
-      if (prev.length >= 3) {
-        alert('You can only compare up to 3 products');
-        return prev;
-      }
+      if (prev.includes(laptopId)) return prev.filter((id) => id !== laptopId);
+      if (prev.length >= 3) { alert('Chỉ có thể so sánh tối đa 3 sản phẩm'); return prev; }
       return [...prev, laptopId];
     });
   };
 
   const addToRecentlyViewed = (laptopId: string) => {
-    setRecentlyViewed((prev) => {
-      const filtered = prev.filter((id) => id !== laptopId);
-      return [laptopId, ...filtered].slice(0, 10); // Keep only last 10
-    });
+    setRecentlyViewed((prev) => [laptopId, ...prev.filter((id) => id !== laptopId)].slice(0, 10));
   };
 
-  const clearCart = () => {
-    setCart([]);
-  };
-
-  const getCartTotal = () => {
-    return cart.reduce((total, item) => total + item.laptop.price * item.quantity, 0);
-  };
+  const getCartTotal = () =>
+    cart.reduce((total, item) => total + item.laptop.price * item.quantity, 0);
 
   return (
     <StoreContext.Provider
@@ -132,6 +205,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         wishlist,
         compare,
         recentlyViewed,
+        cartLoading,
+        loginPromptOpen,
+        setLoginPromptOpen,
         addToCart,
         removeFromCart,
         updateCartQuantity,
@@ -140,6 +216,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         addToRecentlyViewed,
         clearCart,
         getCartTotal,
+        syncCartFromServer,
       }}
     >
       {children}
@@ -149,8 +226,6 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
 export const useStore = () => {
   const context = useContext(StoreContext);
-  if (!context) {
-    throw new Error('useStore must be used within StoreProvider');
-  }
+  if (!context) throw new Error('useStore must be used within StoreProvider');
   return context;
 };
