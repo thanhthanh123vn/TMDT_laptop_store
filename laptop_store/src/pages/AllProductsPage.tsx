@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
+// @ts-ignore
 import { Search, X, ChevronDown, SlidersHorizontal } from "lucide-react";
 import { ProductCard } from "../components/ProductCard";
 import { Button } from "../components/ui/button";

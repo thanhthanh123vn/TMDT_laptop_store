@@ -1,16 +1,27 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router';
-import { Trash2, Minus, Plus, ShoppingCart, Truck, ShieldCheck, CreditCard } from 'lucide-react';
+import { Trash2, Minus, Plus, ShoppingCart, Truck, ShieldCheck, CreditCard, Loader2 } from 'lucide-react';
 import { useStore } from '../context/StoreContext';
 import { Button } from '../components/ui/button';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 
 const CartPage: React.FC = () => {
-  const { cart, removeFromCart, updateCartQuantity, getCartTotal } = useStore();
+  const { cart, removeFromCart, updateCartQuantity, getCartTotal, cartLoading } = useStore();
   const navigate = useNavigate();
 
   const total = getCartTotal();
   const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+  const formatPrice = (price: number) =>
+    price.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
+
+  if (cartLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Loader2 className="w-10 h-10 text-blue-500 animate-spin" />
+      </div>
+    );
+  }
 
   if (cart.length === 0) {
     return (
@@ -113,7 +124,7 @@ const CartPage: React.FC = () => {
                     <div className="text-right">
                       <p className="text-xs text-gray-400">Tổng cộng</p>
                       <p className="text-lg font-bold text-blue-600">
-                        ${(laptop.price * quantity).toLocaleString()}
+                        {formatPrice(laptop.price * quantity)}
                       </p>
                     </div>
                   </div>
@@ -129,7 +140,7 @@ const CartPage: React.FC = () => {
 
               <div className="flex justify-between text-sm text-gray-600 mb-2">
                 <span>Tạm tính</span>
-                <span>${total.toLocaleString()}</span>
+                <span>{formatPrice(total)}</span>
               </div>
               <div className="flex justify-between text-sm text-gray-600 mb-4">
                 <span>Phí vận chuyển</span>
@@ -140,7 +151,7 @@ const CartPage: React.FC = () => {
                 <div className="flex justify-between items-baseline">
                   <span className="font-bold text-gray-900">Tổng cộng</span>
                   <div className="text-right">
-                    <p className="text-2xl font-bold text-blue-600">${total.toLocaleString()}</p>
+                    <p className="text-2xl font-bold text-blue-600">{formatPrice(total)}</p>
                     <p className="text-xs text-gray-400">Đã bao gồm VAT</p>
                   </div>
                 </div>
