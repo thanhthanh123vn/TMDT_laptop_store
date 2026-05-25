@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { useNavigate } from 'react-router';
 import type { Laptop } from '../types';
 import { cartApi } from '../api/cartApi';
+import { wishlistApi } from '../api/wishlistApi';
 
 interface StoreContextType {
   cart: CartItem[];
@@ -20,6 +21,7 @@ interface StoreContextType {
   clearCart: () => void;
   getCartTotal: () => number;
   syncCartFromServer: () => Promise<void>;
+  syncWishlistFromServer: () => Promise<void>;
 }
 
 export interface CartItem {
@@ -87,6 +89,18 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   }, []);
 
+  // Sync wishlist from server
+  const syncWishlistFromServer = useCallback(async () => {
+    if (!isLoggedIn()) return;
+    try {
+      const res = await wishlistApi.getMyWishlist();
+      const ids = (res.data as any[]).map((p: any) => String(p.id));
+      setWishlist(ids);
+    } catch {
+      // fallback: keep local wishlist
+    }
+  }, []);
+
   // Load non-cart state from localStorage on mount
   useEffect(() => {
     const savedWishlist = localStorage.getItem('wishlist');
@@ -99,6 +113,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     // Load cart: from server if logged in, else from localStorage
     if (isLoggedIn()) {
       syncCartFromServer();
+      syncWishlistFromServer();
     } else {
       const savedCart = localStorage.getItem('cart');
       if (savedCart) setCart(JSON.parse(savedCart));
@@ -178,9 +193,19 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const toggleWishlist = (laptopId: string) => {
+    if (!isLoggedIn()) {
+      setLoginPromptOpen(true);
+      return;
+    }
+    // Optimistic update
     setWishlist((prev) =>
       prev.includes(laptopId) ? prev.filter((id) => id !== laptopId) : [...prev, laptopId]
     );
+    // Sync to server
+    wishlistApi.toggleWishlist(Number(laptopId)).catch(() => {
+      // Revert on error
+      syncWishlistFromServer();
+    });
   };
 
   const toggleCompare = (laptopId: string) => {
@@ -217,6 +242,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         clearCart,
         getCartTotal,
         syncCartFromServer,
+        syncWishlistFromServer,
       }}
     >
       {children}
