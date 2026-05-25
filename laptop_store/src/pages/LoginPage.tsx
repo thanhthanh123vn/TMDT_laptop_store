@@ -6,6 +6,8 @@ import { getErrorMessage } from "../utils/errorUtils";
 import { signInWithPopup } from "firebase/auth";
 import { auth, googleProvider, facebookProvider } from "../api/firebaseConfig";
 
+const BG_IMAGE = "https://images.unsplash.com/photo-1593642632559-0c6d3fc62b89?w=1600&q=80";
+
 export default function LoginPage() {
     const [showPassword, setShowPassword] = useState(false)
     const [email, setEmail] = useState("")
@@ -62,36 +64,39 @@ export default function LoginPage() {
     }
 
     return (
-        <div className="min-h-[calc(100vh-160px)] flex flex-col justify-center font-sans">
+        <div
+            className="min-h-[calc(100vh-160px)] flex flex-col justify-center font-sans relative"
+            style={{
+                backgroundImage: `url(${BG_IMAGE})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+            }}
+        >
+            {/* Overlay */}
+            <div className="absolute inset-0 bg-gray-950/60 backdrop-blur-[2px]" />
+
             {/* Main Content */}
-            <main className="container mx-auto px-4 py-12">
+            <main className="relative z-10 container mx-auto px-4 py-12">
                 <div className="grid lg:grid-cols-2 gap-12 items-center max-w-6xl mx-auto">
+
                     {/* Left Column */}
                     <div className="space-y-6">
-                        <div className="inline-flex items-center gap-2 bg-blue-50 px-3 py-1.5 rounded-full text-sm text-blue-700">
+                        <div className="inline-flex items-center gap-2 bg-white/15 backdrop-blur-sm px-3 py-1.5 rounded-full text-sm text-white border border-white/20">
                             <CheckCircle className="w-4 h-4" />
                             <span>Chứng nhận Laptop Chính hãng</span>
                         </div>
 
-                        <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 leading-tight">
-                            Nâng tầm trải nghiệm công nghệ cùng <span className="text-blue-600">LAPTOPRE.</span>
+                        <h1 className="text-4xl lg:text-5xl font-bold text-white leading-tight">
+                            Nâng tầm trải nghiệm công nghệ cùng <span className="text-blue-400">LAPTOPRE.</span>
                         </h1>
 
-                        <p className="text-gray-600 text-lg">
+                        <p className="text-white/70 text-lg">
                             Đăng nhập để xem lịch sử mua hàng, theo dõi bảo hành và nhận các ưu đãi dành riêng cho thành viên.
                         </p>
-
-                        <div className="relative max-w-md hidden lg:block">
-                            <img
-                                src="/laptop-hero.jpg"
-                                alt="Laptop chính hãng"
-                                className="w-full h-auto object-contain rounded-lg shadow-md"
-                            />
-                        </div>
                     </div>
 
                     {/* Right Column - Login Form */}
-                    <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm">
+                    <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-2xl">
                         <div className="space-y-2 mb-6">
                             <h2 className="text-2xl font-bold text-gray-900">Đăng nhập</h2>
                             <p className="text-gray-500">Chào mừng bạn trở lại với LAPTOPRE</p>
@@ -192,6 +197,7 @@ export default function LoginPage() {
                             </Link>
                         </p>
                     </div>
+
                 </div>
             </main>
         </div>
