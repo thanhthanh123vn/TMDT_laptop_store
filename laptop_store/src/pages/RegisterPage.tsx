@@ -3,7 +3,10 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { authApi } from "../api/authApi";
-import { Eye, EyeOff, User, Mail, Phone, Lock, RefreshCw, CheckCircle, Shield } from "lucide-react";
+import { Eye, EyeOff, User, Mail, Phone, Lock, RefreshCw, CheckCircle, Shield, Laptop } from "lucide-react";
+
+// Ảnh laptop setup từ Unsplash (free)
+const PANEL_IMAGE = "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=900&q=80";
 import { getErrorMessage } from "../utils/errorUtils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -73,36 +76,45 @@ export default function RegisterPage() {
                 <div className="w-full max-w-5xl flex flex-col lg:flex-row rounded-2xl overflow-hidden shadow-sm border border-border bg-card">
 
                     {/* Left Panel - Hero Banner */}
-                    <div className="relative lg:w-[42%] bg-primary p-8 lg:p-10 flex flex-col justify-between min-h-[280px] lg:min-h-[580px]">
+                    <div className="relative lg:w-[42%] flex flex-col justify-between min-h-[280px] lg:min-h-[580px] overflow-hidden">
                         {/* Background Image */}
-                        <div className="absolute inset-0">
-                            <img
-                                src="/laptop-hero.jpg"
-                                alt="Laptop background"
-                                className="w-full h-full object-cover opacity-20"
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-br from-primary/95 to-primary/80" />
+                        <img
+                            src={PANEL_IMAGE}
+                            alt="Laptop workspace"
+                            className="absolute inset-0 w-full h-full object-cover"
+                        />
+                        {/* Dark overlay with subtle blue tint */}
+                        <div className="absolute inset-0 bg-gradient-to-br from-gray-950/85 via-blue-950/75 to-gray-900/80" />
+
+                        {/* Decorative circles */}
+                        <div className="absolute -top-10 -right-10 w-48 h-48 rounded-full bg-blue-500/10" />
+                        <div className="absolute -bottom-16 -left-10 w-64 h-64 rounded-full bg-blue-500/10" />
+
+                        {/* Brand */}
+                        <div className="relative z-10 p-8 lg:p-10 flex items-center gap-2">
+                            <Laptop className="h-6 w-6 text-white" />
+                            <span className="text-white font-bold text-lg tracking-wide">LAPTOPRE</span>
                         </div>
 
                         {/* Content */}
-                        <div className="relative z-10 my-auto lg:my-0">
-                            <h1 className="text-2xl lg:text-3xl font-bold text-primary-foreground mb-4 leading-tight">
+                        <div className="relative z-10 px-8 lg:px-10 pb-4 my-auto">
+                            <h1 className="text-2xl lg:text-3xl font-bold text-white mb-4 leading-tight">
                                 Chứng nhận chất lượng, an tâm sử dụng.
                             </h1>
-                            <p className="text-primary-foreground/80 text-sm lg:text-base leading-relaxed">
+                            <p className="text-white/70 text-sm lg:text-base leading-relaxed">
                                 Tham gia cộng đồng LAPTOPRE để nhận những ưu đãi đặc quyền cho các dòng laptop chính hãng đã qua kiểm định khắt khe.
                             </p>
                         </div>
 
                         {/* Badges */}
-                        <div className="relative z-10 flex flex-wrap gap-3 mt-6">
-                            <div className="flex items-center gap-2 bg-primary-foreground/15 backdrop-blur-sm px-4 py-2 rounded-xl">
-                                <CheckCircle className="h-4 w-4 text-primary-foreground" />
-                                <span className="text-primary-foreground text-sm font-medium">Đã kiểm tra 100%</span>
+                        <div className="relative z-10 px-8 lg:px-10 pb-8 lg:pb-10 flex flex-wrap gap-3">
+                            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-xl border border-white/15">
+                                <CheckCircle className="h-4 w-4 text-white" />
+                                <span className="text-white text-sm font-medium">Đã kiểm tra 100%</span>
                             </div>
-                            <div className="flex items-center gap-2 bg-transparent border border-primary-foreground/20 px-4 py-2 rounded-xl">
-                                <Shield className="h-4 w-4 text-primary-foreground" />
-                                <span className="text-primary-foreground text-sm font-medium">Bảo hành 12 tháng</span>
+                            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-xl border border-white/15">
+                                <Shield className="h-4 w-4 text-white" />
+                                <span className="text-white text-sm font-medium">Bảo hành 12 tháng</span>
                             </div>
                         </div>
                     </div>
