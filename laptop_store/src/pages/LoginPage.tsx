@@ -5,6 +5,7 @@ import { authApi } from "../api/authApi"
 import { getErrorMessage } from "../utils/errorUtils";
 import { signInWithPopup } from "firebase/auth";
 import { auth, googleProvider, facebookProvider } from "../api/firebaseConfig";
+import { RegisterChoiceDialog } from "../components/RegisterChoiceDialog";
 
 const BG_IMAGE = "https://images.unsplash.com/photo-1593642632559-0c6d3fc62b89?w=1600&q=80";
 
@@ -16,6 +17,7 @@ export default function LoginPage() {
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+    const [registerDialogOpen, setRegisterDialogOpen] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -192,14 +194,23 @@ export default function LoginPage() {
 
                         <p className="text-center text-sm text-gray-600 mt-8">
                             Chưa có tài khoản?{" "}
-                            <Link to="/register" className="text-blue-600 font-bold hover:underline">
+                            <button
+                                type="button"
+                                onClick={() => setRegisterDialogOpen(true)}
+                                className="text-blue-600 font-bold hover:underline"
+                            >
                                 Đăng ký ngay
-                            </Link>
+                            </button>
                         </p>
                     </div>
 
                 </div>
             </main>
+
+            <RegisterChoiceDialog
+                open={registerDialogOpen}
+                onOpenChange={setRegisterDialogOpen}
+            />
         </div>
     )
 }
