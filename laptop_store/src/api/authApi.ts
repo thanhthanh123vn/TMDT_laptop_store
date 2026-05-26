@@ -7,6 +7,9 @@ export const authApi = {
     register: (data: any) => {
         return axiosClient.post('/auth/register', data);
     },
+    registerSeller: (data: any) => {
+        return axiosClient.post('/auth/register-seller', data);
+    },
     verifyRegisterOtp: (data: any) => {
         return axiosClient.post('/auth/verify-register-otp', data);
     },

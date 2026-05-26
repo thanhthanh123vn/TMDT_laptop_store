@@ -4,12 +4,15 @@ import com.fit.nlu.laptop.dto.request.LoginReq;
 import com.fit.nlu.laptop.dto.request.RefreshTokenReq;
 import com.fit.nlu.laptop.dto.request.RegisterReq;
 import com.fit.nlu.laptop.dto.request.ResetPasswordReq;
+import com.fit.nlu.laptop.dto.request.SellerRegisterReq;
 import com.fit.nlu.laptop.dto.request.VerifyReq;
 import com.fit.nlu.laptop.dto.response.AuthResponse;
 import com.fit.nlu.laptop.entity.AuthProvider;
 import com.fit.nlu.laptop.entity.Role;
+import com.fit.nlu.laptop.entity.SellerProfile;
 import com.fit.nlu.laptop.entity.User;
 import com.fit.nlu.laptop.jwt.JwtUtil;
+import com.fit.nlu.laptop.repository.SellerProfileRepository;
 import com.fit.nlu.laptop.repository.UserRepository;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseToken;
@@ -33,6 +36,7 @@ public class AuthService {
     private static final int RESET_PASSWORD_OTP_EXPIRE_MINUTES = 5;
 
     private final UserRepository repo;
+    private final SellerProfileRepository sellerProfileRepository;
     private final JwtUtil jwtUtil;
     private final PasswordEncoder encoder;
     private final EmailService emailService;
@@ -61,6 +65,54 @@ public class AuthService {
         emailService.sendSimpleMessage(
                 req.email(),
                 "Ma OTP xac thuc tai khoan",
+                "Ma OTP dang ky cua ban la: " + otp + " (hieu luc " + REGISTER_OTP_EXPIRE_MINUTES + " phut)"
+        );
+    }
+
+    public void registerSeller(SellerRegisterReq req) {
+        SellerRegistrationValidator.validate(req);
+
+        if (sellerProfileRepository.existsByCccd(req.cccd().trim())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "CCCD đã được đăng ký");
+        }
+
+        User user = repo.findByEmail(req.email().trim()).orElseGet(User::new);
+
+        if (user.getId() != null && user.isEnabled()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email đã tồn tại");
+        }
+
+        String otp = String.format("%04d", new Random().nextInt(10000));
+
+        user.setEmail(req.email().trim());
+        user.setPassword(encoder.encode(req.password()));
+        user.setFullName(req.fullName().trim());
+        user.setPhone(SellerRegistrationValidator.normalizePhone(req.phone()));
+        user.setRole(Role.SELLER);
+        user.setProvider(AuthProvider.LOCAL);
+        user.setEnabled(false);
+        user.setRegisterOtp(otp);
+        user.setRegisterOtpExpiry(LocalDateTime.now(APP_ZONE).plusMinutes(REGISTER_OTP_EXPIRE_MINUTES));
+        user.setPasswordResetOtp(null);
+        user.setPasswordResetOtpExpiry(null);
+        user = repo.save(user);
+
+        SellerProfile profile = sellerProfileRepository.findByUserId(user.getId()).orElseGet(SellerProfile::new);
+        profile.setUser(user);
+        profile.setWarehouseProvince(req.warehouseProvince().trim());
+        profile.setWarehouseDistrict(req.warehouseDistrict().trim());
+        profile.setWarehouseWard(req.warehouseWard().trim());
+        profile.setWarehouseStreet(req.warehouseStreet().trim());
+        profile.setCccd(req.cccd().trim());
+        profile.setBankName(req.bankName().trim());
+        profile.setBankAccountNumber(req.bankAccountNumber().trim());
+        profile.setBankAccountHolder(req.bankAccountHolder().trim());
+        profile.setApproved(false);
+        sellerProfileRepository.save(profile);
+
+        emailService.sendSimpleMessage(
+                req.email().trim(),
+                "Ma OTP xac thuc tai khoan nguoi ban",
                 "Ma OTP dang ky cua ban la: " + otp + " (hieu luc " + REGISTER_OTP_EXPIRE_MINUTES + " phut)"
         );
     }
@@ -99,6 +151,15 @@ public class AuthService {
 
         if (user.getPassword() == null || !encoder.matches(req.password(), user.getPassword())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Email hoặc mật khẩu sai");
+        }
+
+        // seller kiểm tra approved
+        if (user.getRole() == Role.SELLER) {
+            SellerProfile profile = sellerProfileRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Không tìm thấy hồ sơ người bán"));
+            if (!profile.isApproved()) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Tài khoản người bán của bạn chưa được duyệt. Vui lòng thử lại sau.");
+            }
         }
 
         return issueTokens(user);

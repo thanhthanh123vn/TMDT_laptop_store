@@ -1,0 +1,12 @@
+[
+  { "code": "VCB", "name": "Vietcombank" },
+  { "code": "TCB", "name": "Techcombank" },
+  { "code": "BIDV", "name": "BIDV" },
+  { "code": "VIB", "name": "VIB" },
+  { "code": "ACB", "name": "ACB" },
+  { "code": "MB", "name": "MB Bank" },
+  { "code": "VPB", "name": "VPBank" },
+  { "code": "STB", "name": "Sacombank" },
+  { "code": "SHB", "name": "SHB" },
+  { "code": "HDB", "name": "HDBank" }
+]
