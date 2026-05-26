@@ -314,6 +314,10 @@ export default function RegisterPage() {
                                         <Link to="/login" className="text-primary font-semibold hover:underline">
                                             Đăng nhập
                                         </Link>
+                                        {" · "}
+                                        <Link to="/register/seller" className="text-primary font-semibold hover:underline">
+                                            Đăng ký người bán
+                                        </Link>
                                     </p>
                                 </form>
                             ) : (
@@ -328,12 +332,12 @@ export default function RegisterPage() {
                                         </label>
                                         <Input
                                             type="text"
-                                            placeholder="Nhập mã 6 chữ số"
+                                            placeholder="Nhập mã 4 chữ số"
                                             value={otp}
-                                            onChange={(e) => setOtp(e.target.value)}
+                                            onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 4))}
                                             className="h-12 bg-muted/40 border-border text-center text-2xl tracking-[0.5em] font-bold rounded-xl"
                                             required
-                                            maxLength={6}
+                                            maxLength={4}
                                         />
                                     </div>
 

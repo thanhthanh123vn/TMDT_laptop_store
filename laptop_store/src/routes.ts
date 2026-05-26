@@ -6,6 +6,7 @@ import ProductCompare from './pages/ProductCompare';
 import { ProductDetailPage } from './pages/ProductDetailPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import SellerRegisterPage from './pages/SellerRegisterPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ProfilePage from './pages/ProfilePage';
 import ChangePasswordPage from './pages/ChangePasswordPage';
@@ -37,6 +38,7 @@ export const router = createBrowserRouter([
       { path: 'orders', Component: ProfilePage },
       { path: 'login', Component: LoginPage },
       { path: 'register', Component: RegisterPage },
+      { path: 'register/seller', Component: SellerRegisterPage },
       { path: 'forgot-password', Component: ForgotPasswordPage },
       { path: 'profile', Component: ProfilePage },
       { path: 'wishlist', Component: WishListPage },
