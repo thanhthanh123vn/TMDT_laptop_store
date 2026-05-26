@@ -6,6 +6,17 @@ import {orderApi} from "@/api/orderApi.ts";
 import {useLocation} from "react-router";
 
 
+import {
+  CardNumberElement,
+  CardExpiryElement,
+  CardCvcElement,
+  useStripe,
+  useElements
+} from "@stripe/react-stripe-js";
+import {
+  CardElement
+
+} from "@stripe/react-stripe-js";
 function formatVND(price: number): string {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
 }
@@ -13,7 +24,8 @@ function formatVND(price: number): string {
 export default function CheckoutPage() {
   const navigate = useNavigate();
 
-
+  const stripe = useStripe();
+  const elements = useElements();
   const { cart ,clearCart} = useStore();
 
   const [addresses, setAddresses] = useState<any[]>([]);
@@ -25,7 +37,8 @@ export default function CheckoutPage() {
   const [districts, setDistricts] = useState<any[]>([]);
   const [selectedProvince, setSelectedProvince] = useState<{code: number, name: string} | null>(null);
   const [selectedDistrict, setSelectedDistrict] = useState<{code: number, name: string} | null>(null);
-
+  const [wards, setWards] = useState<any[]>([]);
+  const [selectedWard, setSelectedWard] = useState<{code: number, name: string} | null>(null);
   // const user = JSON.parse(localStorage.getItem("user"));
   const location = useLocation();
   // const userId = user?.id;
@@ -39,7 +52,12 @@ export default function CheckoutPage() {
   const shippingFee = shippingMethod === 'fast' ? 40000 : 0;
   const discountAmount = 0;
   const total = subtotal + shippingFee - discountAmount;
-
+  const [cardInfo, setCardInfo] = useState({
+    cardNumber: '',
+    cardName: '',
+    expiryDate: '',
+    cvv: ''
+  });
   useEffect(() => {
     if (isModalOpen) {
       fetch('https://provinces.open-api.vn/api/p/')
@@ -62,11 +80,39 @@ export default function CheckoutPage() {
     // Reset lại quận huyện nếu đổi tỉnh thành khác
     setSelectedDistrict(null);
   }, [selectedProvince]);
-
+// Gọi API lấy danh sách Phường/Xã khi Quận/Huyện thay đổi
+  useEffect(() => {
+    if (selectedDistrict) {
+      fetch(`https://provinces.open-api.vn/api/d/${selectedDistrict.code}?depth=2`)
+          .then(res => res.json())
+          .then(data => setWards(data.wards))
+          .catch(err => console.error("Lỗi tải phường xã:", err));
+    } else {
+      setWards([]);
+    }
+    // Reset lại phường xã nếu đổi quận huyện khác
+    setSelectedWard(null);
+  }, [selectedDistrict]);
   const handleCheckout = async () => {
-    if (checkoutItems.length === 0) {
+
+
+    if (!checkoutItems || checkoutItems.length === 0) {
       alert("Không có sản phẩm nào để thanh toán!");
       return;
+    }
+
+    if (!addressId) {
+      alert("Vui lòng chọn địa chỉ giao hàng!");
+      return;
+    }
+
+
+    if (paymentMethod === "credit_card") {
+
+      if (!stripe || !elements) {
+        alert("Stripe chưa khởi tạo!");
+        return;
+      }
     }
 
     setIsProcessing(true);
@@ -77,134 +123,294 @@ export default function CheckoutPage() {
       shippingMethod: shippingMethod,
       paymentMethod: paymentMethod,
       totalAmount: total,
-      items: cart.map(item => ({
+
+      items: checkoutItems.map((item) => ({
         productId: item.laptop.id,
         quantity: item.quantity || 1,
         price: item.laptop.price,
-      }))
+      })),
     };
 
-
-
     try {
-      if (paymentMethod === 'vnpay') {
+
+
+      if (paymentMethod === "vnpay") {
+
         try {
 
           const finalAmount = Math.floor(total > 0 ? total : 0);
 
-
           const orderInfo = "ThanhToanDonHangLaptopre";
 
-          const response = await fetch(`http://localhost:8080/api/payment/vnpay/create?amount=${finalAmount}&orderInfo=${orderInfo}`);
+          const response = await orderApi.createVNPayPayment(
+              finalAmount,
+              orderInfo
+          );
 
-          if (!response.ok) {
-            throw new Error(`Lỗi Server: ${response.status}`);
+          const data = response.data;
+
+          if (!data.paymentUrl) {
+            throw new Error("Không tạo được link thanh toán VNPay");
           }
 
-          const data = await response.json();
+          // lưu order tạm
+          localStorage.setItem(
+              "pendingOrder",
+              JSON.stringify(orderPayload)
+          );
 
-          if (data.paymentUrl) {
 
-            window.location.href = data.paymentUrl;
-            return;
-          }
+          window.location.href = data.paymentUrl;
+
+          return;
+
         } catch (error) {
-          console.error("Lỗi khi tạo link VNPay", error);
-          alert("Không thể kết nối với VNPay lúc này. Vui lòng kiểm tra lại Backend.");
+
+          console.error("Lỗi VNPay:", error);
+
+          alert(
+              "Không thể kết nối tới VNPay. Vui lòng thử lại!"
+          );
+
           setIsProcessing(false);
-        }
-      }else {
-        if (paymentMethod === 'cod') {
-          try {
-            await orderApi.createOrder(orderPayload);
 
-
-            if (!isBuyNow) {
-              clearCart();
-            }
-
-            setIsProcessing(false);
-            navigate('/checkout/success');
-
-          } catch (error) {
-            console.error("Lỗi lưu đơn hàng:", error);
-            alert("Có lỗi xảy ra khi lưu đơn hàng. Vui lòng thử lại!");
-            setIsProcessing(false);
-          }
-        }else{
-          setTimeout(() => {
-            setIsProcessing(false);
-            console.log("Đã tạo đơn hàng COD:", orderPayload);
-            navigate('/checkout/success');
-          }, 1500);
-
+          return;
         }
       }
+
+
+      else if (paymentMethod === "cod") {
+
+        await orderApi.createOrder(orderPayload);
+
+
+        if (!isBuyNow) {
+          clearCart();
+        }
+
+        setIsProcessing(false);
+
+        navigate("/checkout/success");
+      }
+
+
+      else if (paymentMethod === "credit_card") {
+
+        try {
+
+          if (!stripe || !elements) {
+
+            alert("Stripe chưa sẵn sàng!");
+
+            setIsProcessing(false);
+
+            return;
+          }
+
+          const cardNumberElement =
+              elements.getElement(CardNumberElement);
+
+          if (!cardNumberElement) {
+
+            alert("Không tìm thấy form thẻ!");
+
+            setIsProcessing(false);
+
+            return;
+          }
+
+          const {
+            error,
+            paymentMethod: stripePaymentMethod
+          } = await stripe.createPaymentMethod({
+
+            type: "card",
+
+            card: cardNumberElement,
+
+            billing_details: {
+              name: cardInfo.cardName,
+            },
+          });
+
+
+          if (error) {
+
+            console.error(error);
+
+            alert(error.message);
+
+            setIsProcessing(false);
+
+            return;
+          }
+
+          if (!stripePaymentMethod) {
+
+            alert("Không tạo được Payment Method!");
+
+            setIsProcessing(false);
+
+            return;
+          }
+
+
+          await orderApi.payWithCreditCard({
+
+            token: stripePaymentMethod.id,
+
+            amount: total * 100,
+
+            currency: "vnd",
+          });
+
+
+          await orderApi.createOrder(orderPayload);
+
+          // clear cart
+          if (!isBuyNow) {
+            clearCart();
+          }
+
+          setIsProcessing(false);
+
+          navigate("/checkout/success");
+
+        } catch (error: any) {
+
+          console.error("Lỗi thanh toán:", error);
+
+          alert(
+              error?.response?.data?.message ||
+              error.message ||
+              "Thanh toán thất bại!"
+          );
+
+          setIsProcessing(false);
+        }
+      }
+
+
+      else {
+
+        alert("Phương thức thanh toán không hợp lệ!");
+
+        setIsProcessing(false);
+      }
+
     } catch (error) {
-      console.error("Lỗi khi xử lý thanh toán:", error);
-      alert("Có lỗi xảy ra trong quá trình xử lý đơn hàng. Vui lòng thử lại!");
+
+      console.error("Lỗi xử lý checkout:", error);
+
+      alert(
+          "Có lỗi xảy ra trong quá trình đặt hàng. Vui lòng thử lại!"
+      );
+
       setIsProcessing(false);
     }
   };
-  useEffect(() => {
-    const fetchAddresses = async () => {
-      try {
-
-        const res = await addressApi.getMyAddresses();
+  const validateCreditCard = () => {
+    const { cardNumber, cardName, expiryDate, cvv } = cardInfo;
 
 
-        const data = res.data || res;
+    const cleanCardNumber = cardNumber.replace(/\s+/g, '');
+    if (!/^\d{16}$/.test(cleanCardNumber)) {
+      return "Số thẻ không hợp lệ (phải đủ 16 số).";
+    }
 
-        setAddresses(data);
+    if (!cardName.trim()) {
+      return "Vui lòng nhập tên in trên thẻ.";
+    }
 
+    if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(expiryDate)) {
+      return "Ngày hết hạn không hợp lệ (Định dạng MM/YY).";
+    }
 
-        if (data.length > 0) {
-          const defaultAddr = data.find((a: any) => a.isDefault);
-          setAddressId(defaultAddr ? defaultAddr.id : data[0].id);
-        }
-      } catch (error) {
-        console.error("Lỗi tải danh sách địa chỉ:", error);
-      }
-    };
-    fetchAddresses();
-  }, []);
+    if (!/^\d{3}$/.test(cvv)) {
+      return "Mã CVV không hợp lệ (phải gồm 3 số).";
+    }
+
+    return null; // Thẻ hợp lệ
+  };
   const handleSaveAddress = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newAddress.address || !newAddress.city || !newAddress.name || !newAddress.phone) return;
 
+    e.preventDefault();
+
+    if (
+        !newAddress.address ||
+        !newAddress.name ||
+        !newAddress.phone ||
+        !selectedProvince ||
+        !selectedDistrict ||
+        !selectedWard
+    ) {
+      alert("Vui lòng nhập đầy đủ thông tin!");
+      return;
+    }
 
     const payload = {
-      name: newAddress.name,
+
+
+      fullName: newAddress.name,
+
+
       phone: newAddress.phone,
-      address: newAddress.address,
-      city: newAddress.city,
-      type: newAddress.type,
-      isDefault: addresses.length === 0
+
+
+      province: selectedProvince.name,
+
+
+      district: selectedDistrict.name,
+
+
+      ward: selectedWard.name,
+
+
+      streetAddress: newAddress.address,
+
+
+      addressType:
+          newAddress.type === "Nhà riêng"
+              ? "HOME"
+              : "OFFICE",
+
+
+      isDefault: addresses.length === 0,
     };
 
     try {
 
       const res = await addressApi.addAddress(payload);
+
       const savedAddr = res.data || res;
 
-      // Cập nhật lại giao diện
+      // update ui
       setAddresses([...addresses, savedAddr]);
+
       setAddressId(savedAddr.id);
+
       setIsModalOpen(false);
 
 
-      setNewAddress({ type: 'Nhà riêng', name: '', phone: '', address: '', city: '' });
+      setNewAddress({
+        type: 'Nhà riêng',
+        name: '',
+        phone: '',
+        address: '',
+        city: ''
+      });
+
       setSelectedProvince(null);
       setSelectedDistrict(null);
+      setSelectedWard(null);
 
     } catch (error) {
+
       console.error("Lỗi lưu địa chỉ:", error);
-      alert("Đã xảy ra lỗi khi lưu địa chỉ mới. Vui lòng thử lại!");
+
+      alert("Đã xảy ra lỗi khi lưu địa chỉ!");
     }
   };
-
-
-
 
   return (
       <main className="max-w-container-max mx-auto px-4 md:px-margin-desktop py-8 md:py-stack-lg min-h-screen bg-background text-on-surface">
@@ -356,6 +562,7 @@ export default function CheckoutPage() {
                   </div>
                 </label>
 
+
                 {/* Credit Card */}
                 <div className={`rounded-xl border-2 transition-all duration-200 overflow-hidden ${paymentMethod === 'credit_card' ? 'border-primary bg-primary/5 shadow-sm' : 'border-outline-variant/50'}`}>
                   <label className="flex items-center gap-4 p-4 cursor-pointer hover:bg-surface-container-low">
@@ -371,26 +578,71 @@ export default function CheckoutPage() {
 
                   {paymentMethod === 'credit_card' && (
                       <div className="p-4 border-t border-primary/20 bg-white m-2 rounded-lg animate-in fade-in slide-in-from-top-2 duration-300">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="space-y-1.5 md:col-span-2">
+                        <div className="space-y-4">
+
+                          {/* Tên in trên thẻ */}
+                          <div className="space-y-1.5">
+                            <label className="text-sm font-semibold text-on-surface">Tên in trên thẻ</label>
+                            <input
+                                value={cardInfo.cardName}
+                                onChange={(e) => setCardInfo({...cardInfo, cardName: e.target.value.toUpperCase()})}
+                                className="w-full border border-outline-variant rounded-lg py-2.5 px-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all uppercase"
+                                placeholder="NGUYEN VAN A"
+                                type="text"
+                            />
+                          </div>
+
+                          {/* Số thẻ */}
+                          <div className="space-y-1.5">
                             <label className="text-sm font-semibold text-on-surface">Số thẻ</label>
-                            <div className="relative">
-                              <input className="w-full border border-outline-variant rounded-lg py-2.5 pl-10 pr-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" placeholder="0000 0000 0000 0000" type="text"/>
-                              <span className="material-symbols-outlined absolute left-3 top-2.5 text-secondary">credit_card</span>
+                            <div className="w-full border border-outline-variant rounded-lg p-3.5 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition-all bg-white">
+                              <CardNumberElement
+                                  options={{
+                                    showIcon: true,
+                                    style: {
+                                      base: { fontSize: '16px', color: '#424770', '::placeholder': { color: '#aab7c4' } },
+                                      invalid: { color: '#9e2146' },
+                                    },
+                                  }}
+                              />
                             </div>
                           </div>
-                          <div className="space-y-1.5 md:col-span-2">
-                            <label className="text-sm font-semibold text-on-surface">Tên in trên thẻ</label>
-                            <input className="w-full border border-outline-variant rounded-lg py-2.5 px-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all uppercase" placeholder="NGUYEN VAN A" type="text"/>
+
+                          {/* Ngày hết hạn và CVV nằm chung 1 dòng dưới */}
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-1.5">
+                              <label className="text-sm font-semibold text-on-surface">Ngày hết hạn</label>
+                              <div className="w-full border border-outline-variant rounded-lg p-3.5 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition-all bg-white">
+                                <CardExpiryElement
+                                    options={{
+                                      style: {
+                                        base: { fontSize: '16px', color: '#424770', '::placeholder': { color: '#aab7c4' } },
+                                        invalid: { color: '#9e2146' },
+                                      },
+                                    }}
+                                />
+                              </div>
+                            </div>
+
+                            <div className="space-y-1.5">
+                              <label className="text-sm font-semibold text-on-surface">Mã CVV</label>
+                              <div className="w-full border border-outline-variant rounded-lg p-3.5 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition-all bg-white">
+                                <CardCvcElement
+                                    options={{
+                                      style: {
+                                        base: { fontSize: '16px', color: '#424770', '::placeholder': { color: '#aab7c4' } },
+                                        invalid: { color: '#9e2146' },
+                                      },
+                                    }}
+                                />
+                              </div>
+                            </div>
                           </div>
-                          <div className="space-y-1.5">
-                            <label className="text-sm font-semibold text-on-surface">Ngày hết hạn</label>
-                            <input className="w-full border border-outline-variant rounded-lg py-2.5 px-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" placeholder="MM/YY" type="text"/>
-                          </div>
-                          <div className="space-y-1.5">
-                            <label className="text-sm font-semibold text-on-surface">Mã CVV</label>
-                            <input className="w-full border border-outline-variant rounded-lg py-2.5 px-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" placeholder="***" type="password" maxLength={3}/>
-                          </div>
+
+                          <p className="text-xs text-secondary mt-1 flex items-center gap-1">
+                            <span className="material-symbols-outlined text-[14px]">lock</span>
+                            Bảo mật thông tin thẻ bằng Stripe.
+                          </p>
                         </div>
                       </div>
                   )}
@@ -513,10 +765,13 @@ export default function CheckoutPage() {
         {/* ================= MODAL THÊM ĐỊA CHỈ MỚI ================= */}
         {isModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-              <div className="bg-surface-container-lowest w-full max-w-lg rounded-2xl shadow-2xl border border-outline-variant overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                <div className="px-6 py-4 border-b border-outline-variant flex justify-between items-center bg-surface-container-low/50">
+              <div
+                  className="bg-surface-container-lowest w-full max-w-lg rounded-2xl shadow-2xl border border-outline-variant overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                <div
+                    className="px-6 py-4 border-b border-outline-variant flex justify-between items-center bg-surface-container-low/50">
                   <h3 className="text-lg font-bold text-primary">Thêm địa chỉ giao hàng</h3>
-                  <button onClick={() => setIsModalOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-outline-variant/30 text-secondary hover:text-error transition-colors">
+                  <button onClick={() => setIsModalOpen(false)}
+                          className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-outline-variant/30 text-secondary hover:text-error transition-colors">
                     <span className="material-symbols-outlined text-[20px]">close</span>
                   </button>
                 </div>
@@ -585,35 +840,69 @@ export default function CheckoutPage() {
                       </select>
                     </div>
                   </div>
-
-                  <div className="space-y-1.5 pb-2">
-                    <label className="text-sm font-semibold text-on-surface block mb-2">Loại địa chỉ</label>
-                    <div className="flex gap-3">
-                      {['Nhà riêng', 'Văn phòng'].map((type) => (
-                          <label key={type}
-                                 className={`flex-1 py-2 text-center rounded-lg border cursor-pointer font-medium text-sm transition-all ${newAddress.type === type ? 'bg-primary border-primary text-white' : 'border-outline-variant text-secondary hover:bg-surface-container-low'}`}>
-                            <input type="radio" name="addressType" className="hidden" checked={newAddress.type === type}
-                                   onChange={() => setNewAddress({...newAddress, type})}/>
-                            {type}
-                          </label>
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-semibold text-on-surface">Phường/Xã</label>
+                    <select
+                        required
+                        className="w-full px-4 py-2.5 border border-outline-variant rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all appearance-none cursor-pointer disabled:bg-surface-container-low disabled:cursor-not-allowed disabled:opacity-70 bg-white"
+                        disabled={!selectedDistrict}
+                        value={selectedWard?.code || ''}
+                        onChange={(e) => {
+                          const ward = wards.find(w => w.code == e.target.value);
+                          setSelectedWard(ward);
+                          if (selectedProvince && selectedDistrict && ward) {
+                            setNewAddress({
+                              ...newAddress,
+                              city: `${ward.name}, ${selectedDistrict.name}, ${selectedProvince.name}`
+                            });
+                          }
+                        }}
+                    >
+                      <option value="" disabled>Chọn Phường/Xã</option>
+                      {wards.map(w => (
+                          <option key={w.code} value={w.code}>{w.name}</option>
                       ))}
-                    </div>
+                    </select>
                   </div>
 
-                  <div className="flex justify-end gap-3 pt-5 border-t border-outline-variant/50">
-                    <button type="button" onClick={() => setIsModalOpen(false)}
-                            className="px-6 py-2.5 rounded-xl font-bold text-secondary bg-surface-container-high hover:bg-outline-variant/40 transition-colors">Hủy
-                      bỏ
-                    </button>
-                    <button type="submit"
-                            className="px-6 py-2.5 rounded-xl font-bold bg-primary text-white hover:bg-primary/90 transition-colors shadow-md shadow-primary/20">Lưu
-                      địa chỉ
-                    </button>
-                  </div>
-                </form>
+
+
+              <div className="space-y-1.5">
+                <label className="text-sm font-semibold text-on-surface">Địa chỉ cụ thể (Số nhà, Tên đường...)</label>
+                <input required
+                       className="w-full px-4 py-2.5 border border-outline-variant rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none bg-white transition-all"
+                       placeholder="VD: 123 Đường Lê Lợi" type="text" value={newAddress.address}
+                       onChange={(e) => setNewAddress({...newAddress, address: e.target.value})}/>
               </div>
-            </div>
-        )}
-      </main>
-  );
+              <div className="space-y-1.5 pb-2">
+                <label className="text-sm font-semibold text-on-surface block mb-2">Loại địa chỉ</label>
+                <div className="flex gap-3">
+                  {['Nhà riêng', 'Văn phòng'].map((type) => (
+                      <label key={type}
+                             className={`flex-1 py-2 text-center rounded-lg border cursor-pointer font-medium text-sm transition-all ${newAddress.type === type ? 'bg-primary border-primary text-white' : 'border-outline-variant text-secondary hover:bg-surface-container-low'}`}>
+                        <input type="radio" name="addressType" className="hidden" checked={newAddress.type === type}
+                               onChange={() => setNewAddress({...newAddress, type})}/>
+                        {type}
+                      </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-5 border-t border-outline-variant/50">
+                <button type="button" onClick={() => setIsModalOpen(false)}
+                        className="px-6 py-2.5 rounded-xl font-bold text-secondary bg-surface-container-high hover:bg-outline-variant/40 transition-colors">Hủy
+                  bỏ
+                </button>
+                <button type="submit"
+                        className="px-6 py-2.5 rounded-xl font-bold bg-primary text-white hover:bg-primary/90 transition-colors shadow-md shadow-primary/20">Lưu
+                  địa chỉ
+                </button>
+              </div>
+            </form>
+          </div>
+          </div>
+          )}
+</main>
+)
+;
 }

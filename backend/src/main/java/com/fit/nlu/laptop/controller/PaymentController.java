@@ -1,6 +1,10 @@
 package com.fit.nlu.laptop.controller;
 
+
+
 import com.fit.nlu.laptop.config.VNPayConfig;
+import com.stripe.model.PaymentIntent;
+import com.stripe.param.PaymentIntentCreateParams;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -101,6 +105,90 @@ public class PaymentController {
             return ResponseEntity.ok("Thanh toán thành công");
         } else {
             return ResponseEntity.badRequest().body("Thanh toán thất bại");
+        }
+    }
+
+    @PostMapping("/credit-card")
+    public ResponseEntity<?> pay(
+            @RequestBody Map<String, Object> payload
+    ) {
+
+        try {
+
+            System.out.println(payload);
+
+            Object tokenObj = payload.get("token");
+            Object amountObj = payload.get("amount");
+            Object currencyObj = payload.get("currency");
+
+            if (tokenObj == null) {
+                return ResponseEntity.badRequest().body(
+                        Map.of("message", "Token bị null")
+                );
+            }
+
+            if (amountObj == null) {
+                return ResponseEntity.badRequest().body(
+                        Map.of("message", "Amount bị null")
+                );
+            }
+
+            if (currencyObj == null) {
+                return ResponseEntity.badRequest().body(
+                        Map.of("message", "Currency bị null")
+                );
+            }
+
+            String paymentMethodId = tokenObj.toString();
+
+            Long amount =
+                    Long.valueOf(amountObj.toString());
+
+            String currency =
+                    currencyObj.toString();
+
+            PaymentIntentCreateParams params =
+                    PaymentIntentCreateParams.builder()
+                            .setAmount(amount)
+                            .setCurrency(currency)
+                            .setPaymentMethod(paymentMethodId)
+                            .setConfirm(true)
+                            .setAutomaticPaymentMethods(
+                                    PaymentIntentCreateParams
+                                            .AutomaticPaymentMethods
+                                            .builder()
+                                            .setEnabled(true)
+                                            .setAllowRedirects(
+                                                    PaymentIntentCreateParams
+                                                            .AutomaticPaymentMethods
+                                                            .AllowRedirects
+                                                            .NEVER
+                                            )
+                                            .build()
+                            )
+                            .build();
+
+            PaymentIntent paymentIntent =
+                    PaymentIntent.create(params);
+
+            return ResponseEntity.ok(
+                    Map.of(
+                            "success", true,
+                            "paymentIntentId", paymentIntent.getId(),
+                            "status", paymentIntent.getStatus()
+                    )
+            );
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+
+            return ResponseEntity.badRequest().body(
+                    Map.of(
+                            "success", false,
+                            "message", e.getMessage()
+                    )
+            );
         }
     }
 }

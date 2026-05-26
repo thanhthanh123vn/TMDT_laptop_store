@@ -1,5 +1,5 @@
 import { RouterProvider } from 'react-router';
-import { router } from './routes';
+import { router } from './routes.tsx';
 import { StoreProvider } from './context/StoreContext';
 import ErrorBoundary from './components/ErrorBoundary';
 
