@@ -2,6 +2,7 @@ package com.fit.nlu.laptop.controller;
 
 import com.fit.nlu.laptop.dto.request.RefreshTokenReq;
 import com.fit.nlu.laptop.dto.request.RegisterReq;
+import com.fit.nlu.laptop.dto.request.SellerRegisterReq;
 import com.fit.nlu.laptop.dto.request.ResetPasswordReq;
 import com.fit.nlu.laptop.dto.request.VerifyReq;
 import com.fit.nlu.laptop.dto.response.AuthResponse;
@@ -27,6 +28,12 @@ public class AuthController {
     public ResponseEntity<?> register(@RequestBody RegisterReq r) {
         authService.register(r);
         return ResponseEntity.ok(Map.of("message", "Đăng ký thành công, vui lòng kiểm tra email để lấy OTP xác thực"));
+    }
+
+    @PostMapping("/register-seller")
+    public ResponseEntity<?> registerSeller(@RequestBody SellerRegisterReq r) {
+        authService.registerSeller(r);
+        return ResponseEntity.ok(Map.of("message", "Đăng ký người bán thành công, vui lòng kiểm tra email để lấy OTP xác thực"));
     }
 
     @PostMapping("/verify-register-otp")
