@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router';
+import { createBrowserRouter } from 'react-router-dom'; // Lưu ý: thường là 'react-router-dom' thay vì 'react-router'
 import { Layout } from './components/Layout';
 import { HomePage } from './pages/HomePage';
 import { AllProductsPage } from './pages/AllProductsPage';
@@ -23,6 +23,12 @@ import {AdminProductsPage} from "./pages/admin/AdminProductsPage.tsx";
 import {AdminDashboardPage} from "./pages/admin/AdminDashboardPage.tsx";
 import {AdminOrdersPage} from "./pages/admin/AdminOrdersPage.tsx";
 
+// 1. Import Stripe
+import { Elements } from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
+
+const stripePromise = loadStripe("pk_test_51Tbd6UFPI5dc6V9ZfFGX5ttKLsacjscuB7vm0arJnWbSdb3OvuEzAGO7merHxX0dFTsUAAyWKF0JO3XgAohFW9Kk00GYBD9HL5");
+
 export const router = createBrowserRouter([
   {
     path: '/',
@@ -33,7 +39,15 @@ export const router = createBrowserRouter([
       { path: 'compare', Component: ProductCompare },
       { path: 'product/:id', Component: ProductDetailPage },
       { path: 'cart', Component: CartPage },
-      { path: 'checkout', Component: CheckoutPage },
+      {
+        path: 'checkout',
+        element: (
+            // 3. Sử dụng stripePromise đã khởi tạo
+            <Elements stripe={stripePromise}>
+                <CheckoutPage />
+                </Elements>
+        )
+      },
       { path: 'checkout/success', Component: CheckoutSuccessPage },
       { path: 'orders', Component: ProfilePage },
       { path: 'login', Component: LoginPage },
@@ -55,9 +69,7 @@ export const router = createBrowserRouter([
           { path: 'password', Component: ChangePasswordPage },
         ]
       }
-
     ],
-
   },
   {
     path: '/admin',
