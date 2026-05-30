@@ -54,6 +54,7 @@ public class OrderService {
         order.setFullName(shippingAddress.getFullName());
 
         order.setPhone(shippingAddress.getPhone());
+        order.setPaymentMethod(orderRequest.get("paymentMethod").toString());
 
         order.setAddress(
                 shippingAddress.getStreetAddress()
@@ -64,6 +65,7 @@ public class OrderService {
                         + ", "
                         + shippingAddress.getProvince()
         );
+
 
         order.setStatus("PROCESSING");
 
@@ -107,5 +109,11 @@ public class OrderService {
         }
 
         return savedOrder;
+    }
+
+
+
+    public boolean hasUserPurchasedProduct(Long userId, Long productId) {
+        return orderRepository.hasUserPurchasedProduct(userId, productId);
     }
 }

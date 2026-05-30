@@ -3,9 +3,12 @@ package com.fit.nlu.laptop.controller;
 
 
 import com.fit.nlu.laptop.config.VNPayConfig;
+import com.fit.nlu.laptop.service.VNPayService;
 import com.stripe.model.PaymentIntent;
 import com.stripe.param.PaymentIntentCreateParams;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,7 +21,8 @@ import java.util.*;
 @RequestMapping("/api/payment")
 @CrossOrigin("*")
 public class PaymentController {
-
+    @Autowired
+    private VNPayService vnpayService;
     @GetMapping("/vnpay/create")
     public ResponseEntity<?> createPayment(HttpServletRequest request,
                                            @RequestParam("amount") long amount,
@@ -37,6 +41,8 @@ public class PaymentController {
             vnp_Params.put("vnp_OrderType", "other");
             vnp_Params.put("vnp_Locale", "vn");
             vnp_Params.put("vnp_ReturnUrl", VNPayConfig.vnp_ReturnUrl);
+//            String ipAddr="";
+//            if (ipAddr.equals("0:0:0:0:0:0:0:1")) ipAddr = "127.0.0.1";
             vnp_Params.put("vnp_IpAddr", VNPayConfig.getIpAddress(request));
 
             Calendar cld = Calendar.getInstance(TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
@@ -51,6 +57,7 @@ public class PaymentController {
             // Sắp xếp tham số
             List<String> fieldNames = new ArrayList<>(vnp_Params.keySet());
             Collections.sort(fieldNames);
+
             StringBuilder hashData = new StringBuilder();
             StringBuilder query = new StringBuilder();
             Iterator<String> itr = fieldNames.iterator();
@@ -60,36 +67,33 @@ public class PaymentController {
                 String fieldValue = vnp_Params.get(fieldName);
                 if ((fieldValue != null) && (fieldValue.length() > 0)) {
 
-                    String encodedValue = URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII.toString()).replace("+", "%20");
-                    String encodedName = URLEncoder.encode(fieldName, StandardCharsets.US_ASCII.toString()).replace("+", "%20");
+                    hashData.append(fieldName).append('=').append(fieldValue);
 
-                    // Build hash data
-                    hashData.append(encodedName);
-                    hashData.append('=');
-                    hashData.append(encodedValue);
 
-                    // Build query
-                    query.append(encodedName);
-                    query.append('=');
-                    query.append(encodedValue);
+                    query.append(URLEncoder.encode(fieldName, StandardCharsets.UTF_8.toString()))
+                            .append('=')
+                            .append(URLEncoder.encode(fieldValue, StandardCharsets.UTF_8.toString()));
 
                     if (itr.hasNext()) {
-                        query.append('&');
                         hashData.append('&');
+                        query.append('&');
                     }
                 }
             }
 
+
             // secure hash
             String vnp_SecureHash = VNPayConfig.hmacSHA512(VNPayConfig.secretKey, hashData.toString());
-            query.append("&vnp_SecureHash=");
-            query.append(vnp_SecureHash);
+            query.append("&vnp_SecureHash=").append(vnp_SecureHash);
+
 
             String paymentUrl = VNPayConfig.vnp_PayUrl + "?" + query.toString();
 
             Map<String, String> response = new HashMap<>();
             response.put("paymentUrl", paymentUrl);
+            System.out.println("Chuỗi dữ liệu trước khi băm: " + hashData.toString());
 
+            System.out.println("Chữ ký vừa tạo: " + vnp_SecureHash);
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
@@ -99,13 +103,16 @@ public class PaymentController {
     }
 
     @GetMapping("/vnpay/return")
-    public ResponseEntity<?> paymentReturn(HttpServletRequest request) {
-        String responseCode = request.getParameter("vnp_ResponseCode");
-        if ("00".equals(responseCode)) {
-            return ResponseEntity.ok("Thanh toán thành công");
-        } else {
-            return ResponseEntity.badRequest().body("Thanh toán thất bại");
+    public ResponseEntity<?> paymentReturn(@RequestParam Map<String, String> queryParams) {
+        if (vnpayService.verifySignature(queryParams)) {
+            if ("00".equals(queryParams.get("vnp_ResponseCode"))) {
+                vnpayService.updateOrderStatus(queryParams.get("vnp_TxnRef"), "PAID");
+                return ResponseEntity.ok("Thanh toán thành công");
+            } else {
+                return ResponseEntity.badRequest().body("Thanh toán thất bại");
+            }
         }
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Chữ ký không hợp lệ");
     }
 
     @PostMapping("/credit-card")
