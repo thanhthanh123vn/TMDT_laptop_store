@@ -83,7 +83,7 @@ export default function CheckoutSuccessPage() {
                 {/* Action Buttons */}
                 <div className="flex flex-col gap-stack-sm">
                     <Link
-                        to="/orders"
+                        to="/account/orders"
                         className="w-full h-12 bg-primary text-on-primary font-bold rounded-lg flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
                     >
                         Xem chi tiết đơn hàng

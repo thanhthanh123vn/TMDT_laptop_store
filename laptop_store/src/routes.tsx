@@ -23,9 +23,10 @@ import {AdminProductsPage} from "./pages/admin/AdminProductsPage.tsx";
 import {AdminDashboardPage} from "./pages/admin/AdminDashboardPage.tsx";
 import {AdminOrdersPage} from "./pages/admin/AdminOrdersPage.tsx";
 
-// 1. Import Stripe
+
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
+import {CheckoutReturnPage} from "@/pages/CheckoutReturnPage.tsx";
 
 const stripePromise = loadStripe("pk_test_51Tbd6UFPI5dc6V9ZfFGX5ttKLsacjscuB7vm0arJnWbSdb3OvuEzAGO7merHxX0dFTsUAAyWKF0JO3XgAohFW9Kk00GYBD9HL5");
 
@@ -48,6 +49,7 @@ export const router = createBrowserRouter([
                 </Elements>
         )
       },
+      { path: 'checkout/vnpay-return', Component: CheckoutReturnPage },
       { path: 'checkout/success', Component: CheckoutSuccessPage },
       { path: 'orders', Component: ProfilePage },
       { path: 'login', Component: LoginPage },
