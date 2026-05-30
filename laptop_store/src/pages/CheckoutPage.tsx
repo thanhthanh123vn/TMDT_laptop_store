@@ -138,9 +138,8 @@ export default function CheckoutPage() {
 
         try {
 
-          const finalAmount = Math.floor(total > 0 ? total : 0);
-
-          const orderInfo = "ThanhToanDonHangLaptopre";
+          const finalAmount = Math.floor(total);
+          const orderInfo = encodeURIComponent("ThanhToanDonHangLaptopre");
 
           const response = await orderApi.createVNPayPayment(
               finalAmount,
@@ -332,86 +331,83 @@ export default function CheckoutPage() {
 
     return null; // Thẻ hợp lệ
   };
+  useEffect(() => {
+    const fetchAddresses = async () => {
+      try {
+        const res = await addressApi.getMyAddresses();
+        const rawData = res.data || res;
+
+
+
+        const uniqueAddresses = rawData.filter((item: any, index: number, self: any[]) =>
+                index === self.findIndex((t: any) => (
+                    t.fullName === item.fullName &&
+                    t.phone === item.phone &&
+                    t.streetAddress === item.streetAddress &&
+                    t.ward === item.ward &&
+                    t.district === item.district &&
+                    t.province === item.province
+                ))
+        );
+
+
+        setAddresses(uniqueAddresses);
+
+
+        if (uniqueAddresses && uniqueAddresses.length > 0) {
+          const defaultAddr = uniqueAddresses.find((a: any) => a.default === true);
+          if (defaultAddr) {
+            setAddressId(defaultAddr.id);
+          } else {
+            setAddressId(uniqueAddresses[0].id);
+          }
+        }
+      } catch (error) {
+        console.error("Lỗi tải danh sách địa chỉ:", error);
+      }
+    };
+    fetchAddresses();
+  }, []);
   const handleSaveAddress = async (e: React.FormEvent) => {
-
     e.preventDefault();
+    if (!newAddress.address || !newAddress.name || !newAddress.phone) return;
 
-    if (
-        !newAddress.address ||
-        !newAddress.name ||
-        !newAddress.phone ||
-        !selectedProvince ||
-        !selectedDistrict ||
-        !selectedWard
-    ) {
-      alert("Vui lòng nhập đầy đủ thông tin!");
-      return;
-    }
 
     const payload = {
-
-
       fullName: newAddress.name,
-
-
       phone: newAddress.phone,
-
-
-      province: selectedProvince.name,
-
-
-      district: selectedDistrict.name,
-
-
-      ward: selectedWard.name,
-
-
+      province: selectedProvince?.name || null,
+      district: selectedDistrict?.name || null,
+      ward: selectedWard?.name || null,
       streetAddress: newAddress.address,
-
-
-      addressType:
-          newAddress.type === "Nhà riêng"
-              ? "HOME"
-              : "OFFICE",
-
-
-      isDefault: addresses.length === 0,
+      addressType: newAddress.type === 'Nhà riêng' ? 'HOME' : 'OFFICE',
+      default: addresses.length === 0
     };
 
     try {
 
-      const res = await addressApi.addAddress(payload);
+      await addressApi.addAddress(payload);
 
-      const savedAddr = res.data || res;
 
-      // update ui
-      setAddresses([...addresses, savedAddr]);
+      const res = await addressApi.getMyAddresses();
+      const updatedAddresses = res.data || res;
+      setAddresses(updatedAddresses);
 
-      setAddressId(savedAddr.id);
+      if (updatedAddresses && updatedAddresses.length > 0) {
+        setAddressId(updatedAddresses[updatedAddresses.length - 1].id);
+      }
 
       setIsModalOpen(false);
-
-
-      setNewAddress({
-        type: 'Nhà riêng',
-        name: '',
-        phone: '',
-        address: '',
-        city: ''
-      });
-
+      setNewAddress({ type: 'Nhà riêng', name: '', phone: '', address: '', city: '' });
       setSelectedProvince(null);
       setSelectedDistrict(null);
       setSelectedWard(null);
 
     } catch (error) {
-
       console.error("Lỗi lưu địa chỉ:", error);
-
-      alert("Đã xảy ra lỗi khi lưu địa chỉ!");
+      alert("Đã xảy ra lỗi khi lưu địa chỉ mới. Vui lòng thử lại!");
     }
   };
-
   return (
       <main className="max-w-container-max mx-auto px-4 md:px-margin-desktop py-8 md:py-stack-lg min-h-screen bg-background text-on-surface">
 
@@ -446,46 +442,64 @@ export default function CheckoutPage() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {addresses.map((item) => (
-                    <div
-                        key={item.id}
-                        onClick={() => setAddressId(item.id)}
-                        className={`relative p-5 rounded-xl border-2 cursor-pointer transition-all duration-200 overflow-hidden group ${
-                            addressId === item.id
-                                ? 'border-primary bg-primary/5 shadow-md'
-                                : 'border-outline-variant/50 hover:border-primary/50 hover:shadow-sm bg-white'
-                        }`}
-                    >
-                      {item.isDefault && (
-                          <span className="absolute top-0 right-0 bg-secondary text-white text-[10px] font-bold px-2 py-1 rounded-bl-lg uppercase tracking-wider">
+                {addresses.map((item) => {
+
+                  const fullAddress = [item.streetAddress, item.ward, item.district, item.province]
+                      .filter(Boolean)
+                      .join(", ");
+
+                  return (
+                      <div
+                          key={item.id}
+                          onClick={() => setAddressId(item.id)}
+                          className={`relative p-5 rounded-xl border-2 cursor-pointer transition-all duration-200 overflow-hidden group ${
+                              addressId === item.id
+                                  ? 'border-primary bg-primary/5 shadow-md'
+                                  : 'border-outline-variant/50 hover:border-primary/50 hover:shadow-sm bg-white'
+                          }`}
+                      >
+                        {item.default && (
+                            <span
+                                className="absolute top-0 right-0 bg-secondary text-white text-[10px] font-bold px-2 py-1 rounded-bl-lg uppercase tracking-wider">
                             Mặc định
                           </span>
-                      )}
+                        )}
 
-                      <div className="flex items-start gap-3">
-                        <span className={`material-symbols-outlined mt-0.5 transition-colors ${addressId === item.id ? 'text-primary' : 'text-outline group-hover:text-primary/70'}`} style={{ fontVariationSettings: addressId === item.id ? "'FILL' 1" : "'FILL' 0" }}>
+                        <div className="flex items-start gap-3">
+                        <span
+                            className={`material-symbols-outlined mt-0.5 transition-colors ${addressId === item.id ? 'text-primary' : 'text-outline group-hover:text-primary/70'}`}
+                            style={{fontVariationSettings: addressId === item.id ? "'FILL' 1" : "'FILL' 0"}}>
                           {addressId === item.id ? 'radio_button_checked' : 'radio_button_unchecked'}
                         </span>
-                        <div className="space-y-1.5">
-                          <div className="flex items-center gap-2">
-                            <span className="font-bold text-on-surface">{item.name}</span>
-                            <span className="text-outline-variant">|</span>
-                            <span className="text-secondary font-medium">{item.phone}</span>
+                          <div className="space-y-1.5">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-on-surface">{item.fullName}</span> {/* Dùng fullName */}
+                              <span className="text-outline-variant">|</span>
+                              <span className="text-secondary font-medium">{item.phone}</span>
+                            </div>
+                            <span
+                                className="inline-block px-2 py-0.5 bg-surface-container-high text-on-surface-variant text-xs rounded font-medium border border-outline-variant/30">
+                                {/* Dùng addressType, dịch lại sang Tiếng Việt nếu cần */}
+                              {item.addressType === 'HOME' ? 'Nhà riêng' : (item.addressType === 'OFFICE' ? 'Văn phòng' : item.addressType)}
+                              </span>
+                            <p className="text-sm text-on-surface-variant leading-relaxed pt-1">
+                              {fullAddress || "Chưa cập nhật địa chỉ chi tiết"}
+                            </p>
                           </div>
-                          <span className="inline-block px-2 py-0.5 bg-surface-container-high text-on-surface-variant text-xs rounded font-medium border border-outline-variant/30">{item.type}</span>
-                          <p className="text-sm text-on-surface-variant leading-relaxed pt-1">{item.address}</p>
                         </div>
                       </div>
-                    </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
             {/* 2. PHƯƠNG THỨC VẬN CHUYỂN */}
-            <div className="bg-surface-container-lowest p-6 md:p-8 rounded-2xl shadow-sm border border-outline-variant/60">
+            <div
+                className="bg-surface-container-lowest p-6 md:p-8 rounded-2xl shadow-sm border border-outline-variant/60">
               <div className="flex items-center gap-3 mb-6 pb-4 border-b border-outline-variant/30">
                 <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
-                  <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>local_shipping</span>
+                  <span className="material-symbols-outlined"
+                        style={{fontVariationSettings: "'FILL' 1"}}>local_shipping</span>
                 </div>
                 <h2 className="text-xl font-bold text-on-surface">Đơn vị vận chuyển</h2>
               </div>
@@ -496,11 +510,14 @@ export default function CheckoutPage() {
                     className={`flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 ${shippingMethod === 'fast' ? 'border-blue-500 bg-blue-50/50 shadow-sm' : 'border-outline-variant/50 hover:border-blue-300 bg-white'}`}
                 >
                   <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${shippingMethod === 'fast' ? 'bg-blue-100 text-blue-600' : 'bg-surface-container-high text-secondary'}`}>
-                      <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>bolt</span>
+                    <div
+                        className={`w-10 h-10 rounded-full flex items-center justify-center ${shippingMethod === 'fast' ? 'bg-blue-100 text-blue-600' : 'bg-surface-container-high text-secondary'}`}>
+                      <span className="material-symbols-outlined"
+                            style={{fontVariationSettings: "'FILL' 1"}}>bolt</span>
                     </div>
                     <div>
-                      <p className={`font-bold ${shippingMethod === 'fast' ? 'text-blue-700' : 'text-on-surface'}`}>Giao hàng Hỏa Tốc</p>
+                      <p className={`font-bold ${shippingMethod === 'fast' ? 'text-blue-700' : 'text-on-surface'}`}>Giao
+                        hàng Hỏa Tốc</p>
                       <p className="text-xs text-secondary mt-0.5">Nhận hàng trong 2-4 giờ</p>
                     </div>
                   </div>
@@ -512,11 +529,14 @@ export default function CheckoutPage() {
                     className={`flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 ${shippingMethod === 'standard' ? 'border-green-500 bg-green-50/50 shadow-sm' : 'border-outline-variant/50 hover:border-green-300 bg-white'}`}
                 >
                   <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${shippingMethod === 'standard' ? 'bg-green-100 text-green-600' : 'bg-surface-container-high text-secondary'}`}>
-                      <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>inventory_2</span>
+                    <div
+                        className={`w-10 h-10 rounded-full flex items-center justify-center ${shippingMethod === 'standard' ? 'bg-green-100 text-green-600' : 'bg-surface-container-high text-secondary'}`}>
+                      <span className="material-symbols-outlined"
+                            style={{fontVariationSettings: "'FILL' 1"}}>inventory_2</span>
                     </div>
                     <div>
-                      <p className={`font-bold ${shippingMethod === 'standard' ? 'text-green-700' : 'text-on-surface'}`}>Giao Tiêu Chuẩn</p>
+                      <p className={`font-bold ${shippingMethod === 'standard' ? 'text-green-700' : 'text-on-surface'}`}>Giao
+                        Tiêu Chuẩn</p>
                       <p className="text-xs text-secondary mt-0.5">Nhận hàng từ 2-3 ngày</p>
                     </div>
                   </div>

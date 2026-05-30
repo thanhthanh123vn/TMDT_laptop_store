@@ -49,5 +49,8 @@ export const orderApi = {
             "/api/payment/credit-card",
             cardData
         );
-    }
+    },
+    checkCanReview: (productId: number | string) => {
+        return axiosClient.get(`/products/${productId}/check-review-eligibility`);
+    },
 };

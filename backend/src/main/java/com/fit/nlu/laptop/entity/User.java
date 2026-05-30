@@ -70,6 +70,8 @@ public class User {
     @Column(name = "avatar_url")
     private String avatarUrl;
 
+//    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+//    private SellerProfile sellerProfile;
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
         name = "wishlists",
