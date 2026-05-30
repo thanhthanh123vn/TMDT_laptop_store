@@ -21,6 +21,9 @@ public class Product {
     private Long id;
 
     private String name;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "seller_id")
+    private SellerProfile seller;
 
     private BigDecimal price;
     

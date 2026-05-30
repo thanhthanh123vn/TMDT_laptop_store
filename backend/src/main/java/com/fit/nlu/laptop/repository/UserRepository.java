@@ -13,4 +13,6 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     boolean existsByEmail(String email);
 
     long countByCreatedAtBetween(LocalDateTime from, LocalDateTime to);
+
+    Optional<User> findByFullName(String fullName);
 }

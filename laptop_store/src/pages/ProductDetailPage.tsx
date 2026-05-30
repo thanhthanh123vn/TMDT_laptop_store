@@ -10,6 +10,8 @@ import { useStore } from '../context/StoreContext';
 import { productApi } from '../api/productApi';
 import { Button } from '../components/ui/button';
 import type { Review, Laptop } from '../types';
+import {Avatar, AvatarFallback, AvatarImage} from "@radix-ui/react-avatar";
+import {ChatWithShop} from "@/pages/ChatWithShop.tsx";
 
 const formatVND = (price: number) =>
   price.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
@@ -54,9 +56,87 @@ export const ProductDetailPage: React.FC = () => {
   const [laptop, setLaptop] = useState<Laptop | null>(null);
   const [loading, setLoading] = useState(true);
   const [addedToCart, setAddedToCart] = useState(false);
-
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const { addToCart, toggleWishlist, wishlist } = useStore();
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [userRating, setUserRating] = useState<number>(5);
+  const [userComment, setUserComment] = useState<string>('');
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [canReview, setCanReview] = useState(false);
+  useEffect(() => {
+    const checkEligibility = async () => {
+      if (id) {
+        try {
+          const res = await productApi.checkCanReview(id);
 
+          setCanReview(res.data.canReview);
+        } catch (error) {
+          console.error("Lỗi kiểm tra quyền đánh giá:", error);
+          setCanReview(false);
+        }
+      }
+    };
+    checkEligibility();
+  }, [id]);
+
+  const fetchReviews = async () => {
+    if (!id) return;
+    try {
+      const res = await productApi.getProductReviews(id);
+      setReviews(res.data || res);
+    } catch (error) {
+      console.error("Lỗi khi tải đánh giá sản phẩm:", error);
+    }
+  };
+
+  // Tải danh sách đánh giá ngay khi mở trang chi tiết sản phẩm
+  useEffect(() => {
+    fetchReviews();
+  }, [id]);
+  useEffect(() => {
+    const checkEligibility = async () => {
+      if (id) {
+        try {
+          const res = await productApi.checkCanReview(id);
+          // Giả sử API trả về { canReview: true/false }
+          setCanReview(res.data.canReview);
+        } catch (error) {
+          console.error("Lỗi kiểm tra quyền đánh giá:", error);
+          setCanReview(false);
+        }
+      }
+    };
+    checkEligibility();
+  }, [id]);
+
+  const handleReviewSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!id) return;
+    if (!userComment.trim()) {
+      alert("Vui lòng nhập nội dung đánh giá của bạn.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await productApi.submitReview(id, {
+        rating: userRating,
+        comment: userComment
+      });
+
+      alert("Cảm ơn bạn đã đánh giá sản phẩm thành công!");
+      setUserComment('');
+      setUserRating(5);
+
+
+      await fetchReviews();
+    } catch (error: any) {
+      console.error("Lỗi khi gửi đánh giá:", error);
+      alert(error?.response?.data || "Gửi đánh giá thất bại. Vui lòng thử lại.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
   useEffect(() => {
     const fetch = async () => {
       try {
@@ -64,6 +144,7 @@ export const ProductDetailPage: React.FC = () => {
         if (res.data) {
           const p = res.data;
           setLaptop({ ...p, id: p.id.toString(), image: p.imageUrl || '/placeholder.svg', price: Number(p.price), category: p.category ? p.category.split(',') : [] });
+          console.log(res.data);
         } else {
           setLaptop(getMockLaptopById(id || '') || null);
         }
@@ -102,10 +183,25 @@ export const ProductDetailPage: React.FC = () => {
     setTimeout(() => setAddedToCart(false), 2000);
   };
 
-  const handlePostReview = () => {
+  const handlePostReview = async () => {
     if (!reviewContent.trim()) return;
-    setAddedReviews([{ id: 'r' + Date.now(), laptopId: laptop.id, userName: 'Bạn', rating: reviewRating, date: new Date().toISOString().split('T')[0], comment: reviewContent }, ...addedReviews]);
-    setReviewContent(''); setReviewRating(5); setShowReviewForm(false);
+    try {
+
+      await productApi.submitReview(laptop.id, {
+        rating: reviewRating,
+        comment: reviewContent
+      });
+
+
+      await fetchReviews();
+
+      // Reset form
+      setReviewContent('');
+      setReviewRating(5);
+      setShowReviewForm(false);
+    } catch (error) {
+      alert("Có lỗi xảy ra khi gửi đánh giá!");
+    }
   };
 
   const tabs = [
@@ -319,12 +415,17 @@ export const ProductDetailPage: React.FC = () => {
               </div>
             </div>
             <div className="flex gap-2 shrink-0">
-              <button className="flex items-center gap-1.5 text-xs font-medium border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50 transition-colors text-gray-600">
-                <MessageCircle className="w-3.5 h-3.5" />
+              <button
+                  onClick={() => setIsChatOpen(true)}
+                  className="flex items-center gap-1.5 text-xs font-medium border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50 transition-colors text-gray-600"
+              >
+                <MessageCircle className="w-3.5 h-3.5"/>
                 Chat
               </button>
-              <button className="flex items-center gap-1.5 text-xs font-medium border border-blue-200 rounded-lg px-3 py-1.5 hover:bg-blue-50 transition-colors text-blue-600">
-                <Store className="w-3.5 h-3.5" />
+
+              <button
+                  className="flex items-center gap-1.5 text-xs font-medium border border-blue-200 rounded-lg px-3 py-1.5 hover:bg-blue-50 transition-colors text-blue-600">
+                <Store className="w-3.5 h-3.5"/>
                 Xem shop
               </button>
             </div>
@@ -335,9 +436,9 @@ export const ProductDetailPage: React.FC = () => {
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
           <div className="flex border-b border-gray-100">
             {tabs.map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
+                <button
+                    key={tab.key}
+                    onClick={() => setActiveTab(tab.key)}
                 className={`px-5 py-3 text-sm font-semibold relative transition-colors ${
                   activeTab === tab.key ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'
                 }`}
@@ -382,85 +483,115 @@ export const ProductDetailPage: React.FC = () => {
 
             {/* Reviews */}
             {activeTab === 'reviews' && (
-              <div className="grid grid-cols-1 lg:grid-cols-[200px_1fr] gap-6">
-                {/* Summary */}
-                <div>
-                  <div className="text-center bg-gray-50 rounded-lg p-4 border border-gray-100 mb-3">
-                    <p className="text-4xl font-bold text-blue-600">{laptop.rating}</p>
-                    <Stars rating={laptop.rating} size="w-4 h-4" />
-                    <p className="text-xs text-gray-400 mt-1">{laptop.reviewCount} đánh giá</p>
-                  </div>
-                  <div className="space-y-1.5 mb-4">
-                    {[5, 4, 3, 2, 1].map((s) => {
-                      const pct = s === 5 ? 85 : s === 4 ? 10 : s === 3 ? 5 : 0;
-                      return (
-                        <div key={s} className="flex items-center gap-1.5 text-[11px] text-gray-400">
-                          <span className="w-6 text-right">{s}★</span>
-                          <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                            <div className="h-full bg-yellow-400 rounded-full" style={{ width: `${pct}%` }} />
-                          </div>
-                          <span className="w-6">{pct}%</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <button
-                    onClick={() => setShowReviewForm(!showReviewForm)}
-                    className="w-full py-2 text-xs font-semibold border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-gray-600"
-                  >
-                    {showReviewForm ? 'Hủy' : '✏️ Viết đánh giá'}
-                  </button>
-                  {showReviewForm && (
-                    <div className="mt-3 p-3 border border-gray-200 rounded-lg space-y-2.5">
-                      <Stars rating={reviewRating} size="w-5 h-5" interactive onRate={setReviewRating} />
-                      <textarea
-                        className="w-full border border-gray-200 rounded-md p-2 text-xs focus:ring-2 focus:ring-blue-500 outline-none resize-none"
-                        rows={3}
-                        placeholder="Chia sẻ trải nghiệm..."
-                        value={reviewContent}
-                        onChange={e => setReviewContent(e.target.value)}
-                      />
-                      <Button onClick={handlePostReview} className="w-full text-xs bg-blue-600 hover:bg-blue-700 text-white rounded-md">
-                        Gửi
-                      </Button>
+                <div className="grid grid-cols-1 lg:grid-cols-[200px_1fr] gap-6">
+                  {/* Summary */}
+                  <div>
+                    <div className="text-center bg-gray-50 rounded-lg p-4 border border-gray-100 mb-3">
+                      <p className="text-4xl font-bold text-blue-600">{laptop.rating}</p>
+                      <Stars rating={laptop.rating} size="w-4 h-4" />
+                      <p className="text-xs text-gray-400 mt-1">{laptop.reviewCount} đánh giá</p>
                     </div>
-                  )}
-                </div>
 
-                {/* List */}
-                <div>
-                  {allReviews.length > 0 ? (
-                    <div className="divide-y divide-gray-100">
-                      {allReviews.map(r => (
-                        <div key={r.id} className="py-4 first:pt-0">
-                          <div className="flex items-center justify-between mb-1.5">
-                            <div className="flex items-center gap-2">
-                              <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs">
-                                {r.userName.charAt(0).toUpperCase()}
+                    <div className="space-y-1.5 mb-4">
+                      {[5, 4, 3, 2, 1].map((s) => {
+                        const pct = s === 5 ? 85 : s === 4 ? 10 : s === 3 ? 5 : 0;
+                        return (
+                            <div key={s} className="flex items-center gap-1.5 text-[11px] text-gray-400">
+                              <span className="w-6 text-right">{s}★</span>
+                              <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                                <div className="h-full bg-yellow-400 rounded-full" style={{ width: `${pct}%` }} />
                               </div>
-                              <div>
-                                <p className="text-xs font-semibold text-gray-800">{r.userName}</p>
-                                <Stars rating={r.rating} size="w-3 h-3" />
-                              </div>
+                              <span className="w-6">{pct}%</span>
                             </div>
-                            <span className="text-[11px] text-gray-400">{new Date(r.date).toLocaleDateString('vi-VN')}</span>
-                          </div>
-                          <p className="text-xs text-gray-600 leading-relaxed">{r.comment}</p>
+                        );
+                      })}
+                    </div>
+
+
+                    {canReview ? (
+                        <>
+                          <button
+                              onClick={() => setShowReviewForm(!showReviewForm)}
+                              className="w-full py-2 text-xs font-semibold border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-gray-600"
+                          >
+                            {showReviewForm ? 'Hủy' : '✏️ Viết đánh giá'}
+                          </button>
+                          {showReviewForm && (
+                              <div className="mt-3 p-3 border border-gray-200 rounded-lg space-y-2.5 animate-in fade-in slide-in-from-top-2">
+                                <Stars rating={reviewRating} size="w-5 h-5" interactive onRate={setReviewRating} />
+                                <textarea
+                                    className="w-full border border-gray-200 rounded-md p-2 text-xs focus:ring-2 focus:ring-blue-500 outline-none resize-none"
+                                    rows={3}
+                                    placeholder="Chia sẻ trải nghiệm..."
+                                    value={reviewContent}
+                                    onChange={e => setReviewContent(e.target.value)}
+                                />
+                                <Button onClick={handlePostReview} className="w-full text-xs bg-blue-600 hover:bg-blue-700 text-white rounded-md">
+                                  Gửi
+                                </Button>
+                              </div>
+                          )}
+                        </>
+                    ) : (
+                        <div className="w-full py-2 px-2 text-center bg-gray-50 border border-gray-200 rounded-lg text-[10px] text-gray-500">
+                          <span className="block material-symbols-outlined mb-1">lock</span>
+                          Chỉ khách hàng đã mua sản phẩm mới được đánh giá.
                         </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center py-12 text-gray-400 border border-dashed border-gray-200 rounded-lg">
-                      <Star className="w-8 h-8 mb-2 fill-gray-100 text-gray-200" />
-                      <p className="text-xs">Chưa có đánh giá. Hãy là người đầu tiên!</p>
-                    </div>
-                  )}
+                    )}
+                  </div>
+
+                  {/* List */}
+                  <div>
+                    {reviews.length > 0 ? (
+                        <div className="divide-y divide-gray-100">
+                          {reviews.map(r => (
+                              <div key={r.id} className="py-4 first:pt-0">
+                                <div className="flex items-center justify-between mb-1.5">
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs">
+                                      <Avatar>
+                                        <AvatarImage src={r.user?.avatarUrl} />
+
+                                        <AvatarFallback>
+                                          {r.user?.fullName?.charAt(0)?.toUpperCase() || "U"}
+                                        </AvatarFallback>
+                                      </Avatar>
+                                    </div>
+                                    <div>
+                                      <p className="text-xs font-semibold text-gray-800">{r.user?.fullName}</p>
+                                      <Stars rating={r.rating} size="w-3 h-3" />
+                                    </div>
+                                  </div>
+                                  <span className="text-[11px] text-gray-400">{new Date(r.createdAt).toLocaleDateString('vi-VN')}</span>
+                                </div>
+                                <p className="text-xs text-gray-600 leading-relaxed">{r.comment}</p>
+                              </div>
+                          ))}
+                        </div>
+                    ) : (
+                        <div className="flex flex-col items-center justify-center py-12 text-gray-400 border border-dashed border-gray-200 rounded-lg">
+                          <span className="material-symbols-outlined text-4xl mb-2">star_border</span>
+                          <p className="text-xs">Chưa có đánh giá nào cho sản phẩm này.</p>
+                        </div>
+                    )}
+                  </div>
                 </div>
-              </div>
             )}
           </div>
         </div>
       </div>
+      {/* <div className="p-4 bg-red-100 text-red-800">
+          Debug: sellerId = {laptop?.sellerId} | isChatOpen = {isChatOpen ? "MỞ" : "ĐÓNG"}
+      </div> */}
+      {laptop && (
+          <ChatWithShop
+              productId={laptop.id}
+              shopId={laptop.sellerId || 1} // Fallback về 1 nếu chưa map được dữ liệu
+              shopName={laptop.sellerName || FAKE_SELLER.name}
+              isOpen={isChatOpen}
+              setIsOpen={setIsChatOpen}
+          />
+      )}
     </main>
   );
 };

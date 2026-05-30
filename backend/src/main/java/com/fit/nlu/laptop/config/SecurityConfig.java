@@ -79,7 +79,7 @@ public class SecurityConfig {
 
                         .requestMatchers("/api/cart/**")
                         .authenticated()
-
+                        .requestMatchers("/ws/**").permitAll()
                         .requestMatchers(
                                 "/api/orders/**",
                                 "/api/reviews/**",
@@ -122,7 +122,7 @@ public class SecurityConfig {
 
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOrigins(List.of("*"));
+        configuration.setAllowedOrigins(List.of("http://localhost:5173", "http://127.0.0.1:5173"));
 
         configuration.setAllowedMethods(
                 Arrays.asList(
@@ -135,7 +135,7 @@ public class SecurityConfig {
                         "PATCH"
                 )
         );
-
+        configuration.setAllowCredentials(true);
         configuration.setAllowedHeaders(List.of("*"));
 
         UrlBasedCorsConfigurationSource source =
