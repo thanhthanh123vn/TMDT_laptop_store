@@ -1,4 +1,4 @@
-package com.fit.nlu.food.dto.request;
+package com.fit.nlu.laptop.dto.request;
 
 public record UpdateUserRoleReq(String role) {
 }
