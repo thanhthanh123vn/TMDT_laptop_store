@@ -3,8 +3,11 @@ export interface Laptop {
     name: string;
     brand: string;
     price: number;
-    sellerId:string;
-    sellerName:string;
+    sellerId: string;
+    sellerName: string;
+    sellerLogo?: string;
+    sellerRating?: number;
+    sellerSoldCount?: number;
     originalPrice?: number;
     discount?: number;
     image: string;

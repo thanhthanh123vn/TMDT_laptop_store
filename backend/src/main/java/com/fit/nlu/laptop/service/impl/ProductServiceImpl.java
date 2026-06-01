@@ -2,6 +2,7 @@ package com.fit.nlu.laptop.service.impl;
 
 import com.fit.nlu.laptop.entity.Product;
 import com.fit.nlu.laptop.entity.SellerProfile;
+import com.fit.nlu.laptop.repository.OrderRepository;
 import com.fit.nlu.laptop.repository.ProductRepository;
 import com.fit.nlu.laptop.service.ProductService;
 import com.fit.nlu.laptop.dto.response.ProductDetailResponse;
@@ -14,6 +15,9 @@ public class ProductServiceImpl implements ProductService {
 
     @Autowired
     private ProductRepository productRepository;
+
+    @Autowired
+    private OrderRepository orderRepository;
 
     @Override
     @Transactional(readOnly = true) // Đảm bảo FetchType.LAZY hoạt động mượt mà
@@ -47,8 +51,11 @@ public class ProductServiceImpl implements ProductService {
         if (seller != null) {
             response.setSellerId(seller.getId());
             response.setSellerName(seller.getStoreName());
-            response.setSellerLogo(seller.getLogoUrl());
             response.setSellerRating(seller.getRating());
+            response.setSellerSoldCount(orderRepository.countBySellerId(seller.getId()));
+            if (seller.getUser() != null) {
+                response.setSellerLogo(seller.getUser().getAvatarUrl());
+            }
         } else {
             response.setSellerName("LaptopStore Official");
         }

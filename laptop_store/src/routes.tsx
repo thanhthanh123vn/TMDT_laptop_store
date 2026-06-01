@@ -22,6 +22,11 @@ import {AdminProductFormPage} from "./pages/admin/AdminProductFormPage.tsx";
 import {AdminProductsPage} from "./pages/admin/AdminProductsPage.tsx";
 import {AdminDashboardPage} from "./pages/admin/AdminDashboardPage.tsx";
 import {AdminOrdersPage} from "./pages/admin/AdminOrdersPage.tsx";
+import {SellerLayout} from "./pages/seller/SellerLayout.tsx";
+import {SellerDashboardPage} from "./pages/seller/SellerDashboardPage.tsx";
+import {SellerProductsPage} from "./pages/seller/SellerProductsPage.tsx";
+import {SellerOrdersPage} from "./pages/seller/SellerOrdersPage.tsx";
+import {SellerReviewsPage} from "./pages/seller/SellerReviewsPage.tsx";
 
 
 import { Elements } from "@stripe/react-stripe-js";
@@ -82,6 +87,16 @@ export const router = createBrowserRouter([
       { path: 'products/add', Component: AdminProductFormPage },
       { path: 'products/edit/:id', Component: AdminProductFormPage },
       { path: 'orders', Component: AdminOrdersPage },
+    ],
+  },
+  {
+    path: '/seller',
+    Component: SellerLayout,
+    children: [
+      { index: true, Component: SellerDashboardPage },
+      { path: 'products', Component: SellerProductsPage },
+      { path: 'orders', Component: SellerOrdersPage },
+      { path: 'reviews', Component: SellerReviewsPage },
     ],
   }
 ]);
