@@ -52,6 +52,7 @@ const initialForm: SellerFormData = {
     phone: "",
     password: "",
     confirmPassword: "",
+    storeName: "",
     warehouseProvince: "",
     warehouseDistrict: "",
     warehouseWard: "",
@@ -126,6 +127,7 @@ export default function SellerRegisterPage() {
                 password: form.password,
                 fullName: form.fullName.trim(),
                 phone: normalizePhone(form.phone),
+                storeName: form.storeName.trim(),
                 warehouseProvince: form.warehouseProvince,
                 warehouseDistrict: form.warehouseDistrict,
                 warehouseWard: form.warehouseWard,
@@ -224,6 +226,20 @@ export default function SellerRegisterPage() {
                                             value={form.fullName}
                                             onChange={(e) => updateField("fullName", e.target.value)}
                                             placeholder="Nguyễn Văn A"
+                                            className="h-11 bg-muted/40 rounded-xl"
+                                            required
+                                        />
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="flex items-center gap-2 text-sm font-medium">
+                                            <Store className="h-4 w-4 text-muted-foreground" />
+                                            Tên cửa hàng
+                                        </label>
+                                        <Input
+                                            value={form.storeName}
+                                            onChange={(e) => updateField("storeName", e.target.value)}
+                                            placeholder="Cửa hàng laptop ABC"
                                             className="h-11 bg-muted/40 rounded-xl"
                                             required
                                         />
