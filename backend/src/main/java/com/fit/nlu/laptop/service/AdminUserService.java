@@ -1,13 +1,13 @@
-package com.fit.nlu.food.service;
+package com.fit.nlu.laptop.service;
 
-import com.fit.nlu.food.dto.request.InviteUserReq;
-import com.fit.nlu.food.dto.request.UpdateUserRoleReq;
-import com.fit.nlu.food.dto.request.UpdateUserStatusReq;
-import com.fit.nlu.food.dto.response.PagedResponse;
-import com.fit.nlu.food.entity.AuthProvider;
-import com.fit.nlu.food.entity.Role;
-import com.fit.nlu.food.entity.User;
-import com.fit.nlu.food.repository.UserRepository;
+import com.fit.nlu.laptop.dto.request.InviteUserReq;
+import com.fit.nlu.laptop.dto.request.UpdateUserRoleReq;
+import com.fit.nlu.laptop.dto.request.UpdateUserStatusReq;
+import com.fit.nlu.laptop.dto.response.PagedResponse;
+import com.fit.nlu.laptop.entity.AuthProvider;
+import com.fit.nlu.laptop.entity.Role;
+import com.fit.nlu.laptop.entity.User;
+import com.fit.nlu.laptop.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
