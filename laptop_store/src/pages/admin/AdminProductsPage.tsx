@@ -1,145 +1,206 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router';
-import { Plus, Edit, Trash2, Search } from 'lucide-react';
-import { laptops as initialLaptops } from '../../data/laptops';
-import type { Laptop } from '../../types';
+'use client';
 
-import { Button } from '../../components/ui/button';
-import { Input } from '../../components/ui/input';
-import { Badge } from '../../components/ui/badge';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '../../components/ui/table';
-import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
+import { useEffect, useState } from 'react';
+import { ChevronLeft, ChevronRight, Edit, Trash2, Plus } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { productAdminService, type AdminProduct } from '../../api/adminService';
 
-export const AdminProductsPage: React.FC = () => {
-    const navigate = useNavigate();
-    const [products, setProducts] = useState<Laptop[]>(initialLaptops);
-    const [searchQuery, setSearchQuery] = useState('');
+export default function AdminProductsPage() {
+    const [selectedCategory, setSelectedCategory] = useState('all');
+    const [keyword, setKeyword] = useState('');
+    const [page, setPage] = useState(1);
+    const [pageSize] = useState(20);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalItems, setTotalItems] = useState(0);
+    const [products, setProducts] = useState<AdminProduct[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
 
-    const handleDelete = (id: string) => {
-        if (window.confirm('Bạn có chắc chắn muốn xóa sản phẩm này?')) {
-            setProducts(products.filter((p) => p.id !== id));
+    const getFreshnessRate = (freshness?: string) => {
+        const value = (freshness ?? '').toUpperCase();
+        if (value === 'HIGH') return 90;
+        if (value === 'MEDIUM') return 55;
+        if (value === 'LOW') return 25;
+        return 10;
+    };
+
+    const getFreshnessBg = (percent: number) => {
+        if (percent > 50) return 'bg-blue-500';
+        if (percent > 20) return 'bg-orange-500';
+        return 'bg-red-500';
+    };
+
+    const loadProducts = async () => {
+        try {
+            setLoading(true);
+            setError('');
+            const data = await productAdminService.list({
+                page,
+                size: pageSize,
+                category: selectedCategory === 'all' ? '' : selectedCategory,
+                keyword,
+                sort: 'createdAt,desc',
+            });
+            setProducts(data.items);
+            setTotalItems(data.totalItems);
+            setTotalPages(data.totalPages);
+        } catch {
+            setError('Không thể tải danh sách sản phẩm.');
+        } finally {
+            setLoading(false);
         }
     };
 
-    const filteredProducts = products.filter((p) =>
-        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.brand.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    useEffect(() => {
+        void loadProducts();
+    }, [selectedCategory, keyword, page, pageSize]);
+
+    useEffect(() => {
+        setPage(1);
+    }, [selectedCategory, keyword]);
+
+    const handleDelete = async (id: number) => {
+        if (!window.confirm('Bạn chắc chắn muốn xóa sản phẩm này?')) {
+            return;
+        }
+
+        try {
+            await productAdminService.remove(id);
+            await loadProducts();
+        } catch {
+            setError('Xóa sản phẩm thất bại.');
+        }
+    };
 
     return (
-        <div className="space-y-4 md:space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
-
-            <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4">
+        <div className="space-y-6">
+            <div className="flex items-center justify-between gap-4">
+                <input
+                    type="text"
+                    placeholder="Tìm kiếm sản phẩm, mã SKU..."
+                    value={keyword}
+                    onChange={(e) => setKeyword(e.target.value)}
+                    className="w-full max-w-md rounded-lg border border-gray-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+            </div>
+            {error && <div className="mb-4 text-sm text-red-600">{error}</div>}
+            <div className="flex items-center justify-between mb-8">
                 <div>
-                    <h2 className="text-xl md:text-2xl font-bold text-slate-800 tracking-tight">Sản phẩm</h2>
-                    <p className="text-sm text-slate-500 mt-1">Quản lý danh mục laptop của bạn.</p>
+                    <h1 className="text-3xl font-bold text-gray-900">Quản lý Sản phẩm</h1>
+                    <p className="text-gray-600 text-sm">Quản lý kho hàng laptop và tình trạng tồn kho của bạn.</p>
                 </div>
-                <Button
-                    onClick={() => navigate('/admin/products/add')}
-                    className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all h-11 sm:h-10 rounded-xl sm:rounded-md"
-                >
-                    <Plus className="w-5 h-5 sm:w-4 sm:h-4 mr-2" />
-                    Thêm sản phẩm
-                </Button>
+                <Link to="/admin/products/new" className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium flex items-center gap-2 hover:bg-blue-700">
+                    <Plus size={20} />
+                    Thêm sản phẩm mới
+                </Link>
             </div>
 
-
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden">
-                {/* Search Bar */}
-                <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row gap-3 bg-slate-50/50">
-                    <div className="relative w-full sm:max-w-md">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                        <Input
-                            placeholder="Tìm tên máy, hãng..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-9 h-11 sm:h-10 bg-white border-slate-200 rounded-xl sm:rounded-lg focus-visible:ring-blue-500"
-                        />
-                    </div>
+            {/* Filter and Info */}
+            <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-4">
+                    <label className="text-sm text-gray-600">Lọc theo danh mục:</label>
+                    <select
+                        value={selectedCategory}
+                        onChange={(e) => setSelectedCategory(e.target.value)}
+                        className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                        <option value="all">Tất cả danh mục</option>
+                        <option value="gaming">Laptop Gaming</option>
+                        <option value="office">Laptop Văn phòng</option>
+                        <option value="macbook">MacBook</option>
+                    </select>
                 </div>
+                <p className="text-sm text-gray-600">Hiển thị {products.length} / {totalItems} sản phẩm</p>
+            </div>
 
+            {/* Products Table */}
+            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                <table className="w-full">
+                    <thead>
+                    <tr className="bg-gray-50 border-b border-gray-200">
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">HÌNH ẢNH</th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">TÊN SẢN PHẨM</th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">DANH MỤC</th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">GIÁ</th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">TÌNH TRẠNG KHO</th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">THAO TÁC</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {products.map((product) => {
+                        const freshness = getFreshnessRate(product.freshness);
+                        const freshnessBg = getFreshnessBg(freshness);
 
-                <div className="w-full overflow-x-auto">
-                    <div className="min-w-[800px] inline-block w-full align-middle">
-                        <Table>
-                            <TableHeader className="bg-slate-50/80">
-                                <TableRow className="border-slate-100">
-                                    <TableHead className="w-[80px] text-slate-500 font-medium">Ảnh</TableHead>
-                                    <TableHead className="text-slate-500 font-medium">Sản phẩm</TableHead>
-                                    <TableHead className="text-slate-500 font-medium">Hãng</TableHead>
-                                    <TableHead className="text-slate-500 font-medium">Giá bán</TableHead>
-                                    <TableHead className="text-slate-500 font-medium">Trạng thái</TableHead>
-                                    <TableHead className="text-right text-slate-500 font-medium pr-6">Thao tác</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {filteredProducts.length > 0 ? (
-                                    filteredProducts.map((product) => (
-                                        <TableRow key={product.id} className="border-slate-100 hover:bg-slate-50/80 transition-colors group">
-                                            <TableCell className="py-3">
-                                                <div className="w-14 h-14 rounded-xl bg-white border border-slate-100 shadow-sm flex items-center justify-center p-1.5 overflow-hidden">
-                                                    <ImageWithFallback src={product.image} alt={product.name} className="w-full h-full object-contain" />
-                                                </div>
-                                            </TableCell>
-                                            <TableCell>
-                                                <p className="font-semibold text-slate-900 line-clamp-1">{product.name}</p>
-                                                <p className="text-xs text-slate-500 mt-0.5 font-medium">{product.cpu} • {product.ram}</p>
-                                            </TableCell>
-                                            <TableCell>
-                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800">
-                                                    {product.brand}
-                                                </span>
-                                            </TableCell>
-                                            <TableCell>
-                                                <span className="font-bold text-blue-600">${product.price.toLocaleString()}</span>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 shadow-none font-medium">
-                                                    {product.condition}
-                                                </Badge>
-                                            </TableCell>
-                                            <TableCell className="text-right pr-4">
-                                                <div className="flex justify-end gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
-                                                    <Button
-                                                        variant="ghost" size="icon"
-                                                        onClick={() => navigate(`/admin/products/edit/${product.id}`)}
-                                                        className="h-9 w-9 text-blue-600 hover:bg-blue-50 hover:text-blue-700 rounded-lg"
-                                                    >
-                                                        <Edit className="w-4 h-4" />
-                                                    </Button>
-                                                    <Button
-                                                        variant="ghost" size="icon"
-                                                        onClick={() => handleDelete(product.id)}
-                                                        className="h-9 w-9 text-red-500 hover:bg-red-50 hover:text-red-600 rounded-lg"
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </Button>
-                                                </div>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))
-                                ) : (
-                                    <TableRow>
-                                        <TableCell colSpan={6} className="h-48 text-center">
-                                            <div className="flex flex-col items-center justify-center text-slate-500">
-                                                <Search className="w-10 h-10 text-slate-300 mb-3" />
-                                                <p>Không tìm thấy sản phẩm nào.</p>
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                )}
-                            </TableBody>
-                        </Table>
-                    </div>
+                        return (
+                            <tr key={product.id} className="border-b border-gray-200 hover:bg-gray-50">
+                                <td className="px-6 py-4">
+                                    <div className="w-12 h-12 bg-gray-300 rounded-lg flex items-center justify-center text-gray-500">
+                                        📷
+                                    </div>
+                                </td>
+                                <td className="px-6 py-4">
+                                    <p className="font-medium text-gray-900">{product.name}</p>
+                                    <p className="text-xs text-gray-500">SKU: {product.sku}</p>
+                                </td>
+                                <td className="px-6 py-4 text-sm text-gray-600">{product.category}</td>
+                                <td className="px-6 py-4 font-medium text-gray-900">{product.price.toLocaleString('vi-VN')}đ</td>
+                                <td className="px-6 py-4">
+                                    <div className="flex items-center gap-2">
+                        <span className={`text-xs font-medium ${freshness > 50 ? 'text-blue-600' : freshness > 20 ? 'text-orange-600' : 'text-red-600'}`}>
+                          {freshness > 50 ? 'Còn hàng' : freshness > 20 ? 'Sắp hết hàng' : 'Hết hàng'}
+                        </span>
+                                        <div className="w-12 h-1 bg-gray-200 rounded-full overflow-hidden">
+                                            <div
+                                                className={`h-full ${freshnessBg}`}
+                                                style={{ width: `${freshness}%` }}
+                                            />
+                                        </div>
+                                        <span className="text-xs text-gray-600">{product.stock}</span>
+                                    </div>
+                                </td>
+                                <td className="px-6 py-4 flex items-center gap-3">
+                                    <Link to={`/admin/products/${product.id}`} className="text-blue-600 hover:text-blue-700 p-2 hover:bg-blue-50 rounded">
+                                        <Edit size={18} />
+                                    </Link>
+                                    <button className="text-red-600 hover:text-red-700 p-2 hover:bg-red-50 rounded" onClick={() => void handleDelete(product.id)}>
+                                        <Trash2 size={18} />
+                                    </button>
+                                </td>
+                            </tr>
+                        );
+                    })}
+                    {!loading && products.length === 0 && (
+                        <tr>
+                            <td colSpan={6} className="px-6 py-6 text-center text-sm text-gray-500">Không có sản phẩm nào.</td>
+                        </tr>
+                    )}
+                    </tbody>
+                </table>
+            </div>
+
+            {/* Pagination */}
+            <div className="flex items-center justify-between mt-6">
+                <button
+                    disabled={page <= 1}
+                    onClick={() => setPage((current) => Math.max(1, current - 1))}
+                    className="text-gray-600 hover:text-gray-900 text-sm font-medium flex items-center gap-1 disabled:opacity-40"
+                >
+                    <ChevronLeft size={16} />
+                    Trước
+                </button>
+                <div className="flex items-center gap-2">
+                    <button className="w-8 h-8 bg-blue-600 text-white rounded font-medium text-sm">{page}</button>
+                    <span className="text-gray-500 text-sm">/ {totalPages}</span>
                 </div>
+                <button
+                    disabled={page >= totalPages}
+                    onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+                    className="text-gray-600 hover:text-gray-900 text-sm font-medium flex items-center gap-1 disabled:opacity-40"
+                >
+                    Tiếp theo
+                    <ChevronRight size={16} />
+                </button>
             </div>
         </div>
     );
-};
+}
