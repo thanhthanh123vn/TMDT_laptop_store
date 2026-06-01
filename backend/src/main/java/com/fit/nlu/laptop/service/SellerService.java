@@ -79,7 +79,7 @@ public class SellerService {
         SellerProfile profile = getProfile(userId);
         Long sellerId = profile.getId();
 
-        long totalProducts = productRepository.countBySellerId(sellerId);
+        long totalProducts = productRepository.countBySellerIdAndIsDeletedFalse(sellerId);
         long totalOrders = orderRepository.countBySellerId(sellerId);
         long totalReviews = reviewRepository.countBySellerId(sellerId);
         Double avgRating = reviewRepository.avgRatingBySellerId(sellerId);
