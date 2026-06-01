@@ -29,4 +29,5 @@ public class ProductDetailResponse {
     private String sellerName;
     private String sellerLogo;
     private Double sellerRating;
+    private Long sellerSoldCount;
 }

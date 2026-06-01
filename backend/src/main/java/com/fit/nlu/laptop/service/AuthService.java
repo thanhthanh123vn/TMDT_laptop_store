@@ -99,6 +99,7 @@ public class AuthService {
 
         SellerProfile profile = sellerProfileRepository.findByUserId(user.getId()).orElseGet(SellerProfile::new);
         profile.setUser(user);
+        profile.setStoreName(req.storeName() != null ? req.storeName().trim() : req.fullName().trim());
         profile.setWarehouseProvince(req.warehouseProvince().trim());
         profile.setWarehouseDistrict(req.warehouseDistrict().trim());
         profile.setWarehouseWard(req.warehouseWard().trim());
@@ -341,7 +342,8 @@ public class AuthService {
                 refreshToken,
                 user.getEmail(),
                 user.getFullName(),
-                user.getProvider() != null ? user.getProvider().name() : null
+                user.getProvider() != null ? user.getProvider().name() : null,
+                user.getRole() != null ? user.getRole().name() : null
         );
     }
 }
