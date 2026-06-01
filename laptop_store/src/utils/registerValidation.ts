@@ -4,6 +4,7 @@ export interface SellerFormData {
     phone: string;
     password: string;
     confirmPassword: string;
+    storeName: string;
     warehouseProvince: string;
     warehouseDistrict: string;
     warehouseWard: string;
@@ -26,6 +27,9 @@ export function normalizePhone(phone: string): string {
 export function validateSellerForm(data: SellerFormData): string | null {
     if (!data.fullName.trim() || data.fullName.trim().length < 2) {
         return "Họ tên phải có ít nhất 2 ký tự.";
+    }
+    if (!data.storeName?.trim() || data.storeName.trim().length < 2) {
+        return "Tên cửa hàng phải có ít nhất 2 ký tự.";
     }
     if (!EMAIL_RE.test(data.email.trim())) {
         return "Email không hợp lệ.";
