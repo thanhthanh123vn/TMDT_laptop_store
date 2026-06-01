@@ -21,10 +21,19 @@ public class FileService {
         if (!Files.exists(root)) {
             Files.createDirectories(root);
         }
-
         String fileName = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
         Files.copy(file.getInputStream(), root.resolve(fileName));
+        return "/uploads/" + fileName;
+    }
 
+    public String saveProductImage(MultipartFile file) throws IOException {
+        // Same pattern as saveAvatar — stored under uploads/, URL is /uploads/<filename>
+        Path root = Paths.get(uploadDir);
+        if (!Files.exists(root)) {
+            Files.createDirectories(root);
+        }
+        String fileName = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
+        Files.copy(file.getInputStream(), root.resolve(fileName));
         return "/uploads/" + fileName;
     }
 }

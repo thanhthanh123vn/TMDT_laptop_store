@@ -8,6 +8,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "products")
@@ -79,6 +81,19 @@ public class Product {
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
+
+    @Column(name = "stock")
+    private Integer stock = 0;
+
+    @Column(name = "is_deleted")
+    private boolean isDeleted = false;
+
+    @Column(name = "approved")
+    private boolean approved = false;
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @com.fasterxml.jackson.annotation.JsonManagedReference
+    private List<ProductImage> images = new ArrayList<>();
 
     @PrePersist
     void onCreate() {
