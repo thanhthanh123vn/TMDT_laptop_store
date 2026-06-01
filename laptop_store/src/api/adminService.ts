@@ -1,4 +1,4 @@
-import api from "./api";
+import api from "./axiosClient";
 
 export type PageResult<T> = {
     items: T[];
@@ -331,7 +331,7 @@ export const userAdminService = {
                 id: toNumber(record.id, index + 1),
                 fullName: toString(record.fullName ?? record.name, "Người dùng"),
                 email: toString(record.email),
-                role: normalizeStatus(toString(record.role, "CUSTOMER")),
+                role: normalizeStatus(toString(record.role, "USER")),
                 status: normalizeStatus(toString(record.status, "ACTIVE")),
                 createdAt: toString(record.createdAt ?? record.registrationDate, ""),
             };

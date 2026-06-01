@@ -19,7 +19,8 @@ import WishListPage from './pages/WishListPage';
 import NotificationsPage from './pages/NotificationsPage';
 import {AdminLayout} from "./pages/admin/AdminLayout.tsx";
 import {AdminProductFormPage} from "./pages/admin/AdminProductFormPage.tsx";
-import {AdminProductsPage} from "./pages/admin/AdminProductsPage.tsx";
+import AdminProductsPage from "./pages/admin/AdminProductsPage.tsx";
+import AdminUsersPage from "./pages/admin/UserManagementPage.tsx";
 import {AdminDashboardPage} from "./pages/admin/AdminDashboardPage.tsx";
 import {AdminOrdersPage} from "./pages/admin/AdminOrdersPage.tsx";
 import {SellerLayout} from "./pages/seller/SellerLayout.tsx";
@@ -87,6 +88,7 @@ export const router = createBrowserRouter([
       { path: 'products/add', Component: AdminProductFormPage },
       { path: 'products/edit/:id', Component: AdminProductFormPage },
       { path: 'orders', Component: AdminOrdersPage },
+      { path: 'users', Component: AdminUsersPage },
     ],
   },
   {
