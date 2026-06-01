@@ -33,10 +33,7 @@ public class ProductController {
     private final ProductService productService;
     @GetMapping
     public List<Product> getAllProducts(@RequestParam(required = false) Long categoryId) {
-        if (categoryId != null) {
-            return productRepository.findByCategoryId(categoryId);
-        }
-        return productRepository.findAll();
+        return productRepository.findPublicProducts(categoryId);
     }
 
     @GetMapping("/{id}")
