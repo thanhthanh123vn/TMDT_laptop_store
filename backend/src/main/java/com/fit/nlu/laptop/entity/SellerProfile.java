@@ -23,13 +23,10 @@ public class SellerProfile {
     private User user;
     @Column(name = "store_name", nullable = false)
     private String storeName;
-    @Column(name = "store_address", length = 500)
-    private String storeAddress;
-    @Column(name = "store_phone", length = 20)
-    private String storePhone;
-    @Column(name = "logo_url", length = 500)
-    private String logoUrl;
-    private Double rating = 0.0;@Column(length = 50)
+
+    private Double rating = 0.0;
+
+    @Column(length = 50)
     private String status = "PENDING";
 
     @Column(name = "warehouse_province", nullable = false)
