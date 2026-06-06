@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router';
-import { LayoutDashboard, Laptop, ShoppingCart, Users, Settings, LogOut, PackagePlus } from 'lucide-react';
+import { LayoutDashboard, Laptop, ShoppingCart, Users, Settings, LogOut, PackagePlus, Bell } from 'lucide-react';
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarGroupContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarHeader, SidebarFooter } from '../../components/ui/sidebar';
 
 const adminMenuItems = [
@@ -9,6 +9,7 @@ const adminMenuItems = [
     { title: 'Thêm sản phẩm', url: '/admin/products/add', icon: PackagePlus },
     { title: 'Đơn hàng', url: '/admin/orders', icon: ShoppingCart },
     { title: 'Khách hàng', url: '/admin/users', icon: Users },
+    { title: 'Thông báo', url: '/admin/notifications', icon: Bell },
     { title: 'Cài đặt', url: '/admin/settings', icon: Settings },
 ];
 
