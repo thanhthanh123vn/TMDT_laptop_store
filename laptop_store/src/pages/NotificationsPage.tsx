@@ -56,12 +56,12 @@ export default function NotificationsPage() {
                     id: n.id.toString(),
                     type: n.type || "system",
                     title: n.title,
-                    message: n.message,
+                    message: n.content || n.message || "Không có nội dung",
                     time: n.createdAt ? new Date(n.createdAt).toLocaleString('vi-VN') : "",
                     read: n.read,
                     icon: n.icon || "info",
                     image: n.imageUrl,
-                    actions: n.actionLink ? [{ label: "Chi tiết", href: n.actionLink }] : []
+                    actions: (n.actionUrl || n.actionLink) ? [{ label: "Chi tiết", href: (n.actionUrl || n.actionLink) }] : []
                 })));
             } catch(err) {
                 console.error(err);
@@ -87,7 +87,7 @@ export default function NotificationsPage() {
     }, []);
 
     const orderNotifications = notifications.filter((n) => n.type === "order")
-    const systemNotificationsAPI = notifications.filter((n) => n.type === "system" || n.type === "promo" || n.type === "info" || n.type === "warning")
+    const systemNotificationsAPI = notifications.filter((n) => n.type !== "order")
 
     const markAllAsRead = async () => {
         try {
