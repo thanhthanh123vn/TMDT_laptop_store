@@ -1,13 +1,24 @@
 package com.fit.nlu.laptop.repository;
 
 import com.fit.nlu.laptop.entity.Notification;
-import com.fit.nlu.laptop.entity.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
-import java.util.List;
-
-@Repository
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
-    List<Notification> findByUserOrderByCreatedAtDesc(User user);
+    Page<Notification> findByUserIdOrUserIdIsNullOrderByCreatedAtDesc(Long userId, Pageable pageable);
+    Page<Notification> findByUserId(Long userId, Pageable pageable);
+    
+    @Query("SELECT COUNT(n) FROM Notification n WHERE (n.userId = :userId OR n.userId IS NULL) AND n.read = false")
+    long countUnreadByUserId(@Param("userId") Long userId);
+    
+    @Query("SELECT n FROM Notification n WHERE (n.userId = :userId OR n.userId IS NULL) AND (:type IS NULL OR n.type = :type) AND (:isRead IS NULL OR n.read = :isRead) ORDER BY n.createdAt DESC")
+    Page<Notification> findUserNotificationsWithFilter(
+            @Param("userId") Long userId,
+            @Param("type") String type,
+            @Param("isRead") Boolean isRead,
+            Pageable pageable
+    );
 }

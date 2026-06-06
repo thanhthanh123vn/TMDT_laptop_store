@@ -3,51 +3,31 @@ package com.fit.nlu.laptop.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "notifications")
 @Getter
 @Setter
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Notification {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    @JsonIgnore
-    private User user;
-
-    private String type; // order, system, promo
-
+    private Long userId; // null nếu gửi cho tất cả
     private String title;
-
-    @Column(columnDefinition = "TEXT")
-    private String message;
-
+    private String content; // description
+    private String type; // order, ai, offer, system
+    @Column(columnDefinition = "JSON")
+    private String tags; // JSON array [{"label": "Track Package", "variant": "outline"}]
+    private String actionUrl; // URL redirect khi click
     @Column(name = "is_read")
-    private boolean isRead = false;
-    
-    private String icon; // package, truck, monitor, warning
-    
-    @Column(name = "image_url")
-    private String imageUrl; // optional
-    
-    @Column(name = "action_link")
-    private String actionLink; // optional href
-
-    @Column(name = "created_at", updatable = false)
+    private boolean read = false;
     private LocalDateTime createdAt;
 
     @PrePersist
     void onCreate() {
-        this.createdAt = LocalDateTime.now();
+        if (this.createdAt == null) {
+            this.createdAt = LocalDateTime.now();
+        }
     }
 }
