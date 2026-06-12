@@ -42,6 +42,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ laptop }) => {
 
   const handleToggleWishlist = (e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     toggleWishlist(laptop.id);
   };
 

@@ -64,22 +64,25 @@ export default function WishlistPage() {
             try {
                 const res = await wishlistApi.getMyWishlist()
                 setWishlistItems(
-                    res.data.map((p: any) => ({
-                        id: p.id,
-                        name: p.name,
-                        image: p.imageUrl || "/placeholder.svg",
-                        price: Number(p.price),
-                        oldPrice: p.oldPrice ? Number(p.oldPrice) : undefined,
-                        rating: p.rating || 5.0,
-                        reviews: p.reviews || 0,
-                        badge: p.badge || "",
-                        badgeColor: p.badgeColor || "bg-emerald-500",
-                        brand: p.brand || "",
-                        cpu: p.cpu || "",
-                        ram: p.ram || "",
-                        storage: p.storage || "",
-                        condition: p.condition || "",
-                    }))
+                    res.data.map((item: any) => {
+                        const p = item.product || item;
+                        return {
+                            id: p.id,
+                            name: p.name,
+                            image: p.imageUrl || "/placeholder.svg",
+                            price: Number(p.price),
+                            oldPrice: p.oldPrice ? Number(p.oldPrice) : undefined,
+                            rating: p.rating || 5.0,
+                            reviews: p.reviews || 0,
+                            badge: p.badge || "",
+                            badgeColor: p.badgeColor || "bg-emerald-500",
+                            brand: p.brand || "",
+                            cpu: p.cpu || "",
+                            ram: p.ram || "",
+                            storage: p.storage || "",
+                            condition: p.condition || "",
+                        }
+                    })
                 )
             } catch {
                 // not logged in or error
