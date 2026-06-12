@@ -24,6 +24,7 @@ import AdminUsersPage from "./pages/admin/UserManagementPage.tsx";
 import {AdminDashboardPage} from "./pages/admin/AdminDashboardPage.tsx";
 import {AdminOrdersPage} from "./pages/admin/AdminOrdersPage.tsx";
 import NotificationManagementPage from "./pages/admin/NotificationManagementPage.tsx";
+import {AdminProfilePage} from "./pages/admin/AdminProfilePage.tsx";
 import {SellerLayout} from "./pages/seller/SellerLayout.tsx";
 import {SellerDashboardPage} from "./pages/seller/SellerDashboardPage.tsx";
 import {SellerProductsPage} from "./pages/seller/SellerProductsPage.tsx";
@@ -91,6 +92,7 @@ export const router = createBrowserRouter([
       { path: 'orders', Component: AdminOrdersPage },
       { path: 'users', Component: AdminUsersPage },
       { path: 'notifications', Component: NotificationManagementPage },
+      { path: 'profile', Component: AdminProfilePage },
     ],
   },
   {
