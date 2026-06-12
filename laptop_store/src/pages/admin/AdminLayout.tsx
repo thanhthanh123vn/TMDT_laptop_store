@@ -1,5 +1,5 @@
 import React from 'react';
-import { Outlet } from 'react-router';
+import { Outlet } from 'react-router-dom';
 import { AdminSidebar } from './AdminSidebar';
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '../../components/ui/sidebar';
 
@@ -21,8 +21,7 @@ export const AdminLayout: React.FC = () => {
 
                         {/* Avatar */}
                         <div className="ml-auto flex items-center gap-3">
-                            <div
-                                className="w-8 h-8 md:w-9 md:h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold shadow-inner border border-blue-200/50 cursor-pointer hover:bg-blue-200 transition-colors">
+                            <div className="w-8 h-8 md:w-9 md:h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold shadow-inner border border-blue-200/50">
                                 Ad
                             </div>
                         </div>

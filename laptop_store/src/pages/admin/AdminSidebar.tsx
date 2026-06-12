@@ -1,6 +1,6 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router';
-import { LayoutDashboard, Laptop, ShoppingCart, Users, Settings, LogOut, PackagePlus, Bell } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { LayoutDashboard, Laptop, ShoppingCart, Users, Settings, LogOut, PackagePlus, Bell, User } from 'lucide-react';
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarGroupContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarHeader, SidebarFooter } from '../../components/ui/sidebar';
 
 const adminMenuItems = [
@@ -10,11 +10,18 @@ const adminMenuItems = [
     { title: 'Đơn hàng', url: '/admin/orders', icon: ShoppingCart },
     { title: 'Khách hàng', url: '/admin/users', icon: Users },
     { title: 'Thông báo', url: '/admin/notifications', icon: Bell },
+    { title: 'Hồ sơ admin', url: '/admin/profile', icon: User },
     { title: 'Cài đặt', url: '/admin/settings', icon: Settings },
 ];
 
 export const AdminSidebar: React.FC = () => {
     const location = useLocation();
+    const navigate = useNavigate();
+
+    const handleLogout = () => {
+        localStorage.removeItem('token');
+        navigate('/login');
+    };
 
     return (
         <Sidebar variant="sidebar" collapsible="icon" className="border-r border-slate-200/60 shadow-sm bg-white">
@@ -55,7 +62,7 @@ export const AdminSidebar: React.FC = () => {
             <SidebarFooter className="border-t border-slate-200/60 p-4 bg-white">
                 <SidebarMenu>
                     <SidebarMenuItem>
-                        <SidebarMenuButton className="h-11 rounded-xl text-rose-500 hover:text-rose-700 hover:bg-rose-50 transition-colors" tooltip="Đăng xuất">
+                        <SidebarMenuButton onClick={handleLogout} className="h-11 rounded-xl text-rose-500 hover:text-rose-700 hover:bg-rose-50 transition-colors" tooltip="Đăng xuất">
                             <LogOut className="w-5 h-5" />
                             <span className="font-medium">Đăng xuất</span>
                         </SidebarMenuButton>
