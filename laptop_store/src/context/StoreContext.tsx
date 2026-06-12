@@ -94,7 +94,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (!isLoggedIn()) return;
     try {
       const res = await wishlistApi.getMyWishlist();
-      const ids = (res.data as any[]).map((p: any) => String(p.id));
+      const ids = (res.data as any[]).map((item: any) => String(item.product?.id || item.id));
       setWishlist(ids);
     } catch {
       // fallback: keep local wishlist

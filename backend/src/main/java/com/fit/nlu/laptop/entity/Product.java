@@ -71,13 +71,13 @@ public class Product {
     private String description;
     
     @Column(name = "is_best_seller")
-    private boolean isBestSeller = false;
+    private Boolean isBestSeller = false;
     
     @Column(name = "is_hot")
-    private boolean isHot = false;
+    private Boolean isHot = false;
     
     @Column(name = "is_sale")
-    private boolean isSale = false;
+    private Boolean isSale = false;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
@@ -86,10 +86,51 @@ public class Product {
     private Integer stock = 0;
 
     @Column(name = "is_deleted")
-    private boolean isDeleted = false;
+    private Boolean isDeleted = false;
 
     @Column(name = "approved")
-    private boolean approved = false;
+    private Boolean approved = false;
+
+    // Manual compatibility getters and setters for boolean primitive fallback
+    public boolean isBestSeller() {
+        return isBestSeller != null && isBestSeller;
+    }
+
+    public void setBestSeller(boolean isBestSeller) {
+        this.isBestSeller = isBestSeller;
+    }
+
+    public boolean isHot() {
+        return isHot != null && isHot;
+    }
+
+    public void setHot(boolean isHot) {
+        this.isHot = isHot;
+    }
+
+    public boolean isSale() {
+        return isSale != null && isSale;
+    }
+
+    public void setSale(boolean isSale) {
+        this.isSale = isSale;
+    }
+
+    public boolean isDeleted() {
+        return isDeleted != null && isDeleted;
+    }
+
+    public void setDeleted(boolean isDeleted) {
+        this.isDeleted = isDeleted;
+    }
+
+    public boolean isApproved() {
+        return approved != null && approved;
+    }
+
+    public void setApproved(boolean approved) {
+        this.approved = approved;
+    }
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @com.fasterxml.jackson.annotation.JsonManagedReference

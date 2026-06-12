@@ -23,6 +23,7 @@ public class WishlistController {
 
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
+    private final com.fit.nlu.laptop.service.WishlistService wishlistService;
 
     @GetMapping
     @Transactional(readOnly = true)
@@ -53,17 +54,9 @@ public class WishlistController {
     }
 
     @PostMapping("/{productId}")
-    @Transactional
     public ResponseEntity<?> toggleWishlist(@AuthenticationPrincipal UserPrincipal principal, @PathVariable Long productId) {
         if (principal == null) return ResponseEntity.status(401).build();
-        User user = userRepository.findById(principal.getId().longValue()).orElseThrow();
-        Product product = productRepository.findById(productId).orElseThrow();
-
-        boolean removed = user.getWishlist().removeIf(p -> p.getId().equals(product.getId()));
-        if (!removed) {
-            user.getWishlist().add(product);
-        }
-        userRepository.save(user);
-        return ResponseEntity.ok(Map.of("inWishlist", !removed, "productId", productId));
+        boolean inWishlist = wishlistService.toggleWishlist(principal.getId().longValue(), productId);
+        return ResponseEntity.ok(Map.of("inWishlist", inWishlist, "productId", productId));
     }
 }
