@@ -89,7 +89,7 @@ export default function AdminProductsPage() {
                     <h1 className="text-3xl font-bold text-gray-900">Quản lý Sản phẩm</h1>
                     <p className="text-gray-600 text-sm">Quản lý kho hàng laptop và tình trạng tồn kho của bạn.</p>
                 </div>
-                <Link to="/admin/products/new" className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium flex items-center gap-2 hover:bg-blue-700">
+                <Link to="/admin/products/add" className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium flex items-center gap-2 hover:bg-blue-700">
                     <Plus size={20} />
                     Thêm sản phẩm mới
                 </Link>
@@ -159,7 +159,7 @@ export default function AdminProductsPage() {
                                     </div>
                                 </td>
                                 <td className="px-6 py-4 flex items-center gap-3">
-                                    <Link to={`/admin/products/${product.id}`} className="text-blue-600 hover:text-blue-700 p-2 hover:bg-blue-50 rounded">
+                                    <Link to={`/admin/products/edit/${product.id}`} className="text-blue-600 hover:text-blue-700 p-2 hover:bg-blue-50 rounded">
                                         <Edit size={18} />
                                     </Link>
                                     <button className="text-red-600 hover:text-red-700 p-2 hover:bg-red-50 rounded" onClick={() => void handleDelete(product.id)}>
