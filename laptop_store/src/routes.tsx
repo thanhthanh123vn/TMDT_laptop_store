@@ -25,6 +25,8 @@ import {AdminDashboardPage} from "./pages/admin/AdminDashboardPage.tsx";
 import {AdminOrdersPage} from "./pages/admin/AdminOrdersPage.tsx";
 import NotificationManagementPage from "./pages/admin/NotificationManagementPage.tsx";
 import {AdminProfilePage} from "./pages/admin/AdminProfilePage.tsx";
+import AdminCategoriesPage from "./pages/admin/AdminCategoriesPage.tsx";
+import AdminRevenuePage from "./pages/admin/AdminRevenuePage.tsx";
 import {SellerLayout} from "./pages/seller/SellerLayout.tsx";
 import {SellerDashboardPage} from "./pages/seller/SellerDashboardPage.tsx";
 import {SellerProductsPage} from "./pages/seller/SellerProductsPage.tsx";
@@ -91,6 +93,8 @@ export const router = createBrowserRouter([
       { path: 'products/edit/:id', Component: AdminProductFormPage },
       { path: 'orders', Component: AdminOrdersPage },
       { path: 'users', Component: AdminUsersPage },
+      { path: 'categories', Component: AdminCategoriesPage },
+      { path: 'revenue', Component: AdminRevenuePage },
       { path: 'notifications', Component: NotificationManagementPage },
       { path: 'profile', Component: AdminProfilePage },
     ],
