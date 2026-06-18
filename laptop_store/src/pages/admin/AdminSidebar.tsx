@@ -1,17 +1,17 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Laptop, ShoppingCart, Users, Settings, LogOut, PackagePlus, Bell, User } from 'lucide-react';
+import { LayoutDashboard, Laptop, ShoppingCart, Users, LogOut, PackagePlus, Bell, User, Tag, BarChart2 } from 'lucide-react';
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarGroupContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarHeader, SidebarFooter } from '../../components/ui/sidebar';
 
 const adminMenuItems = [
     { title: 'Tổng quan', url: '/admin', icon: LayoutDashboard },
     { title: 'Sản phẩm', url: '/admin/products', icon: Laptop },
-    { title: 'Thêm sản phẩm', url: '/admin/products/add', icon: PackagePlus },
+    { title: 'Danh mục', url: '/admin/categories', icon: Tag },
     { title: 'Đơn hàng', url: '/admin/orders', icon: ShoppingCart },
     { title: 'Khách hàng', url: '/admin/users', icon: Users },
+    { title: 'Doanh thu', url: '/admin/revenue', icon: BarChart2 },
     { title: 'Thông báo', url: '/admin/notifications', icon: Bell },
     { title: 'Hồ sơ admin', url: '/admin/profile', icon: User },
-    { title: 'Cài đặt', url: '/admin/settings', icon: Settings },
 ];
 
 export const AdminSidebar: React.FC = () => {
