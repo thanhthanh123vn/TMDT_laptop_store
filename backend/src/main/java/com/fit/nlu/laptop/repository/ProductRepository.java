@@ -12,10 +12,10 @@ import java.util.Optional;
 public interface ProductRepository extends JpaRepository<Product, Long>, org.springframework.data.jpa.repository.JpaSpecificationExecutor<Product> {
     List<Product> findByNameContainingIgnoreCase(String name);
     List<Product> findByCategoryId(Long categoryId);
+    long countByCategoryId(Long categoryId);
     List<Product> findBySellerId(Long sellerId);
     long countBySellerId(Long sellerId);
 
-    // Seller product management - exclude soft-deleted
     List<Product> findBySellerIdAndIsDeletedFalse(Long sellerId);
     long countBySellerIdAndIsDeletedFalse(Long sellerId);
 
@@ -34,7 +34,6 @@ public interface ProductRepository extends JpaRepository<Product, Long>, org.spr
             @Param("inStock") Boolean inStock
     );
 
-    // For public listing - only approved, not deleted
     @Query("SELECT p FROM Product p WHERE p.isDeleted = false AND p.approved = true " +
            "AND (:categoryId IS NULL OR p.categoryId = :categoryId)")
     List<Product> findPublicProducts(@Param("categoryId") Long categoryId);
