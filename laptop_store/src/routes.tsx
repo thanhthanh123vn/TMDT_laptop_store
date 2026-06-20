@@ -27,6 +27,7 @@ import NotificationManagementPage from "./pages/admin/NotificationManagementPage
 import {AdminProfilePage} from "./pages/admin/AdminProfilePage.tsx";
 import AdminCategoriesPage from "./pages/admin/AdminCategoriesPage.tsx";
 import AdminRevenuePage from "./pages/admin/AdminRevenuePage.tsx";
+import AdminSellersPage from "./pages/admin/AdminSellersPage.tsx";
 import {SellerLayout} from "./pages/seller/SellerLayout.tsx";
 import {SellerDashboardPage} from "./pages/seller/SellerDashboardPage.tsx";
 import {SellerProductsPage} from "./pages/seller/SellerProductsPage.tsx";
@@ -53,7 +54,7 @@ export const router = createBrowserRouter([
       {
         path: 'checkout',
         element: (
-            // 3. Sử dụng stripePromise đã khởi tạo
+
             <Elements stripe={stripePromise}>
                 <CheckoutPage />
                 </Elements>
@@ -93,6 +94,7 @@ export const router = createBrowserRouter([
       { path: 'products/edit/:id', Component: AdminProductFormPage },
       { path: 'orders', Component: AdminOrdersPage },
       { path: 'users', Component: AdminUsersPage },
+      { path: 'sellers', Component: AdminSellersPage },
       { path: 'categories', Component: AdminCategoriesPage },
       { path: 'revenue', Component: AdminRevenuePage },
       { path: 'notifications', Component: NotificationManagementPage },
