@@ -401,6 +401,107 @@ export const aiRecipeAdminService = {
     },
 };
 
+export type AdminSeller = {
+    id: number;
+    userId: number;
+    storeName: string;
+    fullName: string;
+    email: string;
+    phone: string;
+    approved: boolean;
+    status: string;
+    emailVerified: boolean;
+    createdAt: string;
+    warehouseProvince?: string;
+    warehouseDistrict?: string;
+    warehouseWard?: string;
+    warehouseStreet?: string;
+    cccd?: string;
+    bankName?: string;
+    bankAccountNumber?: string;
+    bankAccountHolder?: string;
+    rating?: number;
+    avatarUrl?: string;
+};
+
+export const sellerAdminService = {
+    async list(params: { page?: number; size?: number; approved?: string; status?: string; keyword?: string }): Promise<PageResult<AdminSeller>> {
+        const query: Record<string, unknown> = { ...params };
+        if (params.approved === 'true') query.approved = true;
+        else if (params.approved === 'false') query.approved = false;
+        else delete query.approved;
+
+        const res = await api.get('/api/admin/sellers', { params: cleanParams(query) });
+        return toPageResult(res.data, (item, index) => {
+            const record = toRecord(item);
+            return {
+                id: toNumber(record.id, index + 1),
+                userId: toNumber(record.userId),
+                storeName: toString(record.storeName, 'Cửa hàng'),
+                fullName: toString(record.fullName, 'Người bán'),
+                email: toString(record.email),
+                phone: toString(record.phone),
+                approved: record.approved === true,
+                status: normalizeStatus(toString(record.status, 'PENDING')),
+                emailVerified: record.emailVerified === true,
+                createdAt: toString(record.createdAt, ''),
+                warehouseProvince: toString(record.warehouseProvince),
+                warehouseDistrict: toString(record.warehouseDistrict),
+                warehouseWard: toString(record.warehouseWard),
+                warehouseStreet: toString(record.warehouseStreet),
+                cccd: toString(record.cccd),
+                bankName: toString(record.bankName),
+                bankAccountNumber: toString(record.bankAccountNumber),
+                bankAccountHolder: toString(record.bankAccountHolder),
+                rating: toNumber(record.rating),
+                avatarUrl: toString(record.avatarUrl),
+            };
+        });
+    },
+
+    async detail(id: number): Promise<AdminSeller> {
+        const res = await api.get(`/api/admin/sellers/${id}`);
+        const record = toRecord(res.data);
+        return {
+            id: toNumber(record.id),
+            userId: toNumber(record.userId),
+            storeName: toString(record.storeName, 'Cửa hàng'),
+            fullName: toString(record.fullName, 'Người bán'),
+            email: toString(record.email),
+            phone: toString(record.phone),
+            approved: record.approved === true,
+            status: normalizeStatus(toString(record.status, 'PENDING')),
+            emailVerified: record.emailVerified === true,
+            createdAt: toString(record.createdAt, ''),
+            warehouseProvince: toString(record.warehouseProvince),
+            warehouseDistrict: toString(record.warehouseDistrict),
+            warehouseWard: toString(record.warehouseWard),
+            warehouseStreet: toString(record.warehouseStreet),
+            cccd: toString(record.cccd),
+            bankName: toString(record.bankName),
+            bankAccountNumber: toString(record.bankAccountNumber),
+            bankAccountHolder: toString(record.bankAccountHolder),
+            rating: toNumber(record.rating),
+            avatarUrl: toString(record.avatarUrl),
+        };
+    },
+
+    async approve(id: number) {
+        const res = await api.patch(`/api/admin/sellers/${id}/approve`);
+        return res.data;
+    },
+
+    async reject(id: number) {
+        const res = await api.patch(`/api/admin/sellers/${id}/reject`);
+        return res.data;
+    },
+
+    async updateStatus(id: number, status: string) {
+        const res = await api.patch(`/api/admin/sellers/${id}/status`, { status: normalizeStatus(status) });
+        return res.data;
+    },
+};
+
 export type AdminNotification = {
     id: string | number;
     title: string;

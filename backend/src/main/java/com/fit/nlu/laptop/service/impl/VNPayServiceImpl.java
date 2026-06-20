@@ -7,7 +7,8 @@ import com.fit.nlu.laptop.service.VNPayService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 public class VNPayServiceImpl implements VNPayService {
@@ -18,38 +19,21 @@ public class VNPayServiceImpl implements VNPayService {
     @Override
     public boolean verifySignature(Map<String, String> queryParams) {
         String vnp_SecureHash = queryParams.get("vnp_SecureHash");
+        if (vnp_SecureHash == null || vnp_SecureHash.isBlank()) {
+            return false;
+        }
 
-        // Loại bỏ SecureHash khỏi map để tính toán lại hash
         Map<String, String> fields = new HashMap<>(queryParams);
         fields.remove("vnp_SecureHashType");
         fields.remove("vnp_SecureHash");
 
-        // Sắp xếp các tham số theo thứ tự alphabet
-        List<String> fieldNames = new ArrayList<>(fields.keySet());
-        Collections.sort(fieldNames);
-
-        StringBuilder hashData = new StringBuilder();
-        Iterator<String> itr = fieldNames.iterator();
-        while (itr.hasNext()) {
-            String fieldName = itr.next();
-            String fieldValue = fields.get(fieldName);
-            if ((fieldValue != null) && (fieldValue.length() > 0)) {
-                hashData.append(fieldName).append('=').append(fieldValue);
-                if (itr.hasNext()) {
-                    hashData.append('&');
-                }
-            }
-        }
-
-        // Dùng hàm băm HMAC-SHA512 để kiểm tra
-        String signValue = VNPayConfig.hmacSHA512(VNPayConfig.secretKey, hashData.toString());
-        return signValue.equals(vnp_SecureHash);
+        String hashData = VNPayConfig.buildReturnHashData(fields);
+        String signValue = VNPayConfig.hmacSHA512(VNPayConfig.secretKey, hashData);
+        return signValue.equalsIgnoreCase(vnp_SecureHash);
     }
 
     @Override
     public void updateOrderStatus(String vnp_TxnRef, String status) {
-        // Tìm đơn hàng theo mã tham chiếu và cập nhật trạng thái
-        // Lưu ý: vnp_TxnRef thường là ID đơn hàng bạn tạo ra lúc đầu
         Order order = orderRepository.findById(Long.parseLong(vnp_TxnRef))
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
         order.setStatus(status);

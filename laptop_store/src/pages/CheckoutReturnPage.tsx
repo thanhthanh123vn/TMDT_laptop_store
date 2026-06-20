@@ -1,28 +1,39 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Loader2, CheckCircle, XCircle } from 'lucide-react';
+import axiosClient from '../api/axiosClient';
 
 export const CheckoutReturnPage = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const [status, setStatus] = useState<'loading' | 'success' | 'fail'>('loading');
+    const [message, setMessage] = useState('');
 
     useEffect(() => {
         const processPayment = async () => {
-            // 1. Lấy mã phản hồi từ VNPay (vnp_ResponseCode = 00 là thành công)
-            const responseCode = searchParams.get('vnp_ResponseCode');
+            try {
+                const params = Object.fromEntries(searchParams.entries());
+                const response = await axiosClient.get('/api/payment/vnpay/return', { params });
+                const data = response.data;
 
-            if (responseCode === '00') {
-                setStatus('success');
-                // Sau 3 giây tự động về trang đơn hàng
-                setTimeout(() => navigate('/orders'), 3000);
-            } else {
+                if (data.success) {
+                    setStatus('success');
+                    setMessage(data.message || 'Thanh toán thành công!');
+                    setTimeout(() => navigate('/orders'), 3000);
+                } else {
+                    setStatus('fail');
+                    setMessage(data.message || 'Thanh toán thất bại.');
+                    setTimeout(() => navigate('/cart'), 3000);
+                }
+            } catch (error: unknown) {
+                const err = error as { response?: { data?: { message?: string } } };
                 setStatus('fail');
+                setMessage(err.response?.data?.message || 'Không thể xác thực giao dịch VNPay.');
                 setTimeout(() => navigate('/cart'), 3000);
             }
         };
 
-        processPayment();
+        void processPayment();
     }, [searchParams, navigate]);
 
     return (
@@ -38,7 +49,7 @@ export const CheckoutReturnPage = () => {
                 <div className="flex flex-col items-center gap-3 text-green-600">
                     <CheckCircle className="w-16 h-16" />
                     <h1 className="text-xl font-bold">Thanh toán thành công!</h1>
-                    <p className="text-gray-600">Đang chuyển hướng về trang đơn hàng...</p>
+                    <p className="text-gray-600">{message}</p>
                 </div>
             )}
 
@@ -46,7 +57,7 @@ export const CheckoutReturnPage = () => {
                 <div className="flex flex-col items-center gap-3 text-red-600">
                     <XCircle className="w-16 h-16" />
                     <h1 className="text-xl font-bold">Thanh toán thất bại!</h1>
-                    <p className="text-gray-600">Đang chuyển hướng về giỏ hàng...</p>
+                    <p className="text-gray-600">{message}</p>
                 </div>
             )}
         </div>
