@@ -11,6 +11,7 @@ import com.fit.nlu.laptop.repository.ProductImageRepository;
 import com.fit.nlu.laptop.repository.ProductRepository;
 import com.fit.nlu.laptop.repository.SellerProfileRepository;
 import com.fit.nlu.laptop.service.FileService;
+import com.fit.nlu.laptop.service.OrderService;
 import com.fit.nlu.laptop.service.SellerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -38,6 +39,7 @@ public class SellerController {
     private final SellerProfileRepository sellerProfileRepository;
     private final ProductImageRepository productImageRepository;
     private final FileService fileService;
+    private final OrderService orderService;
 
     @GetMapping("/profile")
     public ResponseEntity<Map<String, Object>> getProfile(@AuthenticationPrincipal UserPrincipal principal) {
@@ -220,6 +222,33 @@ public class SellerController {
         getSellerProfile((long) principal.getId());
         String url = fileService.saveProductImage(file);
         return ResponseEntity.ok(Map.of("url", url));
+    }
+
+    // ─── Order Management ─────────────────────────────────────────────────────
+
+    @GetMapping("/orders")
+    public ResponseEntity<List<Map<String, Object>>> getSellerOrders(
+            @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(orderService.getSellerOrders((long) principal.getId()));
+    }
+
+    @GetMapping("/orders/{orderId}")
+    public ResponseEntity<Map<String, Object>> getSellerOrderDetail(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long orderId) {
+        return ResponseEntity.ok(orderService.getSellerOrderDetail((long) principal.getId(), orderId));
+    }
+
+    @PatchMapping("/orders/{orderId}/status")
+    public ResponseEntity<Map<String, Object>> updateOrderStatus(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long orderId,
+            @RequestBody Map<String, Object> body) {
+        String status = body.get("status") != null ? body.get("status").toString() : null;
+        if (status == null || status.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Thiếu trường status");
+        }
+        return ResponseEntity.ok(orderService.updateSellerOrderStatus((long) principal.getId(), orderId, status));
     }
 
     private void applyProductFields(Product p, Map<String, Object> body) {

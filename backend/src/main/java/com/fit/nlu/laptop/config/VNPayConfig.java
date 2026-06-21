@@ -1,6 +1,8 @@
 package com.fit.nlu.laptop.config;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 
 import javax.crypto.Mac;
@@ -11,13 +13,35 @@ import java.util.Random;
 @Configuration
 public class VNPayConfig {
 
-    public static String vnp_TmnCode = "7UWK3F28";
-    public static String secretKey = "8QNNXUYJ64SMIZGIAKGOJH3FR8FFEIIS";
-    public static String vnp_PayUrl = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
-    public static String vnp_ApiUrl = "https://sandbox.vnpayment.vn/merchant_webapi/api/transaction";
+    @Value("${vnpay.tmn-code}")
+    private String tmnCode;
 
+    @Value("${vnpay.secret-key}")
+    private String vnpSecretKey;
 
-    public static String vnp_ReturnUrl = "http://localhost:5173/checkout/vnpay-return";
+    @Value("${vnpay.pay-url}")
+    private String payUrl;
+
+    @Value("${vnpay.api-url}")
+    private String apiUrl;
+
+    @Value("${vnpay.return-url}")
+    private String returnUrl;
+
+    public static String vnp_TmnCode;
+    public static String secretKey;
+    public static String vnp_PayUrl;
+    public static String vnp_ApiUrl;
+    public static String vnp_ReturnUrl;
+
+    @PostConstruct
+    public void init() {
+        vnp_TmnCode = tmnCode;
+        secretKey = vnpSecretKey;
+        vnp_PayUrl = payUrl;
+        vnp_ApiUrl = apiUrl;
+        vnp_ReturnUrl = returnUrl;
+    }
 
     public static String hmacSHA512(final String key, final String data) {
         try {
