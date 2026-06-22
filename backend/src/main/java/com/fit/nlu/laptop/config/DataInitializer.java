@@ -52,11 +52,11 @@ public class DataInitializer implements CommandLineRunner {
             System.out.println("Categories initialized.");
         }
 
-        // ── Seed products ──
+
         if (productRepository.count() == 0) {
-            // Fetch saved categories by order
+
             List<Category> cats = categoryRepository.findAll();
-            // id mapping: 1=VanPhong, 2=Gaming, 3=DoHoa, 4=Macbook, 5=SinhVien, 6=DoanhNhan
+
             Long idVP  = cats.get(0).getId(); // Văn Phòng
             Long idGM  = cats.get(1).getId(); // Gaming
             Long idDH  = cats.get(2).getId(); // Đồ Họa

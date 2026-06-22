@@ -33,4 +33,7 @@ export const sellerApi = {
     // Replace all images for an existing product
     replaceImages: (productId: number, urls: string[]) =>
         axiosClient.put(`/api/seller/products/${productId}/images`, urls),
+    replyToReview: (reviewId: number, data: { replyContent: string }) => {
+        return axiosClient.post(`/api/seller/reviews/${reviewId}/reply`, data);
+    }
 };
