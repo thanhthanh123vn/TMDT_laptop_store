@@ -97,6 +97,7 @@ public class SecurityConfig {
 
                                 "/api/payment/**",
                                 "/api/payment/webhook",
+                                "/api/boost/vnpay-return",
 
                                 "/api/addresses",
 

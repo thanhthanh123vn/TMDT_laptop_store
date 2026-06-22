@@ -28,11 +28,15 @@ public class VNPayConfig {
     @Value("${vnpay.return-url}")
     private String returnUrl;
 
+    @Value("${vnpay.boost-return-url:http://localhost:5173/seller/boost/vnpay-return}")
+    private String boostReturnUrl;
+
     public static String vnp_TmnCode;
     public static String secretKey;
     public static String vnp_PayUrl;
     public static String vnp_ApiUrl;
     public static String vnp_ReturnUrl;
+    public static String vnp_BoostReturnUrl;
 
     @PostConstruct
     public void init() {
@@ -41,6 +45,7 @@ public class VNPayConfig {
         vnp_PayUrl = payUrl;
         vnp_ApiUrl = apiUrl;
         vnp_ReturnUrl = returnUrl;
+        vnp_BoostReturnUrl = boostReturnUrl;
     }
 
     public static String hmacSHA512(final String key, final String data) {
