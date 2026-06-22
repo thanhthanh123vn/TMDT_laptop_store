@@ -1,24 +1,20 @@
 package com.fit.nlu.laptop.service;
 
-import com.fit.nlu.laptop.config.VNPayConfig;
 import com.fit.nlu.laptop.entity.BoostPackage;
 import com.fit.nlu.laptop.entity.Product;
 import com.fit.nlu.laptop.entity.SellerProfile;
 import com.fit.nlu.laptop.repository.BoostPackageRepository;
 import com.fit.nlu.laptop.repository.ProductRepository;
 import com.fit.nlu.laptop.repository.SellerProfileRepository;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -29,6 +25,7 @@ public class BoostPackageService {
     private final BoostPackageRepository boostPackageRepository;
     private final SellerProfileRepository sellerProfileRepository;
     private final ProductRepository productRepository;
+    private final FileService fileService;
 
     private static final Map<Integer, BigDecimal> PRICE_TABLE;
     static {
@@ -50,19 +47,16 @@ public class BoostPackageService {
         return boostPackageRepository.findBySellerId(seller.getId());
     }
 
-    // ─── Tạo gói + URL thanh toán VNPay ─────────────────────────────────────
+    // ─── Tạo gói (PENDING_PAYMENT) ───────────────────────────────────────────
 
     @Transactional
-    public Map<String, Object> createPaymentUrl(Long userId, Long productId,
-                                                int durationMonths, HttpServletRequest request) {
-        // Validate duration
+    public BoostPackage createBoostPackage(Long userId, Long productId, int durationMonths) {
         if (!PRICE_TABLE.containsKey(durationMonths)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Thời hạn không hợp lệ");
         }
 
         SellerProfile seller = getSellerProfile(userId);
 
-        // Validate product belongs to seller and in stock
         Product product = productRepository.findByIdAndIsDeletedFalse(productId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy sản phẩm"));
 
@@ -74,44 +68,40 @@ public class BoostPackageService {
         }
 
         BigDecimal amount = PRICE_TABLE.get(durationMonths);
-        String txnRef = VNPayConfig.getRandomNumber(8) + System.currentTimeMillis() % 10000;
 
-        // Tạo bản ghi gói trước khi thanh toán
         BoostPackage pkg = new BoostPackage();
-        pkg.setTxnRef(txnRef);
         pkg.setSeller(seller);
         pkg.setProduct(product);
         pkg.setDurationMonths(durationMonths);
         pkg.setAmount(amount);
         pkg.setStatus("PENDING_PAYMENT");
-        boostPackageRepository.save(pkg);
-
-        String paymentUrl = buildVNPayUrl(txnRef, amount.longValue(),
-                "Goi day tin " + durationMonths + " thang san pham " + productId, request);
-
-        Map<String, Object> result = new HashMap<>();
-        result.put("paymentUrl", paymentUrl);
-        result.put("txnRef", txnRef);
-        result.put("packageId", pkg.getId());
-        return result;
+        return boostPackageRepository.save(pkg);
     }
 
-    // ─── Xử lý callback VNPay cho boost ─────────────────────────────────────
+    // ─── Seller submit ảnh CK → sang PENDING_APPROVAL ────────────────────────
 
     @Transactional
-    public void handlePaymentReturn(String txnRef, String responseCode) {
-        BoostPackage pkg = boostPackageRepository.findByTxnRef(txnRef)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy gói đẩy tin"));
+    public BoostPackage submitPaymentProof(Long userId, Long packageId, MultipartFile proofFile) {
+        SellerProfile seller = getSellerProfile(userId);
+        BoostPackage pkg = findPackage(packageId);
 
-        if (!"PENDING_PAYMENT".equals(pkg.getStatus())) return; // idempotent
-
-        if ("00".equals(responseCode)) {
-            pkg.setStatus("PENDING_APPROVAL");
-            pkg.setPurchasedAt(LocalDateTime.now());
-        } else {
-            pkg.setStatus("CANCELLED");
+        if (!pkg.getSeller().getId().equals(seller.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Không có quyền thao tác gói này");
         }
-        boostPackageRepository.save(pkg);
+        if (!"PENDING_PAYMENT".equals(pkg.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Gói không ở trạng thái chờ thanh toán");
+        }
+
+        try {
+            String proofUrl = fileService.saveProductImage(proofFile);
+            pkg.setTransferProofUrl(proofUrl);
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Không thể upload ảnh chuyển khoản");
+        }
+
+        pkg.setStatus("PENDING_APPROVAL");
+        pkg.setPurchasedAt(LocalDateTime.now());
+        return boostPackageRepository.save(pkg);
     }
 
     // ─── Admin: lấy danh sách chờ duyệt ─────────────────────────────────────
@@ -138,7 +128,6 @@ public class BoostPackageService {
         pkg.setExpiredAt(now.plusMonths(pkg.getDurationMonths()));
         boostPackageRepository.save(pkg);
 
-        // Cập nhật flag boosted trên sản phẩm
         Product p = pkg.getProduct();
         p.setBestSeller(true);
         productRepository.save(p);
@@ -176,7 +165,6 @@ public class BoostPackageService {
             pkg.setStatus("EXPIRED");
             boostPackageRepository.save(pkg);
 
-            // Tắt boost nếu không còn gói ACTIVE nào khác
             boolean stillBoosted = boostPackageRepository.existsActiveBoostedProduct(pkg.getProduct().getId());
             if (!stillBoosted) {
                 Product p = pkg.getProduct();
@@ -196,57 +184,5 @@ public class BoostPackageService {
     private BoostPackage findPackage(Long id) {
         return boostPackageRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy gói đẩy tin"));
-    }
-
-    private String buildVNPayUrl(String txnRef, long amount, String orderInfo, HttpServletRequest request) {
-        try {
-            Map<String, String> params = new HashMap<>();
-            params.put("vnp_Version", "2.1.0");
-            params.put("vnp_Command", "pay");
-            params.put("vnp_TmnCode", VNPayConfig.vnp_TmnCode);
-            params.put("vnp_Amount", String.valueOf(amount * 100));
-            params.put("vnp_CurrCode", "VND");
-            params.put("vnp_TxnRef", txnRef);
-            params.put("vnp_OrderInfo", orderInfo);
-            params.put("vnp_OrderType", "other");
-            params.put("vnp_Locale", "vn");
-            params.put("vnp_ReturnUrl", VNPayConfig.vnp_BoostReturnUrl);
-            params.put("vnp_IpAddr", VNPayConfig.getIpAddress(request));
-
-            Calendar cld = Calendar.getInstance(TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
-            SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
-            params.put("vnp_CreateDate", formatter.format(cld.getTime()));
-            cld.add(Calendar.MINUTE, 15);
-            params.put("vnp_ExpireDate", formatter.format(cld.getTime()));
-
-            // Sort và build — dùng đúng logic như PaymentController gốc
-            List<String> fieldNames = new ArrayList<>(params.keySet());
-            Collections.sort(fieldNames);
-
-            StringBuilder hashData = new StringBuilder();
-            StringBuilder query = new StringBuilder();
-            Iterator<String> itr = fieldNames.iterator();
-
-            while (itr.hasNext()) {
-                String fieldName = itr.next();
-                String fieldValue = params.get(fieldName);
-                if (fieldValue != null && fieldValue.length() > 0) {
-                    hashData.append(fieldName).append('=').append(fieldValue);
-                    query.append(URLEncoder.encode(fieldName, StandardCharsets.UTF_8.toString()))
-                            .append('=')
-                            .append(URLEncoder.encode(fieldValue, StandardCharsets.UTF_8.toString()));
-                    if (itr.hasNext()) {
-                        hashData.append('&');
-                        query.append('&');
-                    }
-                }
-            }
-
-            String secureHash = VNPayConfig.hmacSHA512(VNPayConfig.secretKey, hashData.toString());
-            query.append("&vnp_SecureHash=").append(secureHash);
-            return VNPayConfig.vnp_PayUrl + "?" + query;
-        } catch (Exception e) {
-            throw new RuntimeException("Không thể tạo URL thanh toán VNPay", e);
-        }
     }
 }

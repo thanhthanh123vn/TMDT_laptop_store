@@ -3,7 +3,7 @@ import { Zap, CheckCircle, XCircle, Clock, AlertCircle, Package, Eye, X } from '
 import { Card, CardContent } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../components/ui/dialog';
-import axiosClient from '../../api/axiosClient';
+import axiosClient, { getImageUrl } from '../../api/axiosClient';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -21,7 +21,7 @@ interface BoostPackage {
     approvedAt?: string;
     expiredAt?: string;
     createdAt: string;
-    txnRef?: string;
+    transferProofUrl?: string;
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -83,6 +83,17 @@ const DetailModal: React.FC<{
                         <div><p className="text-xs text-slate-500">Duyệt lúc</p><p className="font-medium">{fmtD(pkg.approvedAt)}</p></div>
                         <div className="col-span-2"><p className="text-xs text-slate-500">Hết hạn</p><p className="font-medium">{fmtD(pkg.expiredAt)}</p></div>
                     </div>
+
+                    {/* Ảnh chuyển khoản */}
+                    {pkg.transferProofUrl && (
+                        <div>
+                            <p className="text-xs text-slate-500 mb-1.5">Ảnh xác nhận chuyển khoản</p>
+                            <a href={getImageUrl(pkg.transferProofUrl)} target="_blank" rel="noopener noreferrer">
+                                <img src={getImageUrl(pkg.transferProofUrl)} alt="Chuyển khoản"
+                                    className="w-full max-h-52 object-contain rounded-xl border border-slate-200 bg-slate-50 hover:opacity-90 transition-opacity cursor-zoom-in" />
+                            </a>
+                        </div>
+                    )}
 
                     {pkg.status === 'PENDING_APPROVAL' && (
                         <div className="flex gap-3 pt-2">

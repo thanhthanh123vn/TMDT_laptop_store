@@ -61,6 +61,10 @@ public class BoostPackage {
     @Column(name = "expired_at")
     private LocalDateTime expiredAt;     // thời điểm hết hạn
 
+    /** URL ảnh chứng minh chuyển khoản (do seller upload) */
+    @Column(name = "transfer_proof_url")
+    private String transferProofUrl;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 

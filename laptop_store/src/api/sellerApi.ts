@@ -45,5 +45,12 @@ export const sellerApi = {
     getBoostPackages: () => axiosClient.get('/api/seller/boost/packages'),
     getBoostPackageDetail: (id: number) => axiosClient.get(`/api/seller/boost/packages/${id}`),
     createBoost: (productId: number, durationMonths: number) =>
-        axiosClient.post('/api/seller/boost/create', { productId, durationMonths }),
+        axiosClient.post<{ packageId: number }>('/api/seller/boost/create', { productId, durationMonths }),
+    submitBoostPayment: (packageId: number, file: File) => {
+        const fd = new FormData();
+        fd.append('file', file);
+        return axiosClient.post(`/api/seller/boost/packages/${packageId}/submit-payment`, fd, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        });
+    },
 };

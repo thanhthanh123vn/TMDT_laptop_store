@@ -1,14 +1,13 @@
 package com.fit.nlu.laptop.controller;
 
-import com.fit.nlu.laptop.config.VNPayConfig;
 import com.fit.nlu.laptop.entity.BoostPackage;
 import com.fit.nlu.laptop.jwt.UserPrincipal;
 import com.fit.nlu.laptop.service.BoostPackageService;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
@@ -45,56 +44,29 @@ public class BoostPackageController {
         return ResponseEntity.ok(boostPackageService.getPackageDetail((long) principal.getId(), id));
     }
 
-    /** Tạo gói + lấy URL thanh toán VNPay */
+    /** Tạo gói mới → trả về packageId + thông tin CK */
     @PostMapping("/api/seller/boost/create")
     public ResponseEntity<Map<String, Object>> createBoost(
             @AuthenticationPrincipal UserPrincipal principal,
-            @RequestBody Map<String, Object> body,
-            HttpServletRequest request) {
+            @RequestBody Map<String, Object> body) {
         Long productId = Long.valueOf(body.get("productId").toString());
         int durationMonths = Integer.parseInt(body.get("durationMonths").toString());
-        return ResponseEntity.ok(
-                boostPackageService.createPaymentUrl((long) principal.getId(), productId, durationMonths, request));
+        BoostPackage pkg = boostPackageService.createBoostPackage(
+                (long) principal.getId(), productId, durationMonths);
+        return ResponseEntity.ok(Map.of("packageId", pkg.getId()));
     }
 
-    // ═══════════════════════════════════════════════════════
-    //  VNPay return  /api/boost/vnpay-return  (public)
-    // ═══════════════════════════════════════════════════════
-
-    @GetMapping("/api/boost/vnpay-return")
-    public ResponseEntity<Map<String, String>> vnpayReturn(
-            @RequestParam Map<String, String> params) {
-        // Verify signature
-        Map<String, String> copy = new java.util.HashMap<>(params);
-        copy.remove("vnp_SecureHashType");
-        copy.remove("vnp_SecureHash");
-
-        List<String> keys = new java.util.ArrayList<>(copy.keySet());
-        java.util.Collections.sort(keys);
-        StringBuilder hashData = new StringBuilder();
-        java.util.Iterator<String> itr = keys.iterator();
-        while (itr.hasNext()) {
-            String k = itr.next();
-            String v = copy.get(k);
-            if (v != null && !v.isEmpty()) {
-                hashData.append(k).append('=').append(v);
-                if (itr.hasNext()) hashData.append('&');
-            }
-        }
-        boolean valid = VNPayConfig.hmacSHA512(VNPayConfig.secretKey, hashData.toString())
-                .equals(params.get("vnp_SecureHash"));
-
-        String txnRef = params.get("vnp_TxnRef");
-        String responseCode = params.get("vnp_ResponseCode");
-
-        if (valid && txnRef != null) {
-            boostPackageService.handlePaymentReturn(txnRef, responseCode);
-        }
-
-        return ResponseEntity.ok(Map.of(
-                "vnp_ResponseCode", responseCode != null ? responseCode : "99",
-                "txnRef", txnRef != null ? txnRef : ""
-        ));
+    /**
+     * Seller nộp ảnh chuyển khoản → đơn sang PENDING_APPROVAL
+     * multipart/form-data: file = ảnh CK
+     */
+    @PostMapping("/api/seller/boost/packages/{id}/submit-payment")
+    public ResponseEntity<BoostPackage> submitPayment(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file) {
+        return ResponseEntity.ok(
+                boostPackageService.submitPaymentProof((long) principal.getId(), id, file));
     }
 
     // ═══════════════════════════════════════════════════════

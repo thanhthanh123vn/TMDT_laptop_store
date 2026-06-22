@@ -34,7 +34,6 @@ import {SellerProductsPage} from "./pages/seller/SellerProductsPage.tsx";
 import {SellerOrdersPage} from "./pages/seller/SellerOrdersPage.tsx";
 import {SellerReviewsPage} from "./pages/seller/SellerReviewsPage.tsx";
 import {SellerBoostPage} from "./pages/seller/SellerBoostPage.tsx";
-import {SellerBoostReturnPage} from "./pages/seller/SellerBoostReturnPage.tsx";
 
 
 import { Elements } from "@stripe/react-stripe-js";
@@ -112,7 +111,6 @@ export const router = createBrowserRouter([
       { path: 'orders', Component: SellerOrdersPage },
       { path: 'reviews', Component: SellerReviewsPage },
       { path: 'boost', Component: SellerBoostPage },
-      { path: 'boost/vnpay-return', Component: SellerBoostReturnPage },
     ],
   }
 ]);
