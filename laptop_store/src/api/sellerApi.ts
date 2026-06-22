@@ -39,4 +39,11 @@ export const sellerApi = {
     getOrderDetail: (id: number) => axiosClient.get(`/api/seller/orders/${id}`),
     updateOrderStatus: (id: number, status: string) =>
         axiosClient.patch(`/api/seller/orders/${id}/status`, { status }),
+
+    // Boost packages
+    getBoostPrices: () => axiosClient.get('/api/seller/boost/prices'),
+    getBoostPackages: () => axiosClient.get('/api/seller/boost/packages'),
+    getBoostPackageDetail: (id: number) => axiosClient.get(`/api/seller/boost/packages/${id}`),
+    createBoost: (productId: number, durationMonths: number) =>
+        axiosClient.post('/api/seller/boost/create', { productId, durationMonths }),
 };

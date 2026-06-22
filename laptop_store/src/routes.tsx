@@ -27,11 +27,14 @@ import NotificationManagementPage from "./pages/admin/NotificationManagementPage
 import {AdminProfilePage} from "./pages/admin/AdminProfilePage.tsx";
 import AdminCategoriesPage from "./pages/admin/AdminCategoriesPage.tsx";
 import AdminRevenuePage from "./pages/admin/AdminRevenuePage.tsx";
+import AdminBoostPage from "./pages/admin/AdminBoostPage.tsx";
 import {SellerLayout} from "./pages/seller/SellerLayout.tsx";
 import {SellerDashboardPage} from "./pages/seller/SellerDashboardPage.tsx";
 import {SellerProductsPage} from "./pages/seller/SellerProductsPage.tsx";
 import {SellerOrdersPage} from "./pages/seller/SellerOrdersPage.tsx";
 import {SellerReviewsPage} from "./pages/seller/SellerReviewsPage.tsx";
+import {SellerBoostPage} from "./pages/seller/SellerBoostPage.tsx";
+import {SellerBoostReturnPage} from "./pages/seller/SellerBoostReturnPage.tsx";
 
 
 import { Elements } from "@stripe/react-stripe-js";
@@ -97,6 +100,7 @@ export const router = createBrowserRouter([
       { path: 'revenue', Component: AdminRevenuePage },
       { path: 'notifications', Component: NotificationManagementPage },
       { path: 'profile', Component: AdminProfilePage },
+      { path: 'boost', Component: AdminBoostPage },
     ],
   },
   {
@@ -107,6 +111,8 @@ export const router = createBrowserRouter([
       { path: 'products', Component: SellerProductsPage },
       { path: 'orders', Component: SellerOrdersPage },
       { path: 'reviews', Component: SellerReviewsPage },
+      { path: 'boost', Component: SellerBoostPage },
+      { path: 'boost/vnpay-return', Component: SellerBoostReturnPage },
     ],
   }
 ]);

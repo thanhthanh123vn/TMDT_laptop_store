@@ -296,7 +296,11 @@ export const ProductDetailPage: React.FC = () => {
 
               {/* Badges */}
               <div className="flex flex-wrap gap-1.5">
-                {laptop.isBestSeller && <span className="text-[11px] font-semibold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">Bán chạy</span>}
+                {laptop.isBestSeller && (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+                    ⚡ Đẩy tin nổi bật
+                  </span>
+                )}
                 {laptop.isHot && <span className="text-[11px] font-semibold bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full">Hot</span>}
                 {laptop.isSale && <span className="text-[11px] font-semibold bg-red-100 text-red-600 px-2 py-0.5 rounded-full">Sale</span>}
                 <span className="text-[11px] font-semibold bg-green-100 text-green-700 px-2 py-0.5 rounded-full">{laptop.condition}</span>
