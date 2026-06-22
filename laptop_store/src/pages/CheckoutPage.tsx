@@ -139,7 +139,7 @@ export default function CheckoutPage() {
         try {
 
           const finalAmount = Math.floor(total);
-          const orderInfo = encodeURIComponent("ThanhToanDonHangLaptopre");
+          const orderInfo = 'ThanhToanDonHangLaptopre';
 
           const response = await orderApi.createVNPayPayment(
               finalAmount,

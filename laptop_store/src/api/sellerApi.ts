@@ -33,10 +33,7 @@ export const sellerApi = {
     // Replace all images for an existing product
     replaceImages: (productId: number, urls: string[]) =>
         axiosClient.put(`/api/seller/products/${productId}/images`, urls),
-
-    // Order management
-    getOrders: () => axiosClient.get('/api/seller/orders'),
-    getOrderDetail: (id: number) => axiosClient.get(`/api/seller/orders/${id}`),
-    updateOrderStatus: (id: number, status: string) =>
-        axiosClient.patch(`/api/seller/orders/${id}/status`, { status }),
+    replyToReview: (reviewId: number, data: { replyContent: string }) => {
+        return axiosClient.post(`/api/seller/reviews/${reviewId}/reply`, data);
+    }
 };
