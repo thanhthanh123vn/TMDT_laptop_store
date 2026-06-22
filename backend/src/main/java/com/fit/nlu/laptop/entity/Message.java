@@ -20,6 +20,8 @@ public class Message {
 
     private String senderName;
 
+
+
     @Column(columnDefinition = "TEXT")
     private String content;
 

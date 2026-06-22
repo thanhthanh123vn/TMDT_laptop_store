@@ -38,6 +38,7 @@ import {SellerReviewsPage} from "./pages/seller/SellerReviewsPage.tsx";
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 import {CheckoutReturnPage} from "@/pages/CheckoutReturnPage.tsx";
+import {SellerChatPage} from "@/pages/seller/SellerChatPage.tsx";
 
 const stripePromise = loadStripe("pk_test_51Tbd6UFPI5dc6V9ZfFGX5ttKLsacjscuB7vm0arJnWbSdb3OvuEzAGO7merHxX0dFTsUAAyWKF0JO3XgAohFW9Kk00GYBD9HL5");
 
@@ -109,6 +110,7 @@ export const router = createBrowserRouter([
       { path: 'products', Component: SellerProductsPage },
       { path: 'orders', Component: SellerOrdersPage },
       { path: 'reviews', Component: SellerReviewsPage },
+      { path: 'chat', element: <SellerChatPage /> },
     ],
   }
 ]);

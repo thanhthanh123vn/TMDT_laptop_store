@@ -26,7 +26,9 @@ public class Review {
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user; // Do ai đánh giá
-
+    @Column(columnDefinition = "TEXT")
+    private String sellerReply;
+    private LocalDateTime repliedAt;
     private LocalDateTime createdAt;
 
     @PrePersist

@@ -1,7 +1,9 @@
 package com.fit.nlu.laptop.service;
 
 import com.fit.nlu.laptop.entity.Message;
+import com.fit.nlu.laptop.entity.SellerProfile;
 import com.fit.nlu.laptop.repository.MessageRepository;
+import com.fit.nlu.laptop.repository.SellerProfileRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -13,7 +15,7 @@ public class MessageService {
 
 
     private final MessageRepository messageRepository;
-
+    private final SellerProfileRepository sellerProfileRepository;
     // 1. Lưu tin nhắn mới
     public Message saveMessage(Message message) {
         message.setRecalled(false);
@@ -41,4 +43,13 @@ public class MessageService {
 
         return messageRepository.save(message);
     }
+
+    public List<String> getRoomsBySellerUserId(Long sellerUserId) {
+        SellerProfile seller = sellerProfileRepository.findByUserId(sellerUserId)
+                .orElseThrow(() -> new RuntimeException("Tài khoản này chưa đăng ký cửa hàng!"));
+
+        return messageRepository.findDistinctRoomIdsBySellerId(seller.getId());
+    }
+
+
 }
