@@ -31,8 +31,8 @@ public class JwtUtil {
     @Value("${app.jwt.refresh-token-ttl:7d}")
     private Duration refreshTokenTtl;
 
-    // Key này phải đủ 64 ký tự Base64 để an toàn
-    private static final String SECRET_KEY = "32b26095286663738cf0047397669d0392306917637894982736123456789012";
+    @Value("${app.jwt.secret-key}")
+    private String secretKey;
 
     // 1. Lấy Username (Email) từ Token
     public String extractUsername(String token) {
@@ -116,7 +116,7 @@ public class JwtUtil {
 
     // 7. Tạo SecretKey từ chuỗi Base64
     private SecretKey getSignInKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(SECRET_KEY);
+        byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         return Keys.hmacShaKeyFor(keyBytes);
     }
 

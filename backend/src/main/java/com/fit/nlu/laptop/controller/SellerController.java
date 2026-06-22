@@ -226,6 +226,33 @@ public class SellerController {
         return ResponseEntity.ok(Map.of("url", url));
     }
 
+    // ─── Order Management ─────────────────────────────────────────────────────
+
+    @GetMapping("/orders")
+    public ResponseEntity<List<Map<String, Object>>> getSellerOrders(
+            @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(orderService.getSellerOrders((long) principal.getId()));
+    }
+
+    @GetMapping("/orders/{orderId}")
+    public ResponseEntity<Map<String, Object>> getSellerOrderDetail(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long orderId) {
+        return ResponseEntity.ok(orderService.getSellerOrderDetail((long) principal.getId(), orderId));
+    }
+
+    @PatchMapping("/orders/{orderId}/status")
+    public ResponseEntity<Map<String, Object>> updateOrderStatus(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long orderId,
+            @RequestBody Map<String, Object> body) {
+        String status = body.get("status") != null ? body.get("status").toString() : null;
+        if (status == null || status.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Thiếu trường status");
+        }
+        return ResponseEntity.ok(orderService.updateSellerOrderStatus((long) principal.getId(), orderId, status));
+    }
+
     private void applyProductFields(Product p, Map<String, Object> body) {
         if (body.containsKey("name")) p.setName((String) body.get("name"));
         if (body.containsKey("brand")) p.setBrand((String) body.get("brand"));
