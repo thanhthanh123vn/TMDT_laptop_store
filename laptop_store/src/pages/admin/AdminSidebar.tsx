@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Laptop, ShoppingCart, Users, LogOut, PackagePlus, Bell, User, Tag, BarChart2 } from 'lucide-react';
+import { LayoutDashboard, Laptop, ShoppingCart, Users, LogOut, PackagePlus, Bell, User, Tag, BarChart2, Store } from 'lucide-react';
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarGroupContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarHeader, SidebarFooter } from '../../components/ui/sidebar';
 
 const adminMenuItems = [
@@ -9,6 +9,7 @@ const adminMenuItems = [
     { title: 'Danh mục', url: '/admin/categories', icon: Tag },
     { title: 'Đơn hàng', url: '/admin/orders', icon: ShoppingCart },
     { title: 'Khách hàng', url: '/admin/users', icon: Users },
+    { title: 'Người bán', url: '/admin/sellers', icon: Store },
     { title: 'Doanh thu', url: '/admin/revenue', icon: BarChart2 },
     { title: 'Thông báo', url: '/admin/notifications', icon: Bell },
     { title: 'Hồ sơ admin', url: '/admin/profile', icon: User },

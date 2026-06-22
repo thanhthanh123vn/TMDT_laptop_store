@@ -27,6 +27,7 @@ import NotificationManagementPage from "./pages/admin/NotificationManagementPage
 import {AdminProfilePage} from "./pages/admin/AdminProfilePage.tsx";
 import AdminCategoriesPage from "./pages/admin/AdminCategoriesPage.tsx";
 import AdminRevenuePage from "./pages/admin/AdminRevenuePage.tsx";
+import AdminSellersPage from "./pages/admin/AdminSellersPage.tsx";
 import {SellerLayout} from "./pages/seller/SellerLayout.tsx";
 import {SellerDashboardPage} from "./pages/seller/SellerDashboardPage.tsx";
 import {SellerProductsPage} from "./pages/seller/SellerProductsPage.tsx";
@@ -37,6 +38,7 @@ import {SellerReviewsPage} from "./pages/seller/SellerReviewsPage.tsx";
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 import {CheckoutReturnPage} from "@/pages/CheckoutReturnPage.tsx";
+import {SellerChatPage} from "@/pages/seller/SellerChatPage.tsx";
 
 const stripePromise = loadStripe("pk_test_51Tbd6UFPI5dc6V9ZfFGX5ttKLsacjscuB7vm0arJnWbSdb3OvuEzAGO7merHxX0dFTsUAAyWKF0JO3XgAohFW9Kk00GYBD9HL5");
 
@@ -53,7 +55,7 @@ export const router = createBrowserRouter([
       {
         path: 'checkout',
         element: (
-            // 3. Sử dụng stripePromise đã khởi tạo
+
             <Elements stripe={stripePromise}>
                 <CheckoutPage />
                 </Elements>
@@ -93,6 +95,7 @@ export const router = createBrowserRouter([
       { path: 'products/edit/:id', Component: AdminProductFormPage },
       { path: 'orders', Component: AdminOrdersPage },
       { path: 'users', Component: AdminUsersPage },
+      { path: 'sellers', Component: AdminSellersPage },
       { path: 'categories', Component: AdminCategoriesPage },
       { path: 'revenue', Component: AdminRevenuePage },
       { path: 'notifications', Component: NotificationManagementPage },
@@ -107,6 +110,7 @@ export const router = createBrowserRouter([
       { path: 'products', Component: SellerProductsPage },
       { path: 'orders', Component: SellerOrdersPage },
       { path: 'reviews', Component: SellerReviewsPage },
+      { path: 'chat', element: <SellerChatPage /> },
     ],
   }
 ]);

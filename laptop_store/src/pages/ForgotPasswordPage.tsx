@@ -31,7 +31,7 @@ export default function ForgotPasswordPage() {
     }
 
     return (
-        // min-h trừ hao khoảng trống của Layout hệ thống, giúp form căn giữa đẹp mắt
+
         <div className="min-h-[calc(100vh-160px)] flex flex-col justify-center bg-transparent">
             {/* Main Content */}
             <main className="w-full flex flex-col items-center justify-center px-4 py-12">
@@ -92,7 +92,6 @@ export default function ForgotPasswordPage() {
                     </Link>
                 </div>
 
-                {/* Help Link */}
                 <p className="mt-6 text-sm text-muted-foreground">
                     Cần hỗ trợ?{" "}
                     <Link to="/support" className="text-primary hover:underline font-medium">

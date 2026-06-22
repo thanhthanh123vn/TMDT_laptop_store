@@ -38,9 +38,9 @@ export const orderApi = {
 
     // Thanh toán VNPay
     createVNPayPayment: (amount: number, orderInfo: string) => {
-        return axiosClient.get(
-            `/api/payment/vnpay/create?amount=${amount}&orderInfo=${orderInfo}`
-        );
+        return axiosClient.get('/api/payment/vnpay/create', {
+            params: { amount, orderInfo },
+        });
     },
 
     // Thanh toán Credit Card
