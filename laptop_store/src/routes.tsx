@@ -33,6 +33,7 @@ import {SellerDashboardPage} from "./pages/seller/SellerDashboardPage.tsx";
 import {SellerProductsPage} from "./pages/seller/SellerProductsPage.tsx";
 import {SellerOrdersPage} from "./pages/seller/SellerOrdersPage.tsx";
 import {SellerReviewsPage} from "./pages/seller/SellerReviewsPage.tsx";
+import {AdminReviewsPage} from "./pages/admin/AdminReviewsPage.tsx";
 
 
 import { Elements } from "@stripe/react-stripe-js";
@@ -100,6 +101,7 @@ export const router = createBrowserRouter([
       { path: 'revenue', Component: AdminRevenuePage },
       { path: 'notifications', Component: NotificationManagementPage },
       { path: 'profile', Component: AdminProfilePage },
+      { path: 'reviews', Component: AdminReviewsPage },
     ],
   },
   {
