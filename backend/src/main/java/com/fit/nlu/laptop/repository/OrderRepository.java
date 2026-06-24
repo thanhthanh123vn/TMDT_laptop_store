@@ -17,7 +17,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             "FROM Order o JOIN o.items i " +
             "WHERE o.user.id = :userId " +
             "AND i.product.id = :productId " +
-            "AND o.status = 'PROCESSING'")
+            "AND o.status = 'DELIVERED'")
     boolean hasUserPurchasedProduct(@Param("userId") Long userId, @Param("productId") Long productId);
 
     @Query("SELECT DISTINCT o FROM Order o JOIN o.items i WHERE i.product.seller.id = :sellerId ORDER BY o.createdAt DESC")
