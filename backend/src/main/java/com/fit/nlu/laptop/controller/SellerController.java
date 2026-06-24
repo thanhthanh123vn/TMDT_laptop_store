@@ -42,6 +42,7 @@ public class SellerController {
     private final ProductImageRepository productImageRepository;
     private final FileService fileService;
     private final ReviewService reviewService;
+    private final com.fit.nlu.laptop.service.OrderService orderService;
 
     @GetMapping("/profile")
     public ResponseEntity<Map<String, Object>> getProfile(@AuthenticationPrincipal UserPrincipal principal) {
