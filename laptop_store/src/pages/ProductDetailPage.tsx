@@ -185,7 +185,7 @@ export const ProductDetailPage: React.FC = () => {
   const tabs = [
     { key: 'description' as const, label: 'Mô tả' },
     { key: 'specs' as const, label: 'Thông số' },
-    { key: 'reviews' as const, label: `Đánh giá (${allReviews.length})` },
+    { key: 'reviews' as const, label: `Đánh giá (${reviews.length})` },
   ];
 
   const specRows = [
