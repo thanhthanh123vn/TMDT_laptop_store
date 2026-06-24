@@ -71,7 +71,24 @@ public class ProductController {
     @GetMapping("/{productId}/reviews")
     public ResponseEntity<?> getProductReviews(@PathVariable Long productId) {
         List<Review> reviews = reviewService.getReviewsByProductId(productId);
-        return ResponseEntity.ok(reviews);
+        List<Map<String, Object>> result = reviews.stream().map(r -> {
+            Map<String, Object> map = new java.util.LinkedHashMap<>();
+            map.put("id", r.getId());
+            map.put("rating", r.getRating());
+            map.put("comment", r.getComment());
+            map.put("createdAt", r.getCreatedAt());
+            map.put("sellerReply", r.getSellerReply());
+            map.put("repliedAt", r.getRepliedAt());
+
+            Map<String, Object> userMap = new java.util.LinkedHashMap<>();
+            userMap.put("id", r.getUser().getId());
+            userMap.put("fullName", r.getUser().getFullName());
+            userMap.put("avatarUrl", r.getUser().getAvatarUrl());
+            map.put("user", userMap);
+
+            return map;
+        }).toList();
+        return ResponseEntity.ok(result);
     }
 
 
@@ -98,7 +115,20 @@ public class ProductController {
             String comment = (String) payload.get("comment");
 
             Review savedReview = reviewService.createReview(productId, Long.valueOf(principal.getId()), rating, comment);
-            return ResponseEntity.ok(savedReview);
+
+            Map<String, Object> result = new java.util.LinkedHashMap<>();
+            result.put("id", savedReview.getId());
+            result.put("rating", savedReview.getRating());
+            result.put("comment", savedReview.getComment());
+            result.put("createdAt", savedReview.getCreatedAt());
+
+            Map<String, Object> userMap = new java.util.LinkedHashMap<>();
+            userMap.put("id", savedReview.getUser().getId());
+            userMap.put("fullName", savedReview.getUser().getFullName());
+            userMap.put("avatarUrl", savedReview.getUser().getAvatarUrl());
+            result.put("user", userMap);
+
+            return ResponseEntity.ok(result);
 
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Không thể lưu đánh giá: " + e.getMessage());
