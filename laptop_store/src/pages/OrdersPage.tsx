@@ -4,6 +4,8 @@ import {useState, useEffect} from "react"
 import {Link, useNavigate} from "react-router-dom"
 import {orderApi} from "../api/orderApi"
 import {userApi} from "../api/userApi"
+import {productApi} from "../api/productApi"
+import {toast} from "sonner"
 import {
     LayoutDashboard,
     UserPen,
@@ -18,6 +20,7 @@ import {
     CheckCircle2,
     Truck,
     XCircle,
+    Star,
 } from "lucide-react"
 import {Button} from "@/components/ui/button"
 
@@ -84,6 +87,42 @@ export default function OrderHistoryPage() {
         avatarUrl: string
     }>({fullName: "Tài khoản của tôi", avatarUrl: ""})
     const navigate = useNavigate();
+
+    const [reviewModalOpen, setReviewModalOpen] = useState(false);
+    const [reviewProduct, setReviewProduct] = useState<{ id: string; name: string; image: string } | null>(null);
+    const [reviewRating, setReviewRating] = useState(5);
+    const [reviewComment, setReviewComment] = useState("");
+    const [submittingReview, setSubmittingReview] = useState(false);
+
+    const handleOpenReviewModal = (product: { id: string; name: string; image: string }) => {
+        setReviewProduct(product);
+        setReviewRating(5);
+        setReviewComment("");
+        setReviewModalOpen(true);
+    };
+
+    const handleReviewSubmit = async () => {
+        if (!reviewProduct) return;
+        if (!reviewComment.trim()) {
+            return toast.error("Vui lòng nhập nội dung đánh giá của bạn.");
+        }
+
+        setSubmittingReview(true);
+        try {
+            await productApi.submitReview(reviewProduct.id, {
+                rating: reviewRating,
+                comment: reviewComment
+            });
+            toast.success("Cảm ơn bạn đã đánh giá sản phẩm thành công!");
+            setReviewModalOpen(false);
+        } catch (error: any) {
+            console.error("Lỗi khi gửi đánh giá:", error);
+            toast.error(error?.response?.data || "Gửi đánh giá thất bại. Vui lòng thử lại.");
+        } finally {
+            setSubmittingReview(false);
+        }
+    };
+
     useEffect(() => {
         const fetchOrders = async () => {
             try {
@@ -307,8 +346,10 @@ export default function OrderHistoryPage() {
                                                 {order.status === "delivered" && (
                                                     <>
                                                         <span
+                                                            onClick={() => handleOpenReviewModal(order.product)}
                                                             className="text-xs text-primary font-semibold hover:underline cursor-pointer">Viết đánh giá</span>
                                                         <Button variant="outline" size="sm"
+                                                                onClick={() => navigate(`/product/${order.product.id}`)}
                                                                 className="rounded-xl border-gray-200 text-xs font-medium h-9 px-4 w-full sm:w-auto">
                                                             Mua lại
                                                         </Button>
@@ -326,6 +367,7 @@ export default function OrderHistoryPage() {
                                                 )}
                                                 {order.status === "cancelled" && (
                                                     <Button variant="outline" size="sm"
+                                                            onClick={() => navigate(`/product/${order.product.id}`)}
                                                             className="rounded-xl border-gray-200 text-xs font-medium h-9 px-4 w-full sm:w-auto">
                                                         Mua lại
                                                     </Button>
@@ -339,6 +381,87 @@ export default function OrderHistoryPage() {
                     </div>
                 </div>
             </main>
+
+            {/* Review Modal */}
+            {reviewModalOpen && reviewProduct && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200">
+                    <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-xl max-w-md w-full animate-in zoom-in-95 duration-200">
+                        <div className="flex justify-between items-start mb-4">
+                            <h3 className="text-lg font-bold text-slate-900">Viết đánh giá sản phẩm</h3>
+                            <button onClick={() => setReviewModalOpen(false)} className="text-gray-400 hover:text-gray-600 text-xl font-bold cursor-pointer">&times;</button>
+                        </div>
+
+                        {/* Product info in modal */}
+                        <div className="flex gap-4 items-center bg-slate-50 p-3 rounded-xl border border-slate-100 mb-4">
+                            <div className="w-14 h-14 bg-white rounded-lg overflow-hidden border border-slate-100 shrink-0 flex items-center justify-center p-1">
+                                <img
+                                    src={reviewProduct.image}
+                                    alt={reviewProduct.name}
+                                    className="w-full h-full object-contain"
+                                    onError={(e) => {
+                                        (e.target as HTMLImageElement).src = '/placeholder.svg';
+                                    }}
+                                />
+                            </div>
+                            <div className="min-w-0">
+                                <h4 className="font-semibold text-slate-900 text-xs truncate leading-normal">{reviewProduct.name}</h4>
+                                <p className="text-[10px] text-slate-400 mt-0.5">Đơn hàng đã giao thành công</p>
+                            </div>
+                        </div>
+
+                        {/* Star Rating select */}
+                        <div className="flex flex-col items-center gap-1.5 mb-5">
+                            <span className="text-xs text-slate-500 font-medium">Chọn mức độ hài lòng của bạn</span>
+                            <div className="flex gap-1.5">
+                                {[1, 2, 3, 4, 5].map((s) => (
+                                    <Star
+                                        key={s}
+                                        onClick={() => setReviewRating(s)}
+                                        className={`w-8 h-8 cursor-pointer transition-transform hover:scale-110 ${
+                                            s <= reviewRating ? 'fill-yellow-400 text-yellow-400' : 'fill-slate-100 text-slate-200'
+                                        }`}
+                                    />
+                                ))}
+                            </div>
+                            <span className="text-xs font-bold text-yellow-600 mt-0.5">
+                                {reviewRating === 5 ? "Rất hài lòng" :
+                                 reviewRating === 4 ? "Hài lòng" :
+                                 reviewRating === 3 ? "Bình thường" :
+                                 reviewRating === 2 ? "Không hài lòng" : "Rất không hài lòng"}
+                            </span>
+                        </div>
+
+                        {/* Comment text area */}
+                        <div className="mb-5">
+                            <label className="text-xs text-slate-500 font-semibold block mb-1.5">Nội dung đánh giá</label>
+                            <textarea
+                                className="w-full border border-slate-200 rounded-xl p-3 text-xs focus:ring-2 focus:ring-primary focus:outline-none bg-slate-50 focus:bg-white transition-all resize-none"
+                                rows={4}
+                                placeholder="Hãy chia sẻ nhận xét của bạn về chất lượng sản phẩm..."
+                                value={reviewComment}
+                                onChange={(e) => setReviewComment(e.target.value)}
+                            />
+                        </div>
+
+                        <div className="flex gap-3">
+                            <Button
+                                variant="outline"
+                                onClick={() => setReviewModalOpen(false)}
+                                className="flex-1 rounded-xl border-slate-200 text-xs font-medium h-10 cursor-pointer"
+                            >
+                                Hủy
+                            </Button>
+                            <Button
+                                onClick={handleReviewSubmit}
+                                disabled={submittingReview}
+                                className="flex-1 rounded-xl bg-primary text-primary-foreground text-xs font-semibold h-10 cursor-pointer shadow-sm hover:bg-primary/95"
+                            >
+                                {submittingReview ? "Đang gửi..." : "Gửi đánh giá"}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
-    )
+    );
 }
