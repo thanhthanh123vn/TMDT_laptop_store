@@ -36,5 +36,6 @@ public class AdminNotificationController {
         notificationService.adminDelete(id);
         return ResponseEntity.ok().build();
     }
+
 }
 

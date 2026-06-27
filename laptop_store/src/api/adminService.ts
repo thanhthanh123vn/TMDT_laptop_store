@@ -285,11 +285,11 @@ export const orderAdminService = {
             const record = toRecord(item);
             return {
                 id: toNumber(record.id, index + 1),
-                code: toString(record.code ?? record.id, `#${index + 1}`),
+                code: toString(record.orderCode ?? record.code ?? record.id, `#${index + 1}`),
                 customerName: toString(record.customerName ?? record.customer, "Khách hàng"),
                 customerEmail: toString(record.customerEmail ?? record.email, ""),
                 createdAt: toString(record.createdAt ?? record.date, ""),
-                amount: toNumber(record.amount),
+                amount: toNumber(record.totalAmount ?? record.amount),
                 paymentMethod: toString(record.paymentMethod ?? record.method, "N/A"),
                 status: normalizeStatus(toString(record.status, "PENDING")),
             };
@@ -401,6 +401,107 @@ export const aiRecipeAdminService = {
     },
 };
 
+export type AdminSeller = {
+    id: number;
+    userId: number;
+    storeName: string;
+    fullName: string;
+    email: string;
+    phone: string;
+    approved: boolean;
+    status: string;
+    emailVerified: boolean;
+    createdAt: string;
+    warehouseProvince?: string;
+    warehouseDistrict?: string;
+    warehouseWard?: string;
+    warehouseStreet?: string;
+    cccd?: string;
+    bankName?: string;
+    bankAccountNumber?: string;
+    bankAccountHolder?: string;
+    rating?: number;
+    avatarUrl?: string;
+};
+
+export const sellerAdminService = {
+    async list(params: { page?: number; size?: number; approved?: string; status?: string; keyword?: string }): Promise<PageResult<AdminSeller>> {
+        const query: Record<string, unknown> = { ...params };
+        if (params.approved === 'true') query.approved = true;
+        else if (params.approved === 'false') query.approved = false;
+        else delete query.approved;
+
+        const res = await api.get('/api/admin/sellers', { params: cleanParams(query) });
+        return toPageResult(res.data, (item, index) => {
+            const record = toRecord(item);
+            return {
+                id: toNumber(record.id, index + 1),
+                userId: toNumber(record.userId),
+                storeName: toString(record.storeName, 'Cửa hàng'),
+                fullName: toString(record.fullName, 'Người bán'),
+                email: toString(record.email),
+                phone: toString(record.phone),
+                approved: record.approved === true,
+                status: normalizeStatus(toString(record.status, 'PENDING')),
+                emailVerified: record.emailVerified === true,
+                createdAt: toString(record.createdAt, ''),
+                warehouseProvince: toString(record.warehouseProvince),
+                warehouseDistrict: toString(record.warehouseDistrict),
+                warehouseWard: toString(record.warehouseWard),
+                warehouseStreet: toString(record.warehouseStreet),
+                cccd: toString(record.cccd),
+                bankName: toString(record.bankName),
+                bankAccountNumber: toString(record.bankAccountNumber),
+                bankAccountHolder: toString(record.bankAccountHolder),
+                rating: toNumber(record.rating),
+                avatarUrl: toString(record.avatarUrl),
+            };
+        });
+    },
+
+    async detail(id: number): Promise<AdminSeller> {
+        const res = await api.get(`/api/admin/sellers/${id}`);
+        const record = toRecord(res.data);
+        return {
+            id: toNumber(record.id),
+            userId: toNumber(record.userId),
+            storeName: toString(record.storeName, 'Cửa hàng'),
+            fullName: toString(record.fullName, 'Người bán'),
+            email: toString(record.email),
+            phone: toString(record.phone),
+            approved: record.approved === true,
+            status: normalizeStatus(toString(record.status, 'PENDING')),
+            emailVerified: record.emailVerified === true,
+            createdAt: toString(record.createdAt, ''),
+            warehouseProvince: toString(record.warehouseProvince),
+            warehouseDistrict: toString(record.warehouseDistrict),
+            warehouseWard: toString(record.warehouseWard),
+            warehouseStreet: toString(record.warehouseStreet),
+            cccd: toString(record.cccd),
+            bankName: toString(record.bankName),
+            bankAccountNumber: toString(record.bankAccountNumber),
+            bankAccountHolder: toString(record.bankAccountHolder),
+            rating: toNumber(record.rating),
+            avatarUrl: toString(record.avatarUrl),
+        };
+    },
+
+    async approve(id: number) {
+        const res = await api.patch(`/api/admin/sellers/${id}/approve`);
+        return res.data;
+    },
+
+    async reject(id: number) {
+        const res = await api.patch(`/api/admin/sellers/${id}/reject`);
+        return res.data;
+    },
+
+    async updateStatus(id: number, status: string) {
+        const res = await api.patch(`/api/admin/sellers/${id}/status`, { status: normalizeStatus(status) });
+        return res.data;
+    },
+};
+
 export type AdminNotification = {
     id: string | number;
     title: string;
@@ -491,4 +592,58 @@ export const notificationAdminService = {
         return '/api/admin/notifications/stream';
     }
 };
+
+export type AdminReview = {
+    id: number;
+    rating: number;
+    comment: string;
+    createdAt: string;
+    sellerReply?: string;
+    repliedAt?: string;
+    user: {
+        id: number;
+        fullName: string;
+        email: string;
+    };
+    product: {
+        id: number;
+        name: string;
+        imageUrl?: string;
+    };
+};
+
+export const reviewAdminService = {
+    async list(params: { page?: number; size?: number; keyword?: string; rating?: number }): Promise<PageResult<AdminReview>> {
+        const res = await api.get('/api/admin/reviews', { params: cleanParams(params) });
+        return toPageResult(res.data, (item) => {
+            const r = toRecord(item);
+            const user = toRecord(r.user);
+            const product = toRecord(r.product);
+            return {
+                id: toNumber(r.id),
+                rating: toNumber(r.rating),
+                comment: toString(r.comment),
+                createdAt: toString(r.createdAt),
+                sellerReply: toString(r.sellerReply),
+                repliedAt: toString(r.repliedAt),
+                user: {
+                    id: toNumber(user.id),
+                    fullName: toString(user.fullName, 'Người dùng'),
+                    email: toString(user.email),
+                },
+                product: {
+                    id: toNumber(product.id),
+                    name: toString(product.name, 'Sản phẩm'),
+                    imageUrl: toString(product.imageUrl),
+                }
+            } as AdminReview;
+        });
+    },
+
+    async remove(id: number) {
+        const res = await api.delete(`/api/admin/reviews/${id}`);
+        return res.data;
+    }
+};
+
 

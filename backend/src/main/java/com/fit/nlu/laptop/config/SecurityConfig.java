@@ -32,86 +32,59 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
-
-
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-
-
                 .csrf(AbstractHttpConfigurer::disable)
-
-
                 .headers(headers -> headers
                         .contentSecurityPolicy(csp -> csp
                                 .policyDirectives(
                                         "default-src 'self'; " +
-
                                                 // SCRIPT
-                                                "script-src 'self' https://js.stripe.com; " +
-
+                                                "script-src 'self' https://js.stripe.com 'unsafe-inline'; " +
                                                 // FRAME
                                                 "frame-src https://js.stripe.com https://hooks.stripe.com; " +
-
                                                 // STYLE
                                                 "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
-
                                                 // FONT
                                                 "font-src 'self' https://fonts.gstatic.com; " +
-
-                                                // CONNECT
-                                                "connect-src 'self' https://api.stripe.com https://m.stripe.network;"
+                                                // CONNECT - Đã bổ sung ws://localhost:8080 để kết nối Chat Realtime
+                                                "connect-src 'self' http://localhost:8080 ws://localhost:8080 https://api.stripe.com https://m.stripe.network;"
                                 )
                         )
                 )
-
-
                 .sessionManagement(s ->
                         s.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
-
-
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/seller/**").hasRole("SELLER")
 
-                        .requestMatchers(HttpMethod.OPTIONS, "/**")
-                        .permitAll()
-
-                        .requestMatchers("/api/admin/**")
-                        .hasRole("ADMIN")
-
-                        .requestMatchers("/api/seller/**")
-                        .hasRole("SELLER")
-
-                        .requestMatchers("/api/cart/**")
-                        .authenticated()
+                        // Cho phép kết nối WebSockets (Chat) tự do
                         .requestMatchers("/ws/**").permitAll()
+
+                        // Các API cần đăng nhập (Bao gồm API Chat lấy lịch sử)
                         .requestMatchers(
+                                "/api/cart/**",
                                 "/api/orders/**",
                                 "/api/reviews/**",
-                                "/api/notifications/**"
-                        )
-                        .authenticated()
+                                "/api/notifications/**",
+                                "/api/chat/**"
+                        ).authenticated()
 
                         .requestMatchers(
                                 "/auth/**",
                                 "/uploads/**",
                                 "/error",
-
                                 "/api/payment/**",
                                 "/api/payment/webhook",
-                                "/api/boost/vnpay-return",
-
                                 "/api/addresses",
-
                                 "/api/home",
                                 "/api/products/**",
                                 "/api/categories/**"
-                        )
-                        .permitAll()
+                        ).permitAll()
 
-                        .anyRequest()
-                        .authenticated()
+                        .anyRequest().authenticated()
                 )
-
-
                 .addFilterBefore(
                         jwtFilter,
                         UsernamePasswordAuthenticationFilter.class

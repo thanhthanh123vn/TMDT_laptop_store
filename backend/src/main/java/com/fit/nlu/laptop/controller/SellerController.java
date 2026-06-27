@@ -1,5 +1,6 @@
 package com.fit.nlu.laptop.controller;
 
+import com.fit.nlu.laptop.dto.request.ReplyReviewReq;
 import com.fit.nlu.laptop.dto.request.UpdateSellerProfileReq;
 import com.fit.nlu.laptop.dto.response.SellerStatsResponse;
 import com.fit.nlu.laptop.entity.Product;
@@ -12,10 +13,12 @@ import com.fit.nlu.laptop.repository.ProductRepository;
 import com.fit.nlu.laptop.repository.SellerProfileRepository;
 import com.fit.nlu.laptop.service.FileService;
 import com.fit.nlu.laptop.service.OrderService;
+import com.fit.nlu.laptop.service.ReviewService;
 import com.fit.nlu.laptop.service.SellerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -36,9 +39,10 @@ public class SellerController {
 
     private final SellerService sellerService;
     private final ProductRepository productRepository;
-    private final SellerProfileRepository sellerProfileRepository;
+
     private final ProductImageRepository productImageRepository;
     private final FileService fileService;
+    private final ReviewService reviewService;
     private final OrderService orderService;
 
     @GetMapping("/profile")
@@ -63,13 +67,14 @@ public class SellerController {
         return ResponseEntity.ok(sellerService.getReviews((long) principal.getId()));
     }
 
-    // ─── Product Management ───────────────────────────────────────────────────
 
-    private SellerProfile getSellerProfile(long userId) {
-        return sellerProfileRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy hồ sơ người bán"));
+    @GetMapping("/getSellerByUserId")
+    public SellerProfile getSellerProfile(
+            @RequestParam Long userId
+    ) {
+
+        return sellerService.getProfile(userId);
     }
-
     @GetMapping("/products")
     public ResponseEntity<List<Product>> getMyProducts(
             @AuthenticationPrincipal UserPrincipal principal,
@@ -275,5 +280,18 @@ public class SellerController {
             p.setStock(Integer.parseInt(body.get("stock").toString()));
         if (body.containsKey("badge")) p.setBadge((String) body.get("badge"));
         if (body.containsKey("badgeColor")) p.setBadgeColor((String) body.get("badgeColor"));
+    }
+    @PostMapping("/reviews/{reviewId}/reply")
+    @PreAuthorize("hasAuthority('SELLER')")
+    public ResponseEntity<?> replyToReview(
+            @PathVariable Long reviewId,
+            @RequestBody ReplyReviewReq request,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        try {
+            var updatedReview = reviewService.replyToReview(reviewId, Long.valueOf(principal.getId()), request.getReplyContent());
+            return ResponseEntity.ok(updatedReview);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 }

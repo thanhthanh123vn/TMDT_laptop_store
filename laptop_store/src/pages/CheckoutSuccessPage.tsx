@@ -17,7 +17,7 @@ export default function CheckoutSuccessPage() {
                 </svg>
             </div>
 
-            {/* Main Content Card */}
+
             <div className="max-w-[640px] w-full bg-surface-container-lowest border border-outline-variant rounded-lg p-stack-lg shadow-sm z-10">
 
                 {/* Success Status Header */}

@@ -18,6 +18,7 @@ interface Message {
     id: number;
     roomId: string;
     senderId: number;
+    receiverId: number;
     senderName: string;
     content: string;
     timestamp: string;
@@ -42,6 +43,8 @@ export const ChatWithShop: React.FC<ChatProps> = ({ productId, shopId, shopName,
 
 
 
+
+
     const roomId = `room_buyer_${user?.id}_seller_${shopId}_prod_${productId}`;
 
 
@@ -59,6 +62,7 @@ export const ChatWithShop: React.FC<ChatProps> = ({ productId, shopId, shopName,
     }, [isOpen, messages]);
 
     useEffect(() => {
+
         if (isOpen && user) {
 
             const client = new Client({
@@ -111,21 +115,23 @@ export const ChatWithShop: React.FC<ChatProps> = ({ productId, shopId, shopName,
     }, [isOpen, user, roomId]);
 
 
-    // ==========================================
-    // XỬ LÝ GỬI TIN NHẮN MỚI
-    // ==========================================
+
     const handleSendMessage = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!inputText.trim() || !stompClientRef.current?.connected || !user) return;
+
+        if (!inputText.trim() || !stompClientRef.current?.connected || !user) {
+            console.error("Thiếu thông tin kết nối hoặc user!");
+            return;
+        }
 
         const chatMessage = {
             roomId: roomId,
             senderId: user.id,
+
+            receiverId: typeof shopId === 'string' ? parseInt(shopId) : shopId,
             senderName: user.fullName || "User",
             content: inputText.trim(),
-
         };
-
 
         stompClientRef.current.publish({
             destination: `/app/chat/${roomId}/send`,

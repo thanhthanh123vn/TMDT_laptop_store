@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Laptop, ShoppingCart, MessageSquare, LogOut, Store, Zap } from 'lucide-react';
+import { LayoutDashboard, Laptop, ShoppingCart, MessageSquare, LogOut, Store, Zap, MessageCircle} from 'lucide-react';
 import {
     Sidebar, SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarGroupContent,
     SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarHeader, SidebarFooter
@@ -12,6 +12,7 @@ const menuItems = [
     { title: 'Sản phẩm', url: '/seller/products', icon: Laptop },
     { title: 'Đơn hàng', url: '/seller/orders', icon: ShoppingCart },
     { title: 'Bình luận', url: '/seller/reviews', icon: MessageSquare },
+    { title: 'Tin nhắn', url: '/seller/chat', icon: MessageCircle },
     { title: 'Gói đẩy tin', url: '/seller/boost', icon: Zap },
 ];
 
