@@ -37,6 +37,55 @@ public class OrderController {
         return ResponseEntity.ok(orders);
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getOrderById(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long id) {
+        if (principal == null) return ResponseEntity.status(401).build();
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
+        if (!order.getUser().getId().equals(principal.getId().longValue())) {
+            return ResponseEntity.status(403).build();
+        }
+        return ResponseEntity.ok(order);
+    }
+
+    @PutMapping("/{id}/cancel")
+    public ResponseEntity<?> cancelOrder(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long id) {
+        if (principal == null) return ResponseEntity.status(401).build();
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
+        if (!order.getUser().getId().equals(principal.getId().longValue())) {
+            return ResponseEntity.status(403).build();
+        }
+        if (!List.of("PENDING", "PROCESSING").contains(order.getStatus())) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Không thể hủy đơn hàng ở trạng thái hiện tại"));
+        }
+        order.setStatus("CANCELLED");
+        orderRepository.save(order);
+        return ResponseEntity.ok(Map.of("message", "Đã hủy đơn hàng"));
+    }
+
+    @PutMapping("/{id}/return-request")
+    public ResponseEntity<?> requestReturn(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long id) {
+        if (principal == null) return ResponseEntity.status(401).build();
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
+        if (!order.getUser().getId().equals(principal.getId().longValue())) {
+            return ResponseEntity.status(403).build();
+        }
+        if (!"DELIVERED".equals(order.getStatus())) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Chỉ có thể yêu cầu trả hàng sau khi đã giao"));
+        }
+        order.setStatus("RETURN_REQUESTED");
+        orderRepository.save(order);
+        return ResponseEntity.ok(Map.of("message", "Đã gửi yêu cầu trả hàng"));
+    }
+
     @PostMapping
     public ResponseEntity<?> createOrder(
             @AuthenticationPrincipal UserPrincipal principal,
