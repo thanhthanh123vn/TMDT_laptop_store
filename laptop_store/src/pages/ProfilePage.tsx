@@ -20,7 +20,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 
 const sidebarItems = [
-    { icon: LayoutGrid, label: "Tổng quan", href: "/account" },
     { icon: UserCog, label: "Chỉnh sửa hồ sơ", href: "/account/profile", active: true },
     { icon: KeyRound, label: "Đổi mật khẩu", href: "/account/password" },
     { icon: MapPin, label: "Địa chỉ", href: "/account/address" },
