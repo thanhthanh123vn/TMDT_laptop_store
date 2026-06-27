@@ -35,7 +35,8 @@ public interface ProductRepository extends JpaRepository<Product, Long>, org.spr
     );
 
     @Query("SELECT p FROM Product p WHERE p.isDeleted = false AND p.approved = true " +
-           "AND (:categoryId IS NULL OR p.categoryId = :categoryId)")
+           "AND (:categoryId IS NULL OR p.categoryId = :categoryId) " +
+           "ORDER BY p.isBestSeller DESC, p.createdAt DESC")
     List<Product> findPublicProducts(@Param("categoryId") Long categoryId);
 
     Optional<Product> findByIdAndIsDeletedFalse(Long id);

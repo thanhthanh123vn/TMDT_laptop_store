@@ -35,5 +35,25 @@ export const sellerApi = {
         axiosClient.put(`/api/seller/products/${productId}/images`, urls),
     replyToReview: (reviewId: number, data: { replyContent: string }) => {
         return axiosClient.post(`/api/seller/reviews/${reviewId}/reply`, data);
-    }
+    },
+
+    // Order management
+    getOrders: () => axiosClient.get('/api/seller/orders'),
+    getOrderDetail: (id: number) => axiosClient.get(`/api/seller/orders/${id}`),
+    updateOrderStatus: (id: number, status: string) =>
+        axiosClient.patch(`/api/seller/orders/${id}/status`, { status }),
+
+    // Boost packages
+    getBoostPrices: () => axiosClient.get('/api/seller/boost/prices'),
+    getBoostPackages: () => axiosClient.get('/api/seller/boost/packages'),
+    getBoostPackageDetail: (id: number) => axiosClient.get(`/api/seller/boost/packages/${id}`),
+    createBoost: (productId: number, durationMonths: number) =>
+        axiosClient.post<{ packageId: number }>('/api/seller/boost/create', { productId, durationMonths }),
+    submitBoostPayment: (packageId: number, file: File) => {
+        const fd = new FormData();
+        fd.append('file', file);
+        return axiosClient.post(`/api/seller/boost/packages/${packageId}/submit-payment`, fd, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        });
+    },
 };
