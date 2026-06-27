@@ -27,7 +27,7 @@ export default function LoginPage() {
             const response = await authApi.login({ email, password });
             if (response.data && response.data.token) {
                 localStorage.setItem("token", response.data.token);
-                localStorage.setItem("user", JSON.stringify({ fullName: response.data.fullName, email: response.data.email }));
+                localStorage.setItem("user", JSON.stringify({  fullName: response.data.fullName, email: response.data.email }));
                 localStorage.setItem("refreshToken", response.data.refreshToken);
                 if (response.data.role) localStorage.setItem("role", response.data.role);
                 if (response.data.role === "SELLER") {
