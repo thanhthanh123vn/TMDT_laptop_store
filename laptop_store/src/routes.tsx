@@ -39,7 +39,9 @@ import {AdminReviewsPage} from "./pages/admin/AdminReviewsPage.tsx";
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 import {CheckoutReturnPage} from "@/pages/CheckoutReturnPage.tsx";
+import ChatVsShop from "@/pages/ChatVsShop.tsx";
 import {SellerChatPage} from "@/pages/seller/SellerChatPage.tsx";
+import ChatPage from "@/pages/ChatPage.tsx";
 
 const stripePromise = loadStripe("pk_test_51Tbd6UFPI5dc6V9ZfFGX5ttKLsacjscuB7vm0arJnWbSdb3OvuEzAGO7merHxX0dFTsUAAyWKF0JO3XgAohFW9Kk00GYBD9HL5");
 
@@ -71,6 +73,8 @@ export const router = createBrowserRouter([
       { path: 'forgot-password', Component: ForgotPasswordPage },
       { path: 'profile', Component: ProfilePage },
       { path: 'wishlist', Component: WishListPage },
+      { path: 'chat', Component: ChatVsShop },
+      { path: 'allConvChat', Component: ChatPage },
       { path: 'notifications', Component: NotificationsPage },
       {
         path: 'account',
