@@ -27,6 +27,7 @@ public class VNPayServiceImpl implements VNPayService {
         fields.remove("vnp_SecureHashType");
         fields.remove("vnp_SecureHash");
 
+
         String hashData = VNPayConfig.buildReturnHashData(fields);
         String signValue = VNPayConfig.hmacSHA512(VNPayConfig.secretKey, hashData);
         return signValue.equalsIgnoreCase(vnp_SecureHash);

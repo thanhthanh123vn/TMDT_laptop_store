@@ -17,7 +17,7 @@ public class Notification {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long userId; // null nếu gửi cho tất cả
+    private Long userId; 
     private String title;
     private String content; // description
     @Enumerated(EnumType.STRING)

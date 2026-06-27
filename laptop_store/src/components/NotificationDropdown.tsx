@@ -26,7 +26,7 @@ export const NotificationDropdown = () => {
     const [notifications, setNotifications] = useState<AppNotification[]>([]);
     const [user, setUser] = useState<any>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
-    // const navigate = useNavigate();
+    const navigate = useNavigate();
 
     const unreadCount = notifications.filter(n => !n.isRead).length;
 
@@ -40,7 +40,7 @@ export const NotificationDropdown = () => {
     // 2. LẤY LỊCH SỬ THÔNG BÁO TỪ API
     useEffect(() => {
         if (user && user.id) {
-            axiosClient.get(`/api/notifications/${user.id}`)
+            axiosClient.get(`/api/notifications`)
                 .then(res => setNotifications(res.data))
                 .catch(err => console.error("Lỗi lấy thông báo:", err));
         }
@@ -120,7 +120,7 @@ export const NotificationDropdown = () => {
 
         axiosClient.put(`/api/notifications/${id}/read`);
         setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
-        // navigate("/account/orders");
+        navigate("/account/orders");
     };
 
     return (

@@ -63,7 +63,14 @@ export const ProductDetailPage: React.FC = () => {
   const [userComment, setUserComment] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [canReview, setCanReview] = useState(false);
+  const [filterRating, setFilterRating] = useState<number | 'all'>('all');
+  const [reviewImages, setReviewImages] = useState<File[]>([]);
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setReviewImages(Array.from(e.target.files));
+    }
+  };
   useEffect(() => {
     const checkEligibility = async () => {
       if (id) {
@@ -167,20 +174,53 @@ export const ProductDetailPage: React.FC = () => {
   };
 
   const handlePostReview = async () => {
+
     if (!reviewContent.trim()) return;
+
     try {
-      await productApi.submitReview(laptop.id, {
-        rating: reviewRating,
-        comment: reviewContent
+
+      const formData = new FormData();
+
+      formData.append(
+          "rating",
+          reviewRating.toString()
+      );
+
+      formData.append(
+          "comment",
+          reviewContent
+      );
+
+
+      reviewImages.forEach((image)=>{
+        formData.append(
+            "images",
+            image
+        );
       });
+
+
+      await productApi.submitReview(
+          laptop.id,
+          formData
+      );
+
+
       await fetchReviews();
-      setReviewContent('');
+
+
+      setReviewContent("");
       setReviewRating(5);
+      setReviewImages([]);
       setShowReviewForm(false);
-    } catch (error) {
+
+
+    } catch(error){
+
+      console.error(error);
       alert("Có lỗi xảy ra khi gửi đánh giá!");
     }
-  };
+  }
 
   const tabs = [
     { key: 'description' as const, label: 'Mô tả' },
@@ -411,14 +451,80 @@ export const ProductDetailPage: React.FC = () => {
 
                       {canReview ? (
                           <>
-                            <button onClick={() => setShowReviewForm(!showReviewForm)} className="w-full py-2 text-xs font-semibold border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-gray-600">
+                            <button
+                                onClick={() => setShowReviewForm(!showReviewForm)}
+                                className="w-full py-2 text-xs font-semibold border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-gray-600"
+                            >
                               {showReviewForm ? 'Hủy' : '✏️ Viết đánh giá'}
                             </button>
+
                             {showReviewForm && (
                                 <div className="mt-3 p-3 border border-gray-200 rounded-lg space-y-2.5 animate-in fade-in slide-in-from-top-2">
-                                  <Stars rating={reviewRating} size="w-5 h-5" interactive onRate={setReviewRating} />
-                                  <textarea className="w-full border border-gray-200 rounded-md p-2 text-xs focus:ring-2 focus:ring-blue-500 outline-none resize-none" rows={3} placeholder="Chia sẻ trải nghiệm..." value={reviewContent} onChange={e => setReviewContent(e.target.value)} />
-                                  <Button onClick={handlePostReview} className="w-full text-xs bg-blue-600 hover:bg-blue-700 text-white rounded-md">Gửi</Button>
+
+                                  <Stars
+                                      rating={reviewRating}
+                                      size="w-5 h-5"
+                                      interactive
+                                      onRate={setReviewRating}
+                                  />
+
+                                  <textarea
+                                      className="w-full border border-gray-200 rounded-md p-2 text-xs focus:ring-2 focus:ring-blue-500 outline-none resize-none"
+                                      rows={3}
+                                      placeholder="Chia sẻ trải nghiệm..."
+                                      value={reviewContent}
+                                      onChange={e => setReviewContent(e.target.value)}
+                                  />
+
+
+                                  {/* Upload nhiều hình */}
+                                  <div>
+                                    <label className="text-xs font-semibold text-gray-600">
+                                      Hình ảnh sản phẩm
+                                    </label>
+
+                                    <input
+                                        type="file"
+                                        multiple
+                                        accept="image/*"
+                                        onChange={handleImageChange}
+                                        className="mt-1 w-full text-xs border border-gray-200 rounded-md p-2"
+                                    />
+
+                                    {/* Preview ảnh */}
+                                    {reviewImages.length > 0 && (
+                                        <div className="flex gap-2 mt-2 flex-wrap">
+                                          {reviewImages.map((img, index) => (
+                                              <div key={index} className="relative">
+                                                <img
+                                                    src={URL.createObjectURL(img)}
+                                                    className="w-16 h-16 object-cover rounded-md border"
+                                                />
+
+                                                <button
+                                                    onClick={() =>
+                                                        setReviewImages(
+                                                            reviewImages.filter((_, i) => i !== index)
+                                                        )
+                                                    }
+                                                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 text-xs"
+                                                >
+                                                  ×
+                                                </button>
+                                              </div>
+                                          ))}
+                                        </div>
+                                    )}
+                                  </div>
+
+
+                                  <Button
+                                      onClick={handlePostReview}
+                                      className="w-full text-xs bg-blue-600 hover:bg-blue-700 text-white rounded-md"
+                                  >
+                                    Gửi
+                                  </Button>
+
                                 </div>
                             )}
                           </>
@@ -428,9 +534,11 @@ export const ProductDetailPage: React.FC = () => {
                             Chỉ khách hàng đã mua sản phẩm mới được đánh giá.
                           </div>
                       )}
+
                     </div>
 
                     {/* Danh sách bình luận */}
+
                     <div>
                       {reviews.length > 0 ? (
                           <div className="divide-y divide-gray-100">
@@ -452,6 +560,19 @@ export const ProductDetailPage: React.FC = () => {
                                     <span className="text-[11px] text-gray-400">{new Date(r.createdAt).toLocaleDateString('vi-VN')}</span>
                                   </div>
                                   <p className="text-xs text-gray-600 leading-relaxed">{r.comment}</p>
+                                  {r.images && r.images.length > 0 && (
+                                      <div className="flex gap-2 mt-3 flex-wrap">
+
+                                        {r.images.map((img:any, index:number)=> (
+                                            <img
+                                                src={img}
+                                                onClick={() => window.open(img)}
+                                                className="w-20 h-20 object-cover rounded-lg cursor-pointer"
+                                            />
+                                        ))}
+
+                                      </div>
+                                  )}
 
                                   {/* PHẦN HIỂN THỊ PHẢN HỒI CỦA SHOP (MỚI ĐƯỢC THÊM) */}
                                   {r.sellerReply && (
