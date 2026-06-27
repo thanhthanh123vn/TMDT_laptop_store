@@ -285,11 +285,11 @@ export const orderAdminService = {
             const record = toRecord(item);
             return {
                 id: toNumber(record.id, index + 1),
-                code: toString(record.code ?? record.id, `#${index + 1}`),
+                code: toString(record.orderCode ?? record.code ?? record.id, `#${index + 1}`),
                 customerName: toString(record.customerName ?? record.customer, "Khách hàng"),
                 customerEmail: toString(record.customerEmail ?? record.email, ""),
                 createdAt: toString(record.createdAt ?? record.date, ""),
-                amount: toNumber(record.amount),
+                amount: toNumber(record.totalAmount ?? record.amount),
                 paymentMethod: toString(record.paymentMethod ?? record.method, "N/A"),
                 status: normalizeStatus(toString(record.status, "PENDING")),
             };
@@ -592,4 +592,58 @@ export const notificationAdminService = {
         return '/api/admin/notifications/stream';
     }
 };
+
+export type AdminReview = {
+    id: number;
+    rating: number;
+    comment: string;
+    createdAt: string;
+    sellerReply?: string;
+    repliedAt?: string;
+    user: {
+        id: number;
+        fullName: string;
+        email: string;
+    };
+    product: {
+        id: number;
+        name: string;
+        imageUrl?: string;
+    };
+};
+
+export const reviewAdminService = {
+    async list(params: { page?: number; size?: number; keyword?: string; rating?: number }): Promise<PageResult<AdminReview>> {
+        const res = await api.get('/api/admin/reviews', { params: cleanParams(params) });
+        return toPageResult(res.data, (item) => {
+            const r = toRecord(item);
+            const user = toRecord(r.user);
+            const product = toRecord(r.product);
+            return {
+                id: toNumber(r.id),
+                rating: toNumber(r.rating),
+                comment: toString(r.comment),
+                createdAt: toString(r.createdAt),
+                sellerReply: toString(r.sellerReply),
+                repliedAt: toString(r.repliedAt),
+                user: {
+                    id: toNumber(user.id),
+                    fullName: toString(user.fullName, 'Người dùng'),
+                    email: toString(user.email),
+                },
+                product: {
+                    id: toNumber(product.id),
+                    name: toString(product.name, 'Sản phẩm'),
+                    imageUrl: toString(product.imageUrl),
+                }
+            } as AdminReview;
+        });
+    },
+
+    async remove(id: number) {
+        const res = await api.delete(`/api/admin/reviews/${id}`);
+        return res.data;
+    }
+};
+
 
