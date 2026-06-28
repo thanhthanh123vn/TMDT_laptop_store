@@ -3,12 +3,18 @@ package com.fit.nlu.laptop.controller;
 import com.fit.nlu.laptop.dto.response.ProductDetailResponse;
 import com.fit.nlu.laptop.entity.Product;
 import com.fit.nlu.laptop.entity.Review;
+
 import com.fit.nlu.laptop.entity.ReviewImage;
+
+
+
+import com.fit.nlu.laptop.repository.ReviewImageRepository;
+import com.fit.nlu.laptop.repository.ReviewRepository;
+
 import com.fit.nlu.laptop.entity.User;
 import com.fit.nlu.laptop.jwt.UserPrincipal;
 import com.fit.nlu.laptop.repository.ProductRepository;
-import com.fit.nlu.laptop.repository.ReviewImageRepository;
-import com.fit.nlu.laptop.repository.ReviewRepository;
+
 import com.fit.nlu.laptop.repository.UserRepository;
 import com.fit.nlu.laptop.service.OrderService;
 import com.fit.nlu.laptop.service.ProductService;
@@ -23,7 +29,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.security.Principal;
+
 import java.util.LinkedHashMap;
+
 import java.util.List;
 import java.util.Map;
 
@@ -38,9 +46,12 @@ public class ProductController {
     private final OrderService orderService;
     private final ReviewService reviewService;
     private final ProductService productService;
+
     private final S3Service s3Service;
     private final ReviewRepository reviewRepository;
     private final ReviewImageRepository reviewImageRepository;
+
+
     @GetMapping
     public List<Product> getAllProducts(@RequestParam(required = false) Long categoryId) {
         return productRepository.findPublicProducts(categoryId);
@@ -90,6 +101,7 @@ public class ProductController {
             map.put("sellerReply", r.getSellerReply());
             map.put("repliedAt", r.getRepliedAt());
 
+
             List<String> imageUrls =
                     reviewImageRepository
                             .findByReviewId(r.getId())
@@ -99,6 +111,7 @@ public class ProductController {
 
 
             map.put("images", imageUrls);
+
             Map<String, Object> userMap = new java.util.LinkedHashMap<>();
             userMap.put("id", r.getUser().getId());
             userMap.put("fullName", r.getUser().getFullName());
@@ -109,6 +122,8 @@ public class ProductController {
         }).toList();
         return ResponseEntity.ok(result);
     }
+
+
 
 
     @PostMapping(

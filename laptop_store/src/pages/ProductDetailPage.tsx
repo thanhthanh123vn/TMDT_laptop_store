@@ -32,7 +32,7 @@ const Stars: React.FC<{ rating: number; size?: string; interactive?: boolean; on
     </div>
 );
 
-// Fake seller info — replace with real data later
+
 const FAKE_SELLER = {
   name: 'LaptopStore Official',
   avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=LS&backgroundColor=3b82f6&textColor=ffffff',
