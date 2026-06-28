@@ -28,14 +28,20 @@ import {AdminProfilePage} from "./pages/admin/AdminProfilePage.tsx";
 import AdminCategoriesPage from "./pages/admin/AdminCategoriesPage.tsx";
 import AdminRevenuePage from "./pages/admin/AdminRevenuePage.tsx";
 import AdminSellersPage from "./pages/admin/AdminSellersPage.tsx";
+
+
 import AdminBoostPage from "./pages/admin/AdminBoostPage.tsx";
+
 import {SellerLayout} from "./pages/seller/SellerLayout.tsx";
 import {SellerDashboardPage} from "./pages/seller/SellerDashboardPage.tsx";
 import {SellerProductsPage} from "./pages/seller/SellerProductsPage.tsx";
 import {SellerOrdersPage} from "./pages/seller/SellerOrdersPage.tsx";
 import {SellerReviewsPage} from "./pages/seller/SellerReviewsPage.tsx";
 import {AdminReviewsPage} from "./pages/admin/AdminReviewsPage.tsx";
+
+
 import {SellerBoostPage} from "./pages/seller/SellerBoostPage.tsx";
+
 
 
 import { Elements } from "@stripe/react-stripe-js";
@@ -107,7 +113,9 @@ export const router = createBrowserRouter([
       { path: 'revenue', Component: AdminRevenuePage },
       { path: 'notifications', Component: NotificationManagementPage },
       { path: 'profile', Component: AdminProfilePage },
+
       { path: 'boost', Component: AdminBoostPage },
+
       { path: 'reviews', Component: AdminReviewsPage },
     ],
   },
@@ -120,7 +128,9 @@ export const router = createBrowserRouter([
       { path: 'orders', Component: SellerOrdersPage },
       { path: 'reviews', Component: SellerReviewsPage },
       { path: 'chat', element: <SellerChatPage /> },
+
       { path: 'boost', Component: SellerBoostPage },
+
     ],
   }
 ]);

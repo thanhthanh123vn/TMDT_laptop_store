@@ -43,9 +43,9 @@ public class PaymentController {
             vnp_Params.put("vnp_ReturnUrl", VNPayConfig.vnp_ReturnUrl);
             vnp_Params.put("vnp_IpAddr", VNPayConfig.getIpAddress(request));
 
-            if (bankCode != null && !bankCode.isEmpty()) {
-                vnp_Params.put("vnp_BankCode", bankCode);
-            }
+//            if (bankCode != null && !bankCode.isEmpty()) {
+//                vnp_Params.put("vnp_BankCode", bankCode);
+//            }
             vnp_Params.put("vnp_Locale", "vn");
             TimeZone vnTz = TimeZone.getTimeZone("Asia/Ho_Chi_Minh");
             Calendar cld = Calendar.getInstance(vnTz);

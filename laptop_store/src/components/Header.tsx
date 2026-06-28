@@ -17,6 +17,7 @@ import { useStore } from '../context/StoreContext';
 import { Badge } from './ui/badge';
 import { userApi } from "@/api/userApi.ts";
 import axiosClient from "@/api/axiosClient.ts";
+import {NotificationDropdown} from "@/components/NotificationDropdown.tsx";
 
 interface ChatConversation {
   id: string;
@@ -215,7 +216,7 @@ export const Header: React.FC = () => {
               >
                 <Search className="w-5 h-5" />
               </button>
-
+              {isLoggedIn && <NotificationDropdown />}
               {/* ── CHAT DROPDOWN ── */}
               <div className="relative" ref={chatRef}>
                 <button

@@ -4,6 +4,8 @@ import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import { notificationApi } from "../api/notificationApi"
 import { userApi } from "../api/userApi"
+import { Client } from '@stomp/stompjs'
+import SockJS from 'sockjs-client'
 import {
     LayoutGrid,
     UserPen,
@@ -33,12 +35,12 @@ const menuItems = [
 
 interface Notification {
     id: string
-    type: "order" | "system" | "promo" | "info" | "warning"
+    type: "order" | "system" | "promo" | "info" | "warning" | string
     title: string
     message: string
     time: string
     read: boolean
-    icon?: "package" | "truck" | "monitor" | "warning"
+    icon?: "package" | "truck" | "monitor" | "warning" | string
     image?: string
     actions?: { label: string; href: string }[]
 }
@@ -46,7 +48,8 @@ interface Notification {
 export default function NotificationsPage() {
     const [notifications, setNotifications] = useState<Notification[]>([])
     const [loading, setLoading] = useState(true)
-    const [userProfile, setUserProfile] = useState<{ fullName: string; avatarUrl: string }>({ fullName: "Tài khoản của tôi", avatarUrl: "" })
+    // Cập nhật state userProfile để lưu thêm id
+    const [userProfile, setUserProfile] = useState<{ id?: number; fullName: string; avatarUrl: string }>({ fullName: "Tài khoản của tôi", avatarUrl: "" })
 
     useEffect(() => {
         const fetchNotifs = async () => {
@@ -54,11 +57,12 @@ export default function NotificationsPage() {
                 const res = await notificationApi.getMyNotifications();
                 setNotifications(res.data.map((n: any) => ({
                     id: n.id.toString(),
-                    type: n.type || "system",
+                    // Chuyển ORDER thành order để map đúng với giao diện
+                    type: n.type?.toLowerCase() || "system",
                     title: n.title,
                     message: n.content || n.message || "Không có nội dung",
                     time: n.createdAt ? new Date(n.createdAt).toLocaleString('vi-VN') : "",
-                    read: n.read,
+                    read: n.isRead || n.read || false,
                     icon: n.icon || "info",
                     image: n.imageUrl,
                     actions: (n.actionUrl || n.actionLink) ? [{ label: "Chi tiết", href: (n.actionUrl || n.actionLink) }] : []
@@ -75,6 +79,7 @@ export default function NotificationsPage() {
                 const user = res.data;
                 const BASE_URL = "http://localhost:8080";
                 setUserProfile({
+                    id: user.id, // Lưu lại id để dùng cho WebSocket
                     fullName: user.fullName || "Tài khoản của tôi",
                     avatarUrl: user.avatarUrl ? (user.avatarUrl.startsWith('http') ? user.avatarUrl : BASE_URL + user.avatarUrl) : ""
                 });
@@ -85,6 +90,43 @@ export default function NotificationsPage() {
         fetchNotifs();
         fetchProfile();
     }, []);
+
+    // Effect mới: Xử lý WebSocket
+    useEffect(() => {
+        if (!userProfile.id) return;
+
+        const client = new Client({
+            webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
+            connectHeaders: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+            onConnect: () => {
+                client.subscribe(`/topic/notifications/${userProfile.id}`, (msg) => {
+                    const n = JSON.parse(msg.body);
+
+                    // Chuẩn hóa dữ liệu trả về giống API
+                    const newNotification: Notification = {
+                        id: n.id.toString(),
+                        type: n.type?.toLowerCase() || "system",
+                        title: n.title,
+                        message: n.content || n.message || "Không có nội dung",
+                        time: n.createdAt ? new Date(n.createdAt).toLocaleString('vi-VN') : new Date().toLocaleString('vi-VN'),
+                        read: n.isRead || n.read || false,
+                        icon: n.icon || "info",
+                        image: n.imageUrl,
+                        actions: (n.actionUrl || n.actionLink) ? [{ label: "Chi tiết", href: (n.actionUrl || n.actionLink) }] : []
+                    };
+
+                    // Cập nhật list bằng cách chèn thông báo mới lên đầu
+                    setNotifications(prev => [newNotification, ...prev]);
+                });
+            },
+        });
+
+        client.activate();
+
+        return () => {
+            client.deactivate();
+        };
+    }, [userProfile.id]);
 
     const orderNotifications = notifications.filter((n) => n.type === "order")
     const systemNotificationsAPI = notifications.filter((n) => n.type !== "order")

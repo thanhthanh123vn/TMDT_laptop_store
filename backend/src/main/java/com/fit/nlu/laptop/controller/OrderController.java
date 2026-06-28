@@ -4,10 +4,12 @@ import com.fit.nlu.laptop.entity.Address;
 import com.fit.nlu.laptop.entity.Order;
 import com.fit.nlu.laptop.entity.OrderItem;
 import com.fit.nlu.laptop.entity.User;
+import com.fit.nlu.laptop.entity.enums.NotificationType;
 import com.fit.nlu.laptop.jwt.UserPrincipal;
 import com.fit.nlu.laptop.repository.AddressRepository;
 import com.fit.nlu.laptop.repository.OrderRepository;
 import com.fit.nlu.laptop.repository.UserRepository;
+import com.fit.nlu.laptop.service.NotificationService;
 import com.fit.nlu.laptop.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +31,9 @@ public class OrderController {
     private final com.fit.nlu.laptop.repository.ProductRepository productRepository;
     private final com.fit.nlu.laptop.repository.OrderItemRepository orderItemRepository;
     private final OrderService orderService;
+
+    private final NotificationService notificationService;
+
     @GetMapping("/my-orders")
     public ResponseEntity<?> getMyOrders(@AuthenticationPrincipal UserPrincipal principal) {
         if (principal == null) return ResponseEntity.status(401).build();
@@ -104,7 +109,12 @@ public class OrderController {
 
             Order order =
                     orderService.createOrder(user, orderRequest);
-
+            notificationService.sendNotification(
+                    user.getId(),
+                    NotificationType.ORDER,
+                    "Đặt hàng thành công",
+                    "Đơn hàng #" + order.getId() + " của bạn đã được tạo thành công"
+            );
             return ResponseEntity.ok(order);
 
         } catch (Exception e) {

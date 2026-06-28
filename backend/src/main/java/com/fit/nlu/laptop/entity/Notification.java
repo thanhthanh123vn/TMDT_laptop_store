@@ -1,22 +1,27 @@
 package com.fit.nlu.laptop.entity;
 
+import com.fit.nlu.laptop.entity.enums.NotificationType;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
+
 import java.time.LocalDateTime;
 
 @Entity
 @Getter
 @Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Notification {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long userId; // null nếu gửi cho tất cả
+    private Long userId; 
     private String title;
     private String content; // description
-    private String type; // order, ai, offer, system
+    @Enumerated(EnumType.STRING)
+    private NotificationType type;
     @Column(columnDefinition = "JSON")
     private String tags; // JSON array [{"label": "Track Package", "variant": "outline"}]
     private String actionUrl; // URL redirect khi click

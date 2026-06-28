@@ -17,8 +17,19 @@ export const productApi = {
     },
 
 
-    submitReview: (productId: number | string, data: { rating: number; comment: string }) => {
-        return axiosClient.post(`/api/products/${productId}/reviews`, data);
+    submitReview: (
+        productId: number | string,
+        formData: FormData
+    ) => {
+        return axiosClient.post(
+            `/api/products/${productId}/reviews`,
+            formData,
+            {
+                headers: {
+                    "Content-Type": "multipart/form-data"
+                }
+            }
+        );
     },
     checkCanReview: (productId: number | string) => {
         return axiosClient.get(`/api/products/${productId}/check-review-eligibility`);

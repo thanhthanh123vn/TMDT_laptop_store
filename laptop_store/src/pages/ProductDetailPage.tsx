@@ -15,7 +15,6 @@ import {ChatWithShop} from "@/pages/ChatWithShop.tsx";
 
 const formatVND = (price: number) =>
     price.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
-const BASE_URL = 'http://localhost:8080';
 
 const Stars: React.FC<{ rating: number; size?: string; interactive?: boolean; onRate?: (n: number) => void }> = ({
                                                                                                                    rating, size = 'w-3.5 h-3.5', interactive, onRate,
@@ -32,6 +31,17 @@ const Stars: React.FC<{ rating: number; size?: string; interactive?: boolean; on
       ))}
     </div>
 );
+
+
+const FAKE_SELLER = {
+  name: 'LaptopStore Official',
+  avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=LS&backgroundColor=3b82f6&textColor=ffffff',
+  rating: 4.9,
+  sold: 1240,
+  responseRate: '98%',
+  responseTime: 'trong vài phút',
+  verified: true,
+};
 
 export const ProductDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -53,12 +63,19 @@ export const ProductDetailPage: React.FC = () => {
   const [userComment, setUserComment] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [canReview, setCanReview] = useState(false);
+  const [filterRating, setFilterRating] = useState<number | 'all'>('all');
+  const [reviewImages, setReviewImages] = useState<File[]>([]);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setReviewImages(Array.from(e.target.files));
+    }
+  };
   useEffect(() => {
     const checkEligibility = async () => {
       if (id) {
         try {
           const res = await productApi.checkCanReview(id);
-
           setCanReview(res.data.canReview);
         } catch (error) {
           console.error("Lỗi kiểm tra quyền đánh giá:", error);
@@ -82,21 +99,6 @@ export const ProductDetailPage: React.FC = () => {
   // Tải danh sách đánh giá ngay khi mở trang chi tiết sản phẩm
   useEffect(() => {
     fetchReviews();
-  }, [id]);
-  useEffect(() => {
-    const checkEligibility = async () => {
-      if (id) {
-        try {
-          const res = await productApi.checkCanReview(id);
-          // Giả sử API trả về { canReview: true/false }
-          setCanReview(res.data.canReview);
-        } catch (error) {
-          console.error("Lỗi kiểm tra quyền đánh giá:", error);
-          setCanReview(false);
-        }
-      }
-    };
-    checkEligibility();
   }, [id]);
 
   const handleReviewSubmit = async (e: React.FormEvent) => {
@@ -132,20 +134,7 @@ export const ProductDetailPage: React.FC = () => {
         const res = await productApi.getProductById(id || '');
         if (res.data) {
           const p = res.data;
-          setLaptop({
-            ...p,
-            id: p.id.toString(),
-            image: p.imageUrl || '/placeholder.svg',
-            price: Number(p.price),
-            originalPrice: p.oldPrice ? Number(p.oldPrice) : undefined,
-            category: p.category ? p.category.split(',') : [],
-            sellerId: p.sellerId ? String(p.sellerId) : '',
-            sellerName: p.sellerName || '',
-            sellerLogo: p.sellerLogo || '',
-            sellerRating: p.sellerRating ?? 0,
-            sellerSoldCount: p.sellerSoldCount ?? 0,
-          });
-          console.log(res.data);
+          setLaptop({ ...p, id: p.id.toString(), image: p.imageUrl || '/placeholder.svg', price: Number(p.price), category: p.category ? p.category.split(',') : [] });
         } else {
           setLaptop(getMockLaptopById(id || '') || null);
         }
@@ -185,20 +174,53 @@ export const ProductDetailPage: React.FC = () => {
   };
 
   const handlePostReview = async () => {
+
     if (!reviewContent.trim()) return;
+
     try {
-      await productApi.submitReview(laptop.id, {
-        rating: reviewRating,
-        comment: reviewContent
+
+      const formData = new FormData();
+
+      formData.append(
+          "rating",
+          reviewRating.toString()
+      );
+
+      formData.append(
+          "comment",
+          reviewContent
+      );
+
+
+      reviewImages.forEach((image)=>{
+        formData.append(
+            "images",
+            image
+        );
       });
+
+
+      await productApi.submitReview(
+          laptop.id,
+          formData
+      );
+
+
       await fetchReviews();
-      setReviewContent('');
+
+
+      setReviewContent("");
       setReviewRating(5);
+      setReviewImages([]);
       setShowReviewForm(false);
-    } catch (error) {
+
+
+    } catch(error){
+
+      console.error(error);
       alert("Có lỗi xảy ra khi gửi đánh giá!");
     }
-  };
+  }
 
   const tabs = [
     { key: 'description' as const, label: 'Mô tả' },
@@ -261,11 +283,7 @@ export const ProductDetailPage: React.FC = () => {
 
               <div className="flex flex-col gap-3.5">
                 <div className="flex flex-wrap gap-1.5">
-                  {laptop.isBestSeller && (
-                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
-                    ⚡ Đẩy tin nổi bật
-                  </span>
-                )}
+                  {laptop.isBestSeller && <span className="text-[11px] font-semibold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">Bán chạy</span>}
                   {laptop.isHot && <span className="text-[11px] font-semibold bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full">Hot</span>}
                   {laptop.isSale && <span className="text-[11px] font-semibold bg-red-100 text-red-600 px-2 py-0.5 rounded-full">Sale</span>}
                   <span className="text-[11px] font-semibold bg-green-100 text-green-700 px-2 py-0.5 rounded-full">{laptop.condition}</span>
@@ -336,54 +354,30 @@ export const ProductDetailPage: React.FC = () => {
             </div>
           </div>
 
-        {/* ── Seller card ── */}
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-full border border-gray-200 shrink-0 overflow-hidden bg-blue-50 flex items-center justify-center">
-              {laptop.sellerLogo ? (
-                <img
-                  src={laptop.sellerLogo.startsWith('http') ? laptop.sellerLogo : BASE_URL + laptop.sellerLogo}
-                  alt={laptop.sellerName}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <Store className="w-5 h-5 text-blue-400" />
-              )}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5">
-                <span className="text-sm font-semibold text-gray-900 truncate">
-                  {laptop.sellerName || 'LaptopStore Official'}
-                </span>
-                <BadgeCheck className="w-4 h-4 text-blue-500 shrink-0" />
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-4">
+            <div className="flex items-center gap-3">
+              <img src={FAKE_SELLER.avatar} alt={FAKE_SELLER.name} className="w-11 h-11 rounded-full border border-gray-200 shrink-0" />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-sm font-semibold text-gray-900 truncate">{FAKE_SELLER.name}</span>
+                  {FAKE_SELLER.verified && <BadgeCheck className="w-4 h-4 text-blue-500 shrink-0" />}
+                </div>
+                <div className="flex items-center gap-3 text-[11px] text-gray-400 mt-0.5">
+                  <span className="flex items-center gap-0.5"><Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />{FAKE_SELLER.rating}</span>
+                  <span>{FAKE_SELLER.sold.toLocaleString()} đã bán</span>
+                  <span>Phản hồi {FAKE_SELLER.responseRate}</span>
+                </div>
               </div>
-              <div className="flex items-center gap-3 text-[11px] text-gray-400 mt-0.5">
-                {(laptop.sellerRating ?? 0) > 0 && (
-                  <span className="flex items-center gap-0.5">
-                    <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                    {laptop.sellerRating?.toFixed(1)}
-                  </span>
-                )}
-                {(laptop.sellerSoldCount ?? 0) > 0 && (
-                  <span>{laptop.sellerSoldCount?.toLocaleString('vi-VN')} đơn đã bán</span>
-                )}
+              <div className="flex gap-2 shrink-0">
+                <button onClick={() => setIsChatOpen(true)} className="flex items-center gap-1.5 text-xs font-medium border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50 transition-colors text-gray-600">
+                  <MessageCircle className="w-3.5 h-3.5"/>Chat
+                </button>
+                <button className="flex items-center gap-1.5 text-xs font-medium border border-blue-200 rounded-lg px-3 py-1.5 hover:bg-blue-50 transition-colors text-blue-600">
+                  <Store className="w-3.5 h-3.5"/>Xem shop
+                </button>
               </div>
-            </div>
-            <div className="flex gap-2 shrink-0">
-              <button
-                onClick={() => setIsChatOpen(true)}
-                className="flex items-center gap-1.5 text-xs font-medium border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50 transition-colors text-gray-600"
-              >
-                <MessageCircle className="w-3.5 h-3.5" />
-                Chat
-              </button>
-              <button className="flex items-center gap-1.5 text-xs font-medium border border-blue-200 rounded-lg px-3 py-1.5 hover:bg-blue-50 transition-colors text-blue-600">
-                <Store className="w-3.5 h-3.5" />
-                Xem shop
-              </button>
             </div>
           </div>
-        </div>
 
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
             <div className="flex border-b border-gray-100">
@@ -457,14 +451,80 @@ export const ProductDetailPage: React.FC = () => {
 
                       {canReview ? (
                           <>
-                            <button onClick={() => setShowReviewForm(!showReviewForm)} className="w-full py-2 text-xs font-semibold border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-gray-600">
+                            <button
+                                onClick={() => setShowReviewForm(!showReviewForm)}
+                                className="w-full py-2 text-xs font-semibold border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-gray-600"
+                            >
                               {showReviewForm ? 'Hủy' : '✏️ Viết đánh giá'}
                             </button>
+
                             {showReviewForm && (
                                 <div className="mt-3 p-3 border border-gray-200 rounded-lg space-y-2.5 animate-in fade-in slide-in-from-top-2">
-                                  <Stars rating={reviewRating} size="w-5 h-5" interactive onRate={setReviewRating} />
-                                  <textarea className="w-full border border-gray-200 rounded-md p-2 text-xs focus:ring-2 focus:ring-blue-500 outline-none resize-none" rows={3} placeholder="Chia sẻ trải nghiệm..." value={reviewContent} onChange={e => setReviewContent(e.target.value)} />
-                                  <Button onClick={handlePostReview} className="w-full text-xs bg-blue-600 hover:bg-blue-700 text-white rounded-md">Gửi</Button>
+
+                                  <Stars
+                                      rating={reviewRating}
+                                      size="w-5 h-5"
+                                      interactive
+                                      onRate={setReviewRating}
+                                  />
+
+                                  <textarea
+                                      className="w-full border border-gray-200 rounded-md p-2 text-xs focus:ring-2 focus:ring-blue-500 outline-none resize-none"
+                                      rows={3}
+                                      placeholder="Chia sẻ trải nghiệm..."
+                                      value={reviewContent}
+                                      onChange={e => setReviewContent(e.target.value)}
+                                  />
+
+
+                                  {/* Upload nhiều hình */}
+                                  <div>
+                                    <label className="text-xs font-semibold text-gray-600">
+                                      Hình ảnh sản phẩm
+                                    </label>
+
+                                    <input
+                                        type="file"
+                                        multiple
+                                        accept="image/*"
+                                        onChange={handleImageChange}
+                                        className="mt-1 w-full text-xs border border-gray-200 rounded-md p-2"
+                                    />
+
+                                    {/* Preview ảnh */}
+                                    {reviewImages.length > 0 && (
+                                        <div className="flex gap-2 mt-2 flex-wrap">
+                                          {reviewImages.map((img, index) => (
+                                              <div key={index} className="relative">
+                                                <img
+                                                    src={URL.createObjectURL(img)}
+                                                    className="w-16 h-16 object-cover rounded-md border"
+                                                />
+
+                                                <button
+                                                    onClick={() =>
+                                                        setReviewImages(
+                                                            reviewImages.filter((_, i) => i !== index)
+                                                        )
+                                                    }
+                                                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 text-xs"
+                                                >
+                                                  ×
+                                                </button>
+                                              </div>
+                                          ))}
+                                        </div>
+                                    )}
+                                  </div>
+
+
+                                  <Button
+                                      onClick={handlePostReview}
+                                      className="w-full text-xs bg-blue-600 hover:bg-blue-700 text-white rounded-md"
+                                  >
+                                    Gửi
+                                  </Button>
+
                                 </div>
                             )}
                           </>
@@ -474,9 +534,11 @@ export const ProductDetailPage: React.FC = () => {
                             Chỉ khách hàng đã mua sản phẩm mới được đánh giá.
                           </div>
                       )}
+
                     </div>
 
                     {/* Danh sách bình luận */}
+
                     <div>
                       {reviews.length > 0 ? (
                           <div className="divide-y divide-gray-100">
@@ -498,6 +560,19 @@ export const ProductDetailPage: React.FC = () => {
                                     <span className="text-[11px] text-gray-400">{new Date(r.createdAt).toLocaleDateString('vi-VN')}</span>
                                   </div>
                                   <p className="text-xs text-gray-600 leading-relaxed">{r.comment}</p>
+                                  {r.images && r.images.length > 0 && (
+                                      <div className="flex gap-2 mt-3 flex-wrap">
+
+                                        {r.images.map((img:any, index:number)=> (
+                                            <img
+                                                src={img}
+                                                onClick={() => window.open(img)}
+                                                className="w-20 h-20 object-cover rounded-lg cursor-pointer"
+                                            />
+                                        ))}
+
+                                      </div>
+                                  )}
 
                                   {/* PHẦN HIỂN THỊ PHẢN HỒI CỦA SHOP (MỚI ĐƯỢC THÊM) */}
                                   {r.sellerReply && (

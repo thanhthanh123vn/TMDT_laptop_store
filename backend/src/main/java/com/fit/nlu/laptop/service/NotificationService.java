@@ -1,11 +1,13 @@
 package com.fit.nlu.laptop.service;
 
 import com.fit.nlu.laptop.entity.Notification;
+import com.fit.nlu.laptop.entity.enums.NotificationType;
 import com.fit.nlu.laptop.repository.NotificationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
@@ -17,7 +19,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class NotificationService {
     private final NotificationRepository notificationRepository;
-
+    private final SimpMessagingTemplate messagingTemplate;
     // USER NOTIFICATIONS
     public Page<Notification> getUserNotifications(Long userId, String type, Boolean isRead, int page, int size) {
         Pageable pageable = PageRequest.of(Math.max(page-1,0), Math.max(size,1));
@@ -68,7 +70,7 @@ public class NotificationService {
         Notification n = new Notification();
         n.setTitle((String) body.getOrDefault("title", ""));
         n.setContent((String) body.getOrDefault("body", ""));
-        n.setType((String) body.getOrDefault("type", "system"));
+        n.setType(NotificationType.valueOf((String) body.getOrDefault("type", "system")));
         n.setTags((String) body.getOrDefault("tags", "[]"));
         n.setActionUrl((String) body.getOrDefault("actionUrl", ""));
         Object userIdObj = body.get("userId");
@@ -76,7 +78,22 @@ public class NotificationService {
         n.setRead(false);
         return notificationRepository.save(n);
     }
+    public void sendNotification(Long userId, NotificationType type, String title, String message) {
 
+        Notification notification = Notification.builder()
+                .userId(userId)
+                .type(type)
+                .title(title)
+                .content(message)
+                .read(false)
+                .build();
+
+        Notification savedNotification = notificationRepository.save(notification);
+
+
+
+        messagingTemplate.convertAndSend("/topic/notifications/" + userId, savedNotification);
+    }
     public void adminDelete(Long id) {
         notificationRepository.deleteById(id);
     }
