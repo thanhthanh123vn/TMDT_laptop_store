@@ -15,6 +15,14 @@ export const productApi = {
     getProductReviews: (productId: number | string) => {
         return axiosClient.get(`/api/products/${productId}/reviews`);
     },
+    getShopInfo: (shopId: number) => {
+        return axiosClient.get(`/api/products/${shopId}/public`);
+    },
+
+
+    getProductsByShop: (shopId: number) => {
+        return axiosClient.get(`/api/products/seller/${shopId}`);
+    },
 
 
     submitReview: (

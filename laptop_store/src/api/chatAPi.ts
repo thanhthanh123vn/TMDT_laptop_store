@@ -1,12 +1,12 @@
 import axiosClient from './axiosClient';
 
-// Định nghĩa lại cấu trúc Conversation khớp với Backend
+
 export interface Conversation {
     id: string;
     shopName: string;
     lastMessage: string;
     lastMessageTime: string;
-    // Có thể thêm các trường khác nếu Backend trả về
+
 }
 
 export const chatApi = {
@@ -21,4 +21,6 @@ export const chatApi = {
 
     getChatHistory: (conversationId: string) =>
         axiosClient.get(`/api/chat/${conversationId}`),
+
+
 };

@@ -16,22 +16,18 @@ public class MessageRestController {
 
     private final MessageService messageService;
 
-
     @GetMapping("/{conversationId}")
     public ResponseEntity<List<Message>> getHistory(@PathVariable String conversationId) {
         return ResponseEntity.ok(messageService.getChatHistory(conversationId));
     }
-
 
     @GetMapping("/seller/{sellerUserId}")
     public ResponseEntity<List<Conversation>> getSellerConversations(@PathVariable Long sellerUserId) {
         return ResponseEntity.ok(messageService.getConversationsBySellerId(sellerUserId));
     }
 
-
     @GetMapping("/user/{userId}/conversations")
     public ResponseEntity<List<Conversation>> getUserConversations(@PathVariable Long userId) {
         return ResponseEntity.ok(messageService.getConversationsByUserId(userId));
     }
-
 }

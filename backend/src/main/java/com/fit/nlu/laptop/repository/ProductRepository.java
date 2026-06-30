@@ -39,4 +39,6 @@ public interface ProductRepository extends JpaRepository<Product, Long>, org.spr
     List<Product> findPublicProducts(@Param("categoryId") Long categoryId);
 
     Optional<Product> findByIdAndIsDeletedFalse(Long id);
+
+
 }

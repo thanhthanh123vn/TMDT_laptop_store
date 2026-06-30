@@ -62,7 +62,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ laptop }) => {
         {/* ── Image ── */}
         <div className="relative overflow-hidden bg-slate-50 aspect-[4/3] shrink-0">
           <img
-            src={laptop.image}
+            src={laptop.image||laptop.imageUrl}
             alt={laptop.name}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-400"
           />

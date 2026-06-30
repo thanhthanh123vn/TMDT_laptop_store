@@ -30,6 +30,9 @@ export const orderApi = {
     getOrderById: (id: number) => {
         return axiosClient.get(`/api/orders/${id}`);
     },
+    getOrderDetailById: (id: number) => {
+        return axiosClient.get(`/api/orders/orderDetail/${id}`);
+    },
 
     // Hủy đơn hàng
     cancelOrder: (id: number) => {
@@ -58,4 +61,7 @@ export const orderApi = {
     checkCanReview: (productId: number | string) => {
         return axiosClient.get(`/products/${productId}/check-review-eligibility`);
     },
+    getOrdersByShop:(shopId: number | string) => {
+        return axiosClient.get(`/api/orders/user/shop/${shopId}`);
+    }
 };
