@@ -29,7 +29,9 @@ public class OrderController {
     private final com.fit.nlu.laptop.repository.ProductRepository productRepository;
     private final com.fit.nlu.laptop.repository.OrderItemRepository orderItemRepository;
     private final OrderService orderService;
+
     private final NotificationService notificationService;
+
     @GetMapping("/my-orders")
     public ResponseEntity<?> getMyOrders(@AuthenticationPrincipal UserPrincipal principal) {
         if (principal == null) return ResponseEntity.status(401).build();
