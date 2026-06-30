@@ -1,5 +1,5 @@
 import React, {useState, useEffect, useRef} from 'react';
-import {Send, Store, User as UserIcon, X} from 'lucide-react'; // Thêm icon X
+import {Send, Store, User as UserIcon, X} from 'lucide-react';
 import {Client} from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import axiosClient from '../../api/axiosClient';

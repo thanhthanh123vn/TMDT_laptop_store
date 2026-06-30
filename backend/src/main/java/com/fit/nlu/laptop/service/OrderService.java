@@ -237,4 +237,8 @@ public class OrderService {
         data.put("itemCount", itemCount);
         return data;
     }
+
+    public List<Order> findOrdersByBuyerAndShop(Long buyerId, Long shopId) {
+        return orderRepository.findOrdersByBuyerAndSeller(buyerId, shopId);
+    }
 }

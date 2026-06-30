@@ -1,5 +1,6 @@
 package com.fit.nlu.laptop.controller;
 
+import com.fit.nlu.laptop.dto.request.ChatMessageRequest;
 import com.fit.nlu.laptop.entity.Message;
 import com.fit.nlu.laptop.service.MessageService;
 import lombok.RequiredArgsConstructor;
@@ -18,22 +19,29 @@ public class ChatController {
     private final SimpMessagingTemplate messagingTemplate;
     private final MessageService messageService;
 
-    @MessageMapping("/chat/{conversationId}/send")
-    public void sendMessage(@DestinationVariable String conversationId, @Payload Message message) {
 
+
+    @MessageMapping("/chat/{conversationId}/send")
+    public void sendMessage(
+            @DestinationVariable String conversationId,
+            @Payload ChatMessageRequest request
+    ) {
 
 
         Message savedMessage = messageService.sendMessage(
-                message.getSenderId(),
-                message.getReceiverId(),
-                message.getContent(),
-                conversationId
+                request.getSenderId(),
+                request.getReceiverId(),
+                request.getContent(),
+                conversationId,
+                request.getImageUrls(),
+                request.getVideoUrl(),
+                request.getProductId(),
+                request.getOrderId()
         );
 
-
+        // Gửi trả lại Entity Message đã được lưu hoàn chỉnh cho các client trong phòng
         messagingTemplate.convertAndSend("/topic/chat/" + conversationId, savedMessage);
     }
-
     @MessageMapping("/chat/{conversationId}/recall")
     public void recallMessage(@DestinationVariable String conversationId, @Payload Map<String, Long> payload) {
         Long messageId = payload.get("messageId");

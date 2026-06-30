@@ -62,13 +62,16 @@ public class SecurityConfig {
                         // Cho phép kết nối WebSockets (Chat) tự do
                         .requestMatchers("/ws/**").permitAll()
 
+                        .requestMatchers("/api/products/seller/**").permitAll()
                         // Các API cần đăng nhập (Bao gồm API Chat lấy lịch sử)
                         .requestMatchers(
                                 "/api/cart/**",
                                 "/api/orders/**",
                                 "/api/reviews/**",
                                 "/api/notifications/**",
-                                "/api/chat/**"
+                                "/api/chat/**",
+                                "/api/upload/**"
+
                         ).authenticated()
 
                         .requestMatchers(

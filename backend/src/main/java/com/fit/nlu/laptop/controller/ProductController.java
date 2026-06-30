@@ -1,6 +1,9 @@
 package com.fit.nlu.laptop.controller;
 
 import com.fit.nlu.laptop.dto.response.ProductDetailResponse;
+
+import com.fit.nlu.laptop.entity.*;
+
 import com.fit.nlu.laptop.entity.Product;
 import com.fit.nlu.laptop.entity.Review;
 
@@ -12,14 +15,12 @@ import com.fit.nlu.laptop.repository.ReviewImageRepository;
 import com.fit.nlu.laptop.repository.ReviewRepository;
 
 import com.fit.nlu.laptop.entity.User;
+
 import com.fit.nlu.laptop.jwt.UserPrincipal;
 import com.fit.nlu.laptop.repository.ProductRepository;
 
 import com.fit.nlu.laptop.repository.UserRepository;
-import com.fit.nlu.laptop.service.OrderService;
-import com.fit.nlu.laptop.service.ProductService;
-import com.fit.nlu.laptop.service.ReviewService;
-import com.fit.nlu.laptop.service.S3Service;
+import com.fit.nlu.laptop.service.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -50,6 +51,10 @@ public class ProductController {
     private final S3Service s3Service;
     private final ReviewRepository reviewRepository;
     private final ReviewImageRepository reviewImageRepository;
+
+    private final SellerService sellerService;
+
+
 
 
     @GetMapping
@@ -148,9 +153,8 @@ public class ProductController {
                     .body("Vui lòng đăng nhập để đánh giá!");
         }
 
-        System.out.println("rating = " + rating);
-        System.out.println("comment = " + comment);
-        System.out.println("images = " + images.size());
+
+
         try {
 
             boolean hasPurchased =
@@ -237,5 +241,15 @@ public class ProductController {
                     .badRequest()
                     .body("Không thể lưu đánh giá: " + e.getMessage());
         }
+    }
+    @GetMapping("/seller/{sellerId}")
+    public ResponseEntity<List<Product>> getProductsBySeller(@PathVariable Long sellerId) {
+        List<Product> products = productService.getProductsBySellerId(sellerId);
+        return ResponseEntity.ok(products);
+    }
+    @GetMapping("/{shopId}/public")
+    public ResponseEntity<SellerProfile> getShopInfo(@PathVariable Long shopId) {
+        SellerProfile profile = sellerService.getProfileById(shopId);
+        return ResponseEntity.ok(profile);
     }
 }

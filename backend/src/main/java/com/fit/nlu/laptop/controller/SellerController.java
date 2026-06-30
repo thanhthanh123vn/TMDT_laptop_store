@@ -294,4 +294,9 @@ public class SellerController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+    @GetMapping("/{shopId}/public")
+    public ResponseEntity<SellerProfile> getShopInfo(@PathVariable Long shopId) {
+        SellerProfile profile = sellerService.getProfileById(shopId);
+        return ResponseEntity.ok(profile);
+    }
 }
