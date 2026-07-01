@@ -53,6 +53,17 @@ public class OrderController {
         return ResponseEntity.ok(order);
     }
 
+    @GetMapping("/seller/{id}")
+    public ResponseEntity<?> getOrderBySellerId(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long id) {
+        if (principal == null) return ResponseEntity.status(401).build();
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
+
+        return ResponseEntity.ok(order);
+    }
+
     @GetMapping("/orderDetail/{id}")
     public ResponseEntity<?> getOrderDetailById(
             @AuthenticationPrincipal UserPrincipal principal,
@@ -63,11 +74,9 @@ public class OrderController {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
 
-        if (!order.getUser().getId().equals(principal.getId().longValue())) {
-            return ResponseEntity.status(403).build();
-        }
-
-
+//        if (!order.getUser().getId().equals(principal.getId().longValue())) {
+//            return ResponseEntity.status(403).build();
+//        }
 
 
         String displayProductName = "Đơn hàng rỗng";
@@ -169,11 +178,39 @@ public class OrderController {
             );
         }
     }
+
     @GetMapping("/user/shop/{shopId}")
-    public ResponseEntity<List<Order>> getOrdersByShop( @AuthenticationPrincipal UserPrincipal principal,
-                                                        @RequestHeader("Authorization") String token, @PathVariable Long shopId) {
-        Long userId = principal.getId().longValue();
+    public ResponseEntity<List<Order>> getOrdersByShop(@AuthenticationPrincipal UserPrincipal principal,
+                                                       @PathVariable Long shopId) {
+        if (principal == null) return ResponseEntity.status(401).build();
+        User user = userRepository.findById(principal.getId().longValue()).orElseThrow();
+
+        return ResponseEntity.ok(orderService.findOrdersByBuyerAndShop(user.getId(), shopId));
+    }
+
+    @GetMapping("{userId}/shop/{shopId}")
+    public ResponseEntity<List<Order>> getOrdersForSeller(@PathVariable Long userId,
+                                                          @PathVariable Long shopId) {
+
+
         return ResponseEntity.ok(orderService.findOrdersByBuyerAndShop(userId, shopId));
     }
+
+    @PostMapping("/{id}/updateOrderStatus/{newStatus}")
+    public ResponseEntity<?> updateOrderStatus(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long id, @PathVariable String newStatus) {
+        if (principal == null) return ResponseEntity.status(401).build();
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
+
+        if (!List.of("PENDING", "PROCESSING").contains(order.getStatus())) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Không thể hủy đơn hàng ở trạng thái hiện tại"));
+        }
+        order.setStatus(newStatus);
+        orderRepository.save(order);
+        return ResponseEntity.ok(Map.of("message", "Đã hủy đơn hàng"));
+    }
+
 
 }
