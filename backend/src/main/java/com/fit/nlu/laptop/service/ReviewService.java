@@ -7,4 +7,5 @@ public interface ReviewService {
     List<Review> getReviewsByProductId(Long productId);
     Review createReview(Long productId, Long userId, int rating, String comment);
     Review replyToReview(Long reviewId, Long sellerUserId, String replyContent);
+
 }

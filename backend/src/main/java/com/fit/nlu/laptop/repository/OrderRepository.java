@@ -42,4 +42,22 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             @Param("buyerId") Long buyerId,
             @Param("sellerId") Long sellerId
     );
+
+
+    @Query("""
+SELECT DISTINCT o
+FROM Order o JOIN o.items oi
+JOin oi.product p
+WHERE p.id =:productId
+""")
+    List<Order> findAllByProductId(Long productId);
+
+
+    @Query("""
+       SELECT DISTINCT o.user.id 
+       FROM Order o
+       JOIN o.items oi
+       WHERE oi.product.id = :productId
+       """)
+    List<Long> findCustomerBoughtProduct(@Param("productId") Long productId);
 }

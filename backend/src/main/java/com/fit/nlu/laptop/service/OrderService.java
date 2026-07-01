@@ -1,11 +1,7 @@
 package com.fit.nlu.laptop.service;
 
 import com.fit.nlu.laptop.entity.*;
-import com.fit.nlu.laptop.repository.AddressRepository;
-import com.fit.nlu.laptop.repository.OrderItemRepository;
-import com.fit.nlu.laptop.repository.OrderRepository;
-import com.fit.nlu.laptop.repository.ProductRepository;
-import com.fit.nlu.laptop.repository.SellerProfileRepository;
+import com.fit.nlu.laptop.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -26,6 +22,7 @@ public class OrderService {
     private final ProductRepository productRepository;
     private final AddressRepository addressRepository;
     private final SellerProfileRepository sellerProfileRepository;
+    private final ReviewRepository reviewRepository;
 
     // Statuses seller is allowed to set
     private static final List<String> SELLER_ALLOWED_STATUSES =
@@ -240,5 +237,27 @@ public class OrderService {
 
     public List<Order> findOrdersByBuyerAndShop(Long buyerId, Long shopId) {
         return orderRepository.findOrdersByBuyerAndSeller(buyerId, shopId);
+    }
+
+    public double getResponseCustomer(Long productId) {
+
+        List<Long> buyers =
+                orderRepository.findCustomerBoughtProduct(productId);
+
+        List<Long> reviewers =
+                reviewRepository.findCustomerReviewedProduct(productId);
+
+
+        if (buyers.isEmpty()) {
+            return 0;
+        }
+
+
+        long responseCount = reviewers.stream()
+                .filter(buyers::contains)
+                .count();
+
+
+        return ((double) responseCount / buyers.size()) * 100;
     }
 }

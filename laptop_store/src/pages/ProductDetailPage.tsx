@@ -62,6 +62,7 @@ export const ProductDetailPage: React.FC = () => {
   const [canReview, setCanReview] = useState(false);
   const [filterRating, setFilterRating] = useState<number | 'all'>('all');
   const [reviewImages, setReviewImages] = useState<File[]>([]);
+  const [responseCustomer, setResponseCustomer] = useState(0);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -128,7 +129,12 @@ export const ProductDetailPage: React.FC = () => {
   useEffect(() => {
     const fetch = async () => {
       try {
-        const res = await productApi.getProductById(id || '');
+        const [res, responseCustome] = await Promise.all([
+          productApi.getProductById(id || ''),
+          productApi.responseCustomer(id || '')
+        ]);
+
+        setResponseCustomer(responseCustome.data.countResponseCustomer);
         if (res.data) {
           const p = res.data;
           setLaptop({ ...p, id: p.id.toString(), image: p.imageUrl || '/placeholder.svg', price: Number(p.price), category: p.category ? p.category.split(',') : [] });
@@ -223,6 +229,7 @@ export const ProductDetailPage: React.FC = () => {
     ['Trọng lượng', laptop.weight], ['Pin', laptop.batteryCondition],
     ['Tình trạng', laptop.condition],
   ];
+  console.log(responseCustomer);
   const totalReviews = reviews.length;
 console.log(laptop);
   const averageRating = totalReviews > 0
@@ -362,7 +369,7 @@ console.log(laptop);
                   <span className="flex items-center gap-0.5"><Star
                       className="w-3 h-3 fill-yellow-400 text-yellow-400"/>{laptop.sellerRating}</span>
                   <span>{laptop.sellerSoldCount} đã bán</span>
-                  {/*<span>Phản hồi {FAKE_SELLER.responseRate}</span>*/}
+                  <span>Phản hồi {responseCustomer}%</span>
                 </div>
               </div>
               <div className="flex gap-2 shrink-0">
