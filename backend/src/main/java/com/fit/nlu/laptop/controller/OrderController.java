@@ -8,6 +8,7 @@ import com.fit.nlu.laptop.repository.OrderRepository;
 import com.fit.nlu.laptop.repository.UserRepository;
 import com.fit.nlu.laptop.service.NotificationService;
 import com.fit.nlu.laptop.service.OrderService;
+import com.fit.nlu.laptop.service.ReviewService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -29,6 +30,7 @@ public class OrderController {
     private final com.fit.nlu.laptop.repository.ProductRepository productRepository;
     private final com.fit.nlu.laptop.repository.OrderItemRepository orderItemRepository;
     private final OrderService orderService;
+    private final ReviewService reviewService;
 
     private final NotificationService notificationService;
 
@@ -211,6 +213,24 @@ public class OrderController {
         orderRepository.save(order);
         return ResponseEntity.ok(Map.of("message", "Đã hủy đơn hàng"));
     }
+    @GetMapping("/responseCustomer/{productId}")
+    public ResponseEntity<?> getResponseCustomer(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long productId
+    ){
+        if (principal == null) return ResponseEntity.status(401).build();
+
+        double  countResponseCustomer = orderService.getResponseCustomer(productId);
+        Map<String, Object> responseData = new HashMap<>();
+        responseData.put("countResponseCustomer", countResponseCustomer);
+
+        return ResponseEntity.ok(responseData);
+
+
+    }
+
+
+
 
 
 }

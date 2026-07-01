@@ -252,4 +252,6 @@ public class ProductController {
         SellerProfile profile = sellerService.getProfileById(shopId);
         return ResponseEntity.ok(profile);
     }
+
+
 }

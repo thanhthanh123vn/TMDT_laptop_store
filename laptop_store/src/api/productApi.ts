@@ -41,5 +41,8 @@ export const productApi = {
     },
     checkCanReview: (productId: number | string) => {
         return axiosClient.get(`/api/products/${productId}/check-review-eligibility`);
+    },
+    responseCustomer(productId: number | string) {
+        return axiosClient.get(`/api/orders/responseCustomer/${productId}`);
     }
 };
