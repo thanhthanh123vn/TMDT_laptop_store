@@ -29,7 +29,8 @@ public class VNPayConfig {
         vnp_TmnCode = code;
     }
 
-    @Value("${vnpay.secret-key:AR8C4EF8LLT9DSI1CER8GQVL7K4Q1SA0}")
+    @Value("${VNPAY_SECRET_KEY}")
+
     public void setSecretKey(String key) {
         secretKey = key;
     }

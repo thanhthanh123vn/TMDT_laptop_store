@@ -1,7 +1,16 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { loadCheckoutSummary, type CheckoutSummary } from '@/utils/checkoutStorage';
+
+function formatVND(price: number): string {
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
+}
 
 export default function CheckoutSuccessPage() {
+    const location = useLocation();
+    const locationSummary = (location.state as { checkoutSummary?: CheckoutSummary } | null)?.checkoutSummary ?? null;
+    const [summary] = useState<CheckoutSummary | null>(() => locationSummary ?? loadCheckoutSummary());
+
     return (
         <main className="flex-grow flex items-center justify-center px-margin-mobile py-stack-lg min-h-[85vh] bg-background relative overflow-hidden">
 
@@ -18,7 +27,7 @@ export default function CheckoutSuccessPage() {
             </div>
 
 
-            <div className="max-w-[640px] w-full bg-surface-container-lowest border border-outline-variant rounded-lg p-stack-lg shadow-sm z-10">
+            <div className="max-w-[720px] w-full bg-surface-container-lowest border border-outline-variant rounded-lg p-stack-lg shadow-sm z-10">
 
                 {/* Success Status Header */}
                 <div className="flex flex-col items-center text-center mb-stack-lg">
@@ -28,25 +37,88 @@ export default function CheckoutSuccessPage() {
             </span>
                     </div>
                     <h1 className="font-headline-lg text-headline-lg text-on-surface mb-2">Thanh toán thành công</h1>
-                    <p className="font-body-md text-body-md text-on-surface-variant">Giao dịch của bạn đã được xử lý an toàn.</p>
+                    <p className="font-body-md text-body-md text-on-surface-variant">
+                        {summary
+                            ? 'Bill của bạn đã được tạo và lưu thành công.'
+                            : 'Giao dịch của bạn đã được xử lý an toàn.'}
+                    </p>
                 </div>
 
                 {/* Transaction Summary Card */}
                 <div className="bg-surface-container-low rounded-lg p-stack-md mb-stack-lg border border-outline-variant">
-                    <div className="flex justify-between items-center mb-stack-sm">
-                        <span className="font-label-md text-label-md text-on-surface-variant">Mã đơn hàng:</span>
-                        <span className="font-label-md text-label-md text-on-surface font-bold">#LPR-12345</span>
-                    </div>
-                    <div className="flex justify-between items-center mb-stack-sm">
-                        <span className="font-label-md text-label-md text-on-surface-variant">Phương thức:</span>
-                        <span className="font-label-md text-label-md text-on-surface">Chuyển khoản Ngân hàng</span>
-                    </div>
-                    <div className="h-[1px] bg-outline-variant my-stack-sm"></div>
-                    <div className="flex justify-between items-center">
-                        <span className="font-body-md text-body-md font-semibold text-primary">Tổng cộng:</span>
-                        <span className="text-2xl font-bold text-primary">15.540.000₫</span>
-                    </div>
+                    {summary ? (
+                        <>
+                            <div className="flex justify-between items-center mb-stack-sm gap-4">
+                                <span className="font-label-md text-label-md text-on-surface-variant">Mã bill:</span>
+                                <span className="font-label-md text-label-md text-on-surface font-bold text-right break-all">
+                                    #{summary.orderCode}
+                                </span>
+                            </div>
+                            <div className="flex justify-between items-center mb-stack-sm gap-4">
+                                <span className="font-label-md text-label-md text-on-surface-variant">Phương thức:</span>
+                                <span className="font-label-md text-label-md text-on-surface text-right">
+                                    {summary.paymentMethodLabel}
+                                </span>
+                            </div>
+                            <div className="flex justify-between items-center mb-stack-sm gap-4">
+                                <span className="font-label-md text-label-md text-on-surface-variant">Vận chuyển:</span>
+                                <span className="font-label-md text-label-md text-on-surface text-right">
+                                    {summary.shippingMethodLabel}
+                                </span>
+                            </div>
+                            <div className="flex justify-between items-center mb-stack-sm gap-4">
+                                <span className="font-label-md text-label-md text-on-surface-variant">Số lượng:</span>
+                                <span className="font-label-md text-label-md text-on-surface text-right">
+                                    {summary.itemCount} sản phẩm
+                                </span>
+                            </div>
+                            <div className="h-[1px] bg-outline-variant my-stack-sm"></div>
+                            <div className="flex justify-between items-center">
+                                <span className="font-body-md text-body-md font-semibold text-primary">Tổng cộng:</span>
+                                <span className="text-2xl font-bold text-primary">{formatVND(summary.totalAmount)}</span>
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                            <div className="flex justify-between items-center mb-stack-sm">
+                                <span className="font-label-md text-label-md text-on-surface-variant">Mã đơn hàng:</span>
+                                <span className="font-label-md text-label-md text-on-surface font-bold">#LPR-12345</span>
+                            </div>
+                            <div className="flex justify-between items-center mb-stack-sm">
+                                <span className="font-label-md text-label-md text-on-surface-variant">Phương thức:</span>
+                                <span className="font-label-md text-label-md text-on-surface">Thanh toán thành công</span>
+                            </div>
+                            <div className="h-[1px] bg-outline-variant my-stack-sm"></div>
+                            <div className="flex justify-between items-center">
+                                <span className="font-body-md text-body-md font-semibold text-primary">Tổng cộng:</span>
+                                <span className="text-2xl font-bold text-primary">15.540.000₫</span>
+                            </div>
+                        </>
+                    )}
                 </div>
+
+                {summary?.items?.length ? (
+                    <div className="bg-surface-container-low rounded-lg p-stack-md mb-stack-lg border border-outline-variant">
+                        <h2 className="font-label-md text-label-md text-on-surface mb-stack-sm">Chi tiết bill</h2>
+                        <div className="space-y-3">
+                            {summary.items.map((item) => (
+                                <div key={`${item.productId}-${item.productName}`} className="flex items-start justify-between gap-4 py-2 border-b border-outline-variant last:border-b-0 last:pb-0">
+                                    <div className="min-w-0">
+                                        <p className="font-body-md text-body-md text-on-surface font-medium truncate">
+                                            {item.productName}
+                                        </p>
+                                        <p className="font-label-sm text-label-sm text-on-surface-variant">
+                                            SL: {item.quantity} × {formatVND(item.price)}
+                                        </p>
+                                    </div>
+                                    <span className="font-semibold text-on-surface whitespace-nowrap">
+                                        {formatVND(item.price * item.quantity)}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                ) : null}
 
                 {/* Next Steps Bento Grid Style */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-gutter mb-stack-lg">

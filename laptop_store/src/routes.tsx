@@ -76,7 +76,7 @@ export const router = createBrowserRouter([
       },
       { path: 'checkout/vnpay-return', Component: CheckoutReturnPage },
       { path: 'checkout/success', Component: CheckoutSuccessPage },
-      { path: 'orders', Component: ProfilePage },
+      { path: 'orders', Component: OrdersPage },
       { path: 'login', Component: LoginPage },
       { path: 'register', Component: RegisterPage },
       { path: 'register/seller', Component: SellerRegisterPage },
