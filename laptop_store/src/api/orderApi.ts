@@ -30,6 +30,12 @@ export const orderApi = {
     getOrderById: (id: number) => {
         return axiosClient.get(`/api/orders/${id}`);
     },
+    getOrderBySellerId: (id: number) => {
+        return axiosClient.get(`/api/orders/seller/${id}`);
+    },
+    getOrderDetailById: (id: number) => {
+        return axiosClient.get(`/api/orders/orderDetail/${id}`);
+    },
 
     // Hủy đơn hàng
     cancelOrder: (id: number) => {
@@ -37,12 +43,17 @@ export const orderApi = {
     },
 
     // Thanh toán VNPay
-    createVNPayPayment: (amount: number, orderInfo: string) => {
-        return axiosClient.get('/api/payment/vnpay/create', {
-            params: { amount, orderInfo },
-        });
-    },
+    createVNPayPayment: (amount: number, orderInfo: string, bankCode?: string) => {
 
+        const params: any = { amount, orderInfo };
+
+
+        if (bankCode && bankCode.trim() !== '') {
+            params.bankCode = bankCode;
+        }
+
+        return axiosClient.get('/api/payment/vnpay/create', { params });
+    },
     // Thanh toán Credit Card
     payWithCreditCard: (cardData: any) => {
         return axiosClient.post(
@@ -52,5 +63,14 @@ export const orderApi = {
     },
     checkCanReview: (productId: number | string) => {
         return axiosClient.get(`/products/${productId}/check-review-eligibility`);
+    },
+    getOrdersByShop:(shopId: number | string) => {
+        return axiosClient.get(`/api/orders/user/shop/${shopId}`);
+    },
+    getOrdersForSeller:(userId:number | string,shopId: number | string) => {
+        return axiosClient.get(`/api/orders/${userId}/shop/${shopId}`);
+    },
+    updateOrderStatus:(id:number | string,newStatus: number | string) => {
+        return axiosClient.post(`/api/orders/${id}/shop/${newStatus}`);
     },
 };

@@ -1,6 +1,6 @@
 import React from 'react';
 import {Link, useNavigate} from 'react-router';
-import {Heart, GitCompare, ShoppingCart, CreditCard} from 'lucide-react';
+import {Heart, GitCompare, ShoppingCart, CreditCard, Zap} from 'lucide-react';
 import type { Laptop } from '../types';
 import { Rating } from './Rating';
 import { useStore } from '../context/StoreContext';
@@ -57,21 +57,30 @@ export const ProductCard: React.FC<ProductCardProps> = ({ laptop }) => {
 
   return (
     <Link to={`/product/${laptop.id}`} className="block group">
-      <div className="bg-white rounded-xl border border-slate-100 hover:border-blue-200 hover:shadow-md transition-all duration-200 overflow-hidden flex flex-col h-full">
+      <div className={`bg-white rounded-xl border hover:shadow-md transition-all duration-200 overflow-hidden flex flex-col h-full ${
+        laptop.isBestSeller
+          ? 'border-amber-300 ring-1 ring-amber-200 shadow-sm shadow-amber-100'
+          : 'border-slate-100 hover:border-blue-200'
+      }`}>
+
+        {/* Boosted ribbon */}
+        {laptop.isBestSeller && (
+          <div className="bg-gradient-to-r from-amber-400 to-orange-400 px-3 py-0.5 flex items-center gap-1.5">
+            <Zap className="w-3 h-3 text-white" />
+            <span className="text-[10px] font-bold text-white uppercase tracking-wide">Đẩy tin nổi bật</span>
+          </div>
+        )}
 
         {/* ── Image ── */}
         <div className="relative overflow-hidden bg-slate-50 aspect-[4/3] shrink-0">
           <img
-            src={laptop.image}
+            src={laptop.image||laptop.imageUrl}
             alt={laptop.name}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-400"
           />
 
           {/* Badges top-left */}
           <div className="absolute top-2 left-2 flex flex-col gap-1">
-            {laptop.isBestSeller && (
-              <Badge className="bg-blue-600 text-white text-[10px] px-1.5 py-0.5 h-auto">Nổi bật</Badge>
-            )}
             {laptop.isHot && (
               <Badge className="bg-orange-500 text-white text-[10px] px-1.5 py-0.5 h-auto">Hot</Badge>
             )}

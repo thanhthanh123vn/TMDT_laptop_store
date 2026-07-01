@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
+
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
     Page<Notification> findByUserIdOrUserIdIsNullOrderByCreatedAtDesc(Long userId, Pageable pageable);
     Page<Notification> findByUserId(Long userId, Pageable pageable);
@@ -21,4 +23,5 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
             @Param("isRead") Boolean isRead,
             Pageable pageable
     );
+    List<Notification> findByUserIdOrderByCreatedAtDesc(Long userId);
 }

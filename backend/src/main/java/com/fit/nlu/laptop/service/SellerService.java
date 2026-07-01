@@ -98,4 +98,20 @@ public class SellerService {
         SellerProfile profile = getProfile(userId);
         return reviewRepository.findBySellerIdOrderByCreatedAtDesc(profile.getId());
     }
+    public SellerProfile getProfileById(Long shopId) {
+
+        return sellerProfileRepository.findById(shopId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy thông tin cửa hàng với ID: " + shopId));
+    }
+
+    public SellerProfile updateRating(Long userId,Double rating) {
+        SellerProfile profile = getProfile(userId);
+        if (rating != null && rating != 0) {
+
+            profile.setRating(rating);
+        }
+        return sellerProfileRepository.save(profile);
+
+
+    }
 }

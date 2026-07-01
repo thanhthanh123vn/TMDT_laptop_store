@@ -28,6 +28,10 @@ import {AdminProfilePage} from "./pages/admin/AdminProfilePage.tsx";
 import AdminCategoriesPage from "./pages/admin/AdminCategoriesPage.tsx";
 import AdminRevenuePage from "./pages/admin/AdminRevenuePage.tsx";
 import AdminSellersPage from "./pages/admin/AdminSellersPage.tsx";
+
+
+import AdminBoostPage from "./pages/admin/AdminBoostPage.tsx";
+
 import {SellerLayout} from "./pages/seller/SellerLayout.tsx";
 import {SellerDashboardPage} from "./pages/seller/SellerDashboardPage.tsx";
 import {SellerProductsPage} from "./pages/seller/SellerProductsPage.tsx";
@@ -36,10 +40,18 @@ import {SellerReviewsPage} from "./pages/seller/SellerReviewsPage.tsx";
 import {AdminReviewsPage} from "./pages/admin/AdminReviewsPage.tsx";
 
 
+import {SellerBoostPage} from "./pages/seller/SellerBoostPage.tsx";
+
+
+
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 import {CheckoutReturnPage} from "@/pages/CheckoutReturnPage.tsx";
+import ChatVsShop from "@/pages/ChatVsShop.tsx";
 import {SellerChatPage} from "@/pages/seller/SellerChatPage.tsx";
+import ChatPage from "@/pages/ChatPage.tsx";
+import ShopDetailPage from "@/pages/ShopDetailPage.tsx";
+import {SellerOrderDetail} from "@/pages/seller/SellerOrderDetail.tsx";
 
 const stripePromise = loadStripe("pk_test_51Tbd6UFPI5dc6V9ZfFGX5ttKLsacjscuB7vm0arJnWbSdb3OvuEzAGO7merHxX0dFTsUAAyWKF0JO3XgAohFW9Kk00GYBD9HL5");
 
@@ -71,6 +83,12 @@ export const router = createBrowserRouter([
       { path: 'forgot-password', Component: ForgotPasswordPage },
       { path: 'profile', Component: ProfilePage },
       { path: 'wishlist', Component: WishListPage },
+      { path: 'chat', Component: ChatVsShop },
+      { path: 'allConvChat', Component: ChatPage },
+      {
+        path: "/shop/:id",
+        Component: ShopDetailPage
+      },
       { path: 'notifications', Component: NotificationsPage },
       {
         path: 'account',
@@ -101,6 +119,9 @@ export const router = createBrowserRouter([
       { path: 'revenue', Component: AdminRevenuePage },
       { path: 'notifications', Component: NotificationManagementPage },
       { path: 'profile', Component: AdminProfilePage },
+
+      { path: 'boost', Component: AdminBoostPage },
+
       { path: 'reviews', Component: AdminReviewsPage },
     ],
   },
@@ -111,8 +132,13 @@ export const router = createBrowserRouter([
       { index: true, Component: SellerDashboardPage },
       { path: 'products', Component: SellerProductsPage },
       { path: 'orders', Component: SellerOrdersPage },
+      { path: "orders/:orderId", Component:SellerOrderDetail } ,
       { path: 'reviews', Component: SellerReviewsPage },
       { path: 'chat', element: <SellerChatPage /> },
+
+
+      { path: 'boost', Component: SellerBoostPage },
+
     ],
   }
 ]);

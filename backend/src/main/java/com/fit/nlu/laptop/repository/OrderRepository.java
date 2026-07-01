@@ -28,4 +28,18 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     @Query("SELECT COALESCE(SUM(i.price * i.quantity), 0) FROM OrderItem i WHERE i.product.seller.id = :sellerId")
     java.math.BigDecimal sumRevenueBySellerId(@Param("sellerId") Long sellerId);
+
+    @Query("""
+    SELECT DISTINCT o 
+    FROM Order o
+    JOIN o.items oi
+    JOIN oi.product p
+    WHERE o.user.id = :buyerId
+    AND p.seller.id = :sellerId
+    ORDER BY o.createdAt DESC
+""")
+    List<Order> findOrdersByBuyerAndSeller(
+            @Param("buyerId") Long buyerId,
+            @Param("sellerId") Long sellerId
+    );
 }

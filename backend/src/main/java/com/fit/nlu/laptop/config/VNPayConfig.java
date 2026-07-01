@@ -11,7 +11,6 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -31,6 +30,7 @@ public class VNPayConfig {
     }
 
     @Value("${VNPAY_SECRET_KEY}")
+
     public void setSecretKey(String key) {
         secretKey = key;
     }
@@ -49,77 +49,49 @@ public class VNPayConfig {
     public void setVnpReturnUrl(String url) {
         vnp_ReturnUrl = url;
     }
-
-    /** VNPay yêu cầu encode theo US-ASCII, khoảng trắng dùng '+' thay vì %20 */
+    /** VNPay yêu cầu encode theo UTF-8, khoảng trắng dùng %20 thay vì + */
     public static String vnpayUrlEncode(String value) {
         if (value == null) {
             return "";
         }
-        return URLEncoder.encode(value, StandardCharsets.US_ASCII).replace("%20", "+");
+
+        return URLEncoder.encode(value, StandardCharsets.UTF_8).replace("+", "%20");
     }
 
-    /** Tạo chuỗi hash khi gửi sang VNPay (giá trị phải được URL-encode) */
+    /** Tạo chuỗi hash khi gửi sang VNPay (Trong VNPay 2.1.0, HashData giống hệt Query String) */
     public static String buildPaymentHashData(Map<String, String> params) {
         List<String> fieldNames = new ArrayList<>(params.keySet());
-        Collections.sort(fieldNames);
+        Collections.sort(fieldNames); // Sắp xếp theo Alphabet
 
-        StringBuilder hashData = new StringBuilder();
-        Iterator<String> itr = fieldNames.iterator();
-        while (itr.hasNext()) {
-            String fieldName = itr.next();
+        List<String> segments = new ArrayList<>();
+        for (String fieldName : fieldNames) {
             String fieldValue = params.get(fieldName);
             if (fieldValue != null && !fieldValue.isEmpty()) {
-                hashData.append(fieldName)
-                        .append('=')
-                        .append(vnpayUrlEncode(fieldValue));
-                if (itr.hasNext()) {
-                    hashData.append('&');
-                }
+
+                segments.add(vnpayUrlEncode(fieldName) + "=" + vnpayUrlEncode(fieldValue));
             }
         }
-        return hashData.toString();
+        return String.join("&", segments);
     }
 
-    /** Tạo query string redirect (cùng quy tắc encode với chuỗi hash) */
     public static String buildPaymentQuery(Map<String, String> params) {
-        List<String> fieldNames = new ArrayList<>(params.keySet());
-        Collections.sort(fieldNames);
-
-        StringBuilder query = new StringBuilder();
-        Iterator<String> itr = fieldNames.iterator();
-        while (itr.hasNext()) {
-            String fieldName = itr.next();
-            String fieldValue = params.get(fieldName);
-            if (fieldValue != null && !fieldValue.isEmpty()) {
-                query.append(vnpayUrlEncode(fieldName))
-                        .append('=')
-                        .append(vnpayUrlEncode(fieldValue));
-                if (itr.hasNext()) {
-                    query.append('&');
-                }
-            }
-        }
-        return query.toString();
+        return buildPaymentHashData(params);
     }
 
-    /** Xác minh chữ ký callback/IPN: dùng giá trị tham số đã decode (Spring đã decode sẵn) */
+    /** Xác minh chữ ký callback/IPN: dùng giá trị tham số đã decode */
     public static String buildReturnHashData(Map<String, String> params) {
         List<String> fieldNames = new ArrayList<>(params.keySet());
         Collections.sort(fieldNames);
 
-        StringBuilder hashData = new StringBuilder();
-        Iterator<String> itr = fieldNames.iterator();
-        while (itr.hasNext()) {
-            String fieldName = itr.next();
+        List<String> segments = new ArrayList<>();
+        for (String fieldName : fieldNames) {
             String fieldValue = params.get(fieldName);
             if (fieldValue != null && !fieldValue.isEmpty()) {
-                hashData.append(fieldName).append('=').append(fieldValue);
-                if (itr.hasNext()) {
-                    hashData.append('&');
-                }
+
+                segments.add(fieldName + "=" + fieldValue);
             }
         }
-        return hashData.toString();
+        return String.join("&", segments);
     }
 
     public static String hmacSHA512(final String key, final String data) {

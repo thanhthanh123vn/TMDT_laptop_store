@@ -8,5 +8,6 @@ public record UpdateSellerProfileReq(
         String warehouseStreet,
         String bankName,
         String bankAccountNumber,
-        String bankAccountHolder
+        String bankAccountHolder,
+        Double rating
 ) {}

@@ -15,10 +15,29 @@ export const productApi = {
     getProductReviews: (productId: number | string) => {
         return axiosClient.get(`/api/products/${productId}/reviews`);
     },
+    getShopInfo: (shopId: number) => {
+        return axiosClient.get(`/api/products/${shopId}/public`);
+    },
 
 
-    submitReview: (productId: number | string, data: { rating: number; comment: string }) => {
-        return axiosClient.post(`/api/products/${productId}/reviews`, data);
+    getProductsByShop: (shopId: number) => {
+        return axiosClient.get(`/api/products/seller/${shopId}`);
+    },
+
+
+    submitReview: (
+        productId: number | string,
+        formData: FormData
+    ) => {
+        return axiosClient.post(
+            `/api/products/${productId}/reviews`,
+            formData,
+            {
+                headers: {
+                    "Content-Type": "multipart/form-data"
+                }
+            }
+        );
     },
     checkCanReview: (productId: number | string) => {
         return axiosClient.get(`/api/products/${productId}/check-review-eligibility`);

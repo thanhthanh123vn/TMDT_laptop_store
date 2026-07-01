@@ -23,7 +23,8 @@ public class PaymentController {
     @GetMapping("/vnpay/create")
     public ResponseEntity<?> createPayment(HttpServletRequest request,
                                            @RequestParam("amount") long amount,
-                                           @RequestParam("orderInfo") String orderInfo) {
+                                           @RequestParam("orderInfo") String orderInfo,
+                                           @RequestParam(value = "bankCode", required = false) String bankCode) {
         try {
             long amountVNPay = amount * 100;
             Map<String, String> vnp_Params = new HashMap<>();
@@ -33,6 +34,8 @@ public class PaymentController {
             vnp_Params.put("vnp_TmnCode", VNPayConfig.vnp_TmnCode);
             vnp_Params.put("vnp_Amount", String.valueOf(amountVNPay));
             vnp_Params.put("vnp_CurrCode", "VND");
+
+
             vnp_Params.put("vnp_TxnRef", VNPayConfig.getRandomNumber(8));
             vnp_Params.put("vnp_OrderInfo", orderInfo);
             vnp_Params.put("vnp_OrderType", "other");
@@ -40,6 +43,10 @@ public class PaymentController {
             vnp_Params.put("vnp_ReturnUrl", VNPayConfig.vnp_ReturnUrl);
             vnp_Params.put("vnp_IpAddr", VNPayConfig.getIpAddress(request));
 
+//            if (bankCode != null && !bankCode.isEmpty()) {
+//                vnp_Params.put("vnp_BankCode", bankCode);
+//            }
+            vnp_Params.put("vnp_Locale", "vn");
             TimeZone vnTz = TimeZone.getTimeZone("Asia/Ho_Chi_Minh");
             Calendar cld = Calendar.getInstance(vnTz);
             SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
@@ -60,7 +67,7 @@ public class PaymentController {
             Map<String, String> response = new HashMap<>();
             response.put("paymentUrl", paymentUrl);
             response.put("txnRef", vnp_Params.get("vnp_TxnRef"));
-
+            System.out.println(paymentUrl);
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {

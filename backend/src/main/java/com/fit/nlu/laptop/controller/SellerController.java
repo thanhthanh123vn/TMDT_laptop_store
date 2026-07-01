@@ -12,6 +12,7 @@ import com.fit.nlu.laptop.repository.ProductImageRepository;
 import com.fit.nlu.laptop.repository.ProductRepository;
 import com.fit.nlu.laptop.repository.SellerProfileRepository;
 import com.fit.nlu.laptop.service.FileService;
+import com.fit.nlu.laptop.service.OrderService;
 import com.fit.nlu.laptop.service.ReviewService;
 import com.fit.nlu.laptop.service.SellerService;
 import lombok.RequiredArgsConstructor;
@@ -38,11 +39,11 @@ public class SellerController {
 
     private final SellerService sellerService;
     private final ProductRepository productRepository;
-    private final SellerProfileRepository sellerProfileRepository;
+
     private final ProductImageRepository productImageRepository;
     private final FileService fileService;
     private final ReviewService reviewService;
-    private final com.fit.nlu.laptop.service.OrderService orderService;
+    private final OrderService orderService;
 
     @GetMapping("/profile")
     public ResponseEntity<Map<String, Object>> getProfile(@AuthenticationPrincipal UserPrincipal principal) {
@@ -66,13 +67,14 @@ public class SellerController {
         return ResponseEntity.ok(sellerService.getReviews((long) principal.getId()));
     }
 
-    // ─── Product Management ───────────────────────────────────────────────────
 
-    private SellerProfile getSellerProfile(long userId) {
-        return sellerProfileRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy hồ sơ người bán"));
+    @GetMapping("/getSellerByUserId")
+    public SellerProfile getSellerProfile(
+            @RequestParam Long userId
+    ) {
+
+        return sellerService.getProfile(userId);
     }
-
     @GetMapping("/products")
     public ResponseEntity<List<Product>> getMyProducts(
             @AuthenticationPrincipal UserPrincipal principal,
@@ -291,5 +293,21 @@ public class SellerController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
+    }
+    @GetMapping("/{shopId}/public")
+    public ResponseEntity<SellerProfile> getShopInfo(@PathVariable Long shopId) {
+        SellerProfile profile = sellerService.getProfileById(shopId);
+        return ResponseEntity.ok(profile);
+    }
+    @PostMapping("/rating/{rating}")
+    public ResponseEntity<?> updateRating(@AuthenticationPrincipal UserPrincipal userPrincipal,
+                                          @PathVariable Double rating){
+        if (userPrincipal == null) return ResponseEntity.status(401).build();
+        var updateRating = sellerService.updateRating((long) userPrincipal.getId(),rating);
+        return ResponseEntity.ok(updateRating);
+
+
+
+
     }
 }

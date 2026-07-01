@@ -73,18 +73,34 @@ export const SellerDashboardPage: React.FC = () => {
     const [success, setSuccess] = useState('');
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    useEffect(() => { fetchData(); }, []);
+    useEffect(() => { fetchData();  }, []);
 
     const fetchData = async () => {
         try {
-            const [pRes, sRes] = await Promise.all([sellerApi.getProfile(), sellerApi.getStats()]);
+
+            const [pRes, sRes] = await Promise.all([
+                sellerApi.getProfile(),
+                sellerApi.getStats()
+            ]);
+
             setProfile(pRes.data);
             setStats(sRes.data);
             setForm(pRes.data);
+
+
+            if (sRes.data && sRes.data.avgRating !== undefined) {
+                try {
+                    await sellerApi.updateRating(sRes.data.avgRating);
+                } catch (err) {
+                    console.error("Lỗi cập nhật rating:", err);
+
+                }
+            }
         } catch {
             setError('Không thể tải dữ liệu.');
         }
     };
+
 
     const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -133,6 +149,7 @@ export const SellerDashboardPage: React.FC = () => {
     const avatarSrc = profile?.avatarUrl
         ? (profile.avatarUrl.startsWith('http') ? profile.avatarUrl : BASE_URL + profile.avatarUrl)
         : null;
+
 
     return (
         <div className="space-y-6">
