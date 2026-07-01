@@ -1,6 +1,7 @@
 package com.fit.nlu.laptop.service.impl;
 
 import com.fit.nlu.laptop.entity.Product;
+import com.fit.nlu.laptop.entity.ProductImage;
 import com.fit.nlu.laptop.entity.SellerProfile;
 import com.fit.nlu.laptop.repository.OrderRepository;
 import com.fit.nlu.laptop.repository.ProductRepository;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class ProductServiceImpl implements ProductService {
@@ -47,6 +49,15 @@ public class ProductServiceImpl implements ProductService {
         response.setScreenSize(product.getScreenSize());
         response.setDescription(product.getDescription());
         response.setCondition(product.getCondition());
+
+        // Map danh sách ảnh từ product_images, fallback về imageUrl nếu rỗng
+        List<String> imageUrls = product.getImages().stream()
+                .map(ProductImage::getUrl)
+                .collect(Collectors.toList());
+        if (imageUrls.isEmpty() && product.getImageUrl() != null) {
+            imageUrls = List.of(product.getImageUrl());
+        }
+        response.setImages(imageUrls);
 
         // 2. Map thông tin Seller an toàn
         SellerProfile seller = product.getSeller();

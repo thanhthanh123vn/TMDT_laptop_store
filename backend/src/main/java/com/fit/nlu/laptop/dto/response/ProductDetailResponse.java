@@ -3,6 +3,7 @@ package com.fit.nlu.laptop.dto.response;
 import lombok.Getter;
 import lombok.Setter;
 import java.math.BigDecimal;
+import java.util.List;
 
 @Getter
 @Setter
@@ -13,6 +14,7 @@ public class ProductDetailResponse {
     private BigDecimal price;
     private BigDecimal oldPrice;
     private String imageUrl;
+    private List<String> images;
     private String badge;
     private Double rating;
     private Integer reviews;
