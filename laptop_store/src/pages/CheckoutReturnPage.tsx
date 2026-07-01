@@ -1,9 +1,18 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Loader2, CheckCircle, XCircle } from 'lucide-react';
+import { useStore } from '../context/StoreContext';
 import axiosClient from '../api/axiosClient';
+import { orderApi } from '@/api/orderApi';
+import {
+    buildCheckoutSummary,
+    clearPendingOrder,
+    loadPendingOrder,
+    saveCheckoutSummary,
+} from '@/utils/checkoutStorage';
 
 export const CheckoutReturnPage = () => {
+    const { clearCart } = useStore();
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const [status, setStatus] = useState<'loading' | 'success' | 'fail'>('loading');
@@ -16,25 +25,56 @@ export const CheckoutReturnPage = () => {
                 const response = await axiosClient.get('/api/payment/vnpay/return', { params });
                 const data = response.data;
 
+                if (!data.success) {
+                    clearPendingOrder();
+                    setStatus('fail');
+                    setMessage(data.message || 'Thanh toán thất bại.');
+                    setTimeout(() => navigate('/cart', { replace: true }), 3000);
+                    return;
+                }
+
+                const pendingOrder = loadPendingOrder();
+
+                if (!pendingOrder) {
+                    setStatus('fail');
+                    setMessage('Không tìm thấy thông tin đơn hàng tạm để tạo bill VNPay.');
+                    setTimeout(() => navigate('/cart', { replace: true }), 3000);
+                    return;
+                }
+
+                const orderResponse = await orderApi.createOrder(pendingOrder.orderPayload);
+                const checkoutSummary = buildCheckoutSummary({
+                    orderPayload: pendingOrder.orderPayload,
+                    checkoutItems: pendingOrder.checkoutItems ?? [],
+                    orderResponse,
+                });
+
+                saveCheckoutSummary(checkoutSummary);
+
+                clearPendingOrder();
+
+                if (pendingOrder.clearCartAfterSuccess) {
+                    clearCart();
+                }
+
                 if (data.success) {
                     setStatus('success');
                     setMessage(data.message || 'Thanh toán thành công!');
-                    setTimeout(() => navigate('/orders'), 3000);
-                } else {
-                    setStatus('fail');
-                    setMessage(data.message || 'Thanh toán thất bại.');
-                    setTimeout(() => navigate('/cart'), 3000);
+                    setTimeout(
+                        () => navigate('/checkout/success', { replace: true, state: { checkoutSummary } }),
+                        1500
+                    );
                 }
             } catch (error: unknown) {
                 const err = error as { response?: { data?: { message?: string } } };
                 setStatus('fail');
                 setMessage(err.response?.data?.message || 'Không thể xác thực giao dịch VNPay.');
-                setTimeout(() => navigate('/cart'), 3000);
+                setTimeout(() => navigate('/cart', { replace: true }), 3000);
             }
         };
 
         void processPayment();
-    }, [searchParams, navigate]);
+    }, [searchParams, navigate, clearCart]);
 
     return (
         <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">

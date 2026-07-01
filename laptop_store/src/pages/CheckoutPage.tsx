@@ -3,7 +3,15 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useStore } from '../context/StoreContext';
 import {addressApi} from "@/api/addressApi.ts";
 import {orderApi} from "@/api/orderApi.ts";
+import type { CreateOrderPayload } from "@/api/orderApi.ts";
 import {useLocation} from "react-router";
+import {
+  buildCheckoutSummary,
+  clearPendingOrder,
+  type CheckoutCartItem,
+  saveCheckoutSummary,
+  savePendingOrder,
+} from "@/utils/checkoutStorage";
 
 
 import {
@@ -13,12 +21,23 @@ import {
   useStripe,
   useElements
 } from "@stripe/react-stripe-js";
-import {
-  CardElement
-
-} from "@stripe/react-stripe-js";
 function formatVND(price: number): string {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
+}
+
+function storeCompletedCheckout(
+    orderPayload: CreateOrderPayload,
+    checkoutItems: CheckoutCartItem[],
+    orderResponse?: unknown
+) {
+  clearPendingOrder();
+  saveCheckoutSummary(
+      buildCheckoutSummary({
+        orderPayload,
+        checkoutItems,
+        orderResponse,
+      })
+  );
 }
 
 export default function CheckoutPage() {
@@ -46,7 +65,7 @@ export default function CheckoutPage() {
   const buyNowItem = location.state?.item;
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newAddress, setNewAddress] = useState({ type: 'Nhà riêng', name: '', phone: '', address: '', city: '' });
-  const checkoutItems = isBuyNow && buyNowItem ? [buyNowItem] : cart;
+  const checkoutItems = (isBuyNow && buyNowItem ? [buyNowItem] : cart) as CheckoutCartItem[];
 
   const subtotal = checkoutItems.reduce((sum, item) => sum + item.laptop.price * (item.quantity || 1), 0);
   const shippingFee = shippingMethod === 'fast' ? 40000 : 0;
@@ -153,10 +172,7 @@ export default function CheckoutPage() {
           }
 
           // lưu order tạm
-          localStorage.setItem(
-              "pendingOrder",
-              JSON.stringify(orderPayload)
-          );
+          savePendingOrder(orderPayload, !isBuyNow, checkoutItems);
 
 
           window.location.href = data.paymentUrl;
@@ -179,8 +195,8 @@ export default function CheckoutPage() {
 
 
       else if (paymentMethod === "cod") {
-
-        await orderApi.createOrder(orderPayload);
+        const response = await orderApi.createOrder(orderPayload);
+        storeCompletedCheckout(orderPayload, checkoutItems, response);
 
 
         if (!isBuyNow) {
@@ -264,7 +280,8 @@ export default function CheckoutPage() {
           });
 
 
-          await orderApi.createOrder(orderPayload);
+          const response = await orderApi.createOrder(orderPayload);
+          storeCompletedCheckout(orderPayload, checkoutItems, response);
 
           // clear cart
           if (!isBuyNow) {
