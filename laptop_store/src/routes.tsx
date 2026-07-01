@@ -51,6 +51,7 @@ import ChatVsShop from "@/pages/ChatVsShop.tsx";
 import {SellerChatPage} from "@/pages/seller/SellerChatPage.tsx";
 import ChatPage from "@/pages/ChatPage.tsx";
 import ShopDetailPage from "@/pages/ShopDetailPage.tsx";
+import {SellerOrderDetail} from "@/pages/seller/SellerOrderDetail.tsx";
 
 const stripePromise = loadStripe("pk_test_51Tbd6UFPI5dc6V9ZfFGX5ttKLsacjscuB7vm0arJnWbSdb3OvuEzAGO7merHxX0dFTsUAAyWKF0JO3XgAohFW9Kk00GYBD9HL5");
 
@@ -131,8 +132,10 @@ export const router = createBrowserRouter([
       { index: true, Component: SellerDashboardPage },
       { path: 'products', Component: SellerProductsPage },
       { path: 'orders', Component: SellerOrdersPage },
+      { path: "orders/:orderId", Component:SellerOrderDetail } ,
       { path: 'reviews', Component: SellerReviewsPage },
       { path: 'chat', element: <SellerChatPage /> },
+
 
       { path: 'boost', Component: SellerBoostPage },
 

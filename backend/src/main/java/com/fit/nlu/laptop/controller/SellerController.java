@@ -299,4 +299,15 @@ public class SellerController {
         SellerProfile profile = sellerService.getProfileById(shopId);
         return ResponseEntity.ok(profile);
     }
+    @PostMapping("/rating/{rating}")
+    public ResponseEntity<?> updateRating(@AuthenticationPrincipal UserPrincipal userPrincipal,
+                                          @PathVariable Double rating){
+        if (userPrincipal == null) return ResponseEntity.status(401).build();
+        var updateRating = sellerService.updateRating((long) userPrincipal.getId(),rating);
+        return ResponseEntity.ok(updateRating);
+
+
+
+
+    }
 }

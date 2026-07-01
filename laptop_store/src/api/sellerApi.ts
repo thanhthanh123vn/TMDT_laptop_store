@@ -13,7 +13,7 @@ export const sellerApi = {
     updateProfile: (data: any) => axiosClient.put('/api/seller/profile', data),
     getStats: () => axiosClient.get('/api/seller/stats'),
     getReviews: () => axiosClient.get('/api/seller/reviews'),
-
+    getOrders: () => axiosClient.get('/api/seller/orders'),
     // Product management
     getProducts: (filters?: SellerProductFilters) =>
         axiosClient.get('/api/seller/products', { params: filters }),
@@ -35,5 +35,8 @@ export const sellerApi = {
         axiosClient.put(`/api/seller/products/${productId}/images`, urls),
     replyToReview: (reviewId: number, data: { replyContent: string }) => {
         return axiosClient.post(`/api/seller/reviews/${reviewId}/reply`, data);
+    },
+    updateRating: (rating:number)=>{
+        return axiosClient.post(`/api/seller/rating/${rating}`);
     }
 };

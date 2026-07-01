@@ -13,6 +13,7 @@ import { userApi } from '@/api/userApi.ts';
 import { uploadApi } from "@/api/uploadApi.ts";
 import { orderApi } from "@/api/orderApi.ts";
 import { productApi } from "@/api/productApi.ts";
+import {Link} from "react-router";
 
 interface Message {
     id: number;
@@ -379,7 +380,9 @@ export default function ChatVsShop() {
                             <div className="p-4 bg-white border-b border-slate-200 flex items-center gap-3 shadow-sm z-10">
                                 <div className="w-10 h-10 bg-pink-100 rounded-full flex items-center justify-center text-pink-600"><Store size={20} /></div>
                                 <div>
-                                    <h2 className="font-bold text-slate-800">{currentConv?.seller?.storeName || "Cửa hàng"}</h2>
+
+                                    <Link  to={`/shop/${currentConv?.seller.id}`}
+                                           className="font-bold text-slate-800">{currentConv?.seller?.storeName || "Cửa hàng"}</Link>
                                     <span className="text-[11px] text-green-500 font-medium flex items-center gap-1"><span className="w-2 h-2 bg-green-500 rounded-full inline-block"></span> Đang hoạt động</span>
                                 </div>
                             </div>

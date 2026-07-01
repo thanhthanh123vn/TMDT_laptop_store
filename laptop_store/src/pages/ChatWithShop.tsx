@@ -20,7 +20,7 @@ import {userApi} from "@/api/userApi.ts";
 import {uploadApi} from "@/api/uploadApi.ts";
 import {orderApi} from "@/api/orderApi.ts";
 import {productApi} from "@/api/productApi.ts";
-import {useNavigate} from "react-router";
+import {Link, useNavigate} from "react-router";
 
 interface User {
     id: number;
@@ -385,7 +385,12 @@ export const ChatWithShop: React.FC<ChatProps> = ({productId, shopId, shopName, 
                                     className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 border-2 border-blue-600 rounded-full"></span>
                             </div>
                             <div>
-                                <h3 className="font-bold text-sm">{shopName}</h3>
+                                <Link
+                                    to={`/shop/${shopId}`}
+                                    className="font-bold text-sm hover:underline"
+                                >
+                                    {shopName}
+                                </Link>
                                 <p className="text-[11px] text-blue-100">Đang hoạt động</p>
                             </div>
                         </div>

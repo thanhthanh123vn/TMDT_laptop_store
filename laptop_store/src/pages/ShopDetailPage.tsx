@@ -5,6 +5,7 @@ import { productApi } from '../api/productApi';
 import { userApi } from '../api/userApi';
 import { ProductCard } from '../components/ProductCard';
 import type { Laptop } from '../types';
+import {sellerApi} from "@/api/sellerApi.ts";
 
 interface SellerInfo {
     id: number;
@@ -21,7 +22,13 @@ interface SellerInfo {
     bankAccountHolder: string;
     approved: boolean;
 }
-
+interface Stats {
+    totalProducts: number;
+    totalOrders: number;
+    totalReviews: number;
+    avgRating: number;
+    totalRevenue: number;
+}
 const ShopDetailPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
@@ -38,10 +45,12 @@ const ShopDetailPage: React.FC = () => {
                 setLoading(true);
                 const [shopRes, productsRes] = await Promise.all([
                     productApi.getShopInfo(Number(id)),
-                    productApi.getProductsByShop(Number(id))
+                    productApi.getProductsByShop(Number(id)),
+
                 ]);
                 setSeller(shopRes.data);
                 setProducts(productsRes.data);
+
             } catch (error) {
                 console.error("Lỗi lấy thông tin shop:", error);
             } finally {

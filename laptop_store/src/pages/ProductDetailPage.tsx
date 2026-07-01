@@ -34,10 +34,7 @@ const Stars: React.FC<{ rating: number; size?: string; interactive?: boolean; on
 
 
 const FAKE_SELLER = {
-  name: 'LaptopStore Official',
-  avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=LS&backgroundColor=3b82f6&textColor=ffffff',
-  rating: 4.9,
-  sold: 1240,
+
   responseRate: '98%',
   responseTime: 'trong vài phút',
   verified: true,
@@ -227,7 +224,7 @@ export const ProductDetailPage: React.FC = () => {
     ['Tình trạng', laptop.condition],
   ];
   const totalReviews = reviews.length;
-
+console.log(laptop);
   const averageRating = totalReviews > 0
       ? Number((reviews.reduce((sum, r) => sum + r.rating, 0) / totalReviews).toFixed(1))
       : 0;
@@ -354,18 +351,18 @@ export const ProductDetailPage: React.FC = () => {
 
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-4">
             <div className="flex items-center gap-3">
-              <img src={FAKE_SELLER.avatar} alt={FAKE_SELLER.name}
+              <img src={laptop.sellerLogo} alt={laptop.sellerName}
                    className="w-11 h-11 rounded-full border border-gray-200 shrink-0"/>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
-                  <span className="text-sm font-semibold text-gray-900 truncate">{FAKE_SELLER.name}</span>
+                  <span className="text-sm font-semibold text-gray-900 truncate">{laptop.sellerName}</span>
                   {FAKE_SELLER.verified && <BadgeCheck className="w-4 h-4 text-blue-500 shrink-0"/>}
                 </div>
                 <div className="flex items-center gap-3 text-[11px] text-gray-400 mt-0.5">
                   <span className="flex items-center gap-0.5"><Star
-                      className="w-3 h-3 fill-yellow-400 text-yellow-400"/>{FAKE_SELLER.rating}</span>
-                  <span>{FAKE_SELLER.sold.toLocaleString()} đã bán</span>
-                  <span>Phản hồi {FAKE_SELLER.responseRate}</span>
+                      className="w-3 h-3 fill-yellow-400 text-yellow-400"/>{laptop.sellerRating}</span>
+                  <span>{laptop.sellerSoldCount} đã bán</span>
+                  {/*<span>Phản hồi {FAKE_SELLER.responseRate}</span>*/}
                 </div>
               </div>
               <div className="flex gap-2 shrink-0">

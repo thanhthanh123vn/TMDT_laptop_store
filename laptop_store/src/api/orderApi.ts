@@ -30,6 +30,9 @@ export const orderApi = {
     getOrderById: (id: number) => {
         return axiosClient.get(`/api/orders/${id}`);
     },
+    getOrderBySellerId: (id: number) => {
+        return axiosClient.get(`/api/orders/seller/${id}`);
+    },
     getOrderDetailById: (id: number) => {
         return axiosClient.get(`/api/orders/orderDetail/${id}`);
     },
@@ -63,5 +66,11 @@ export const orderApi = {
     },
     getOrdersByShop:(shopId: number | string) => {
         return axiosClient.get(`/api/orders/user/shop/${shopId}`);
-    }
+    },
+    getOrdersForSeller:(userId:number | string,shopId: number | string) => {
+        return axiosClient.get(`/api/orders/${userId}/shop/${shopId}`);
+    },
+    updateOrderStatus:(id:number | string,newStatus: number | string) => {
+        return axiosClient.post(`/api/orders/${id}/shop/${newStatus}`);
+    },
 };

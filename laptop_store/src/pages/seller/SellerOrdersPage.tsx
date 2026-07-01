@@ -9,6 +9,7 @@ import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../components/ui/dialog';
 import { sellerApi } from '../../api/sellerApi';
+import {useNavigate} from "react-router";
 
 const BASE_URL = 'http://localhost:8080';
 const fmt = (n: number) =>
@@ -93,6 +94,7 @@ const OrderDetailModal: React.FC<DetailModalProps> = ({ orderId, onClose, onStat
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [selectedStatus, setSelectedStatus] = useState('');
+
 
     useEffect(() => {
         if (!orderId) { setDetail(null); return; }
@@ -286,7 +288,7 @@ export const SellerOrdersPage: React.FC = () => {
     const [search, setSearch] = useState('');
     const [filterStatus, setFilterStatus] = useState<StatusKey | ''>('');
     const [detailId, setDetailId] = useState<number | null>(null);
-
+    const navigate = useNavigate() ;
     const fetchOrders = useCallback(async () => {
         setLoading(true);
         setError('');
@@ -417,10 +419,10 @@ export const SellerOrdersPage: React.FC = () => {
                                         </td>
                                         <td className="px-4 py-3">
                                             <button
-                                                onClick={() => setDetailId(o.id)}
+                                                onClick={() => navigate(`/seller/orders/${o.id}`)}
                                                 className="flex items-center gap-1.5 text-xs font-medium text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 px-2.5 py-1.5 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
                                             >
-                                                <Eye className="w-3.5 h-3.5" /> Xem
+                                                <Eye className="w-3.5 h-3.5"/> Xem
                                             </button>
                                         </td>
                                     </tr>

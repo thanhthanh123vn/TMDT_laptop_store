@@ -63,14 +63,15 @@ public class SecurityConfig {
                         .requestMatchers("/ws/**").permitAll()
 
                         .requestMatchers("/api/products/seller/**").permitAll()
-                        // Các API cần đăng nhập (Bao gồm API Chat lấy lịch sử)
+
                         .requestMatchers(
                                 "/api/cart/**",
                                 "/api/orders/**",
                                 "/api/reviews/**",
                                 "/api/notifications/**",
                                 "/api/chat/**",
-                                "/api/upload/**"
+                                "/api/upload/**",
+                                "/api/seller/stats"
 
                         ).authenticated()
 
@@ -81,6 +82,7 @@ public class SecurityConfig {
                                 "/api/payment/**",
                                 "/api/payment/webhook",
                                 "/api/addresses",
+
                                 "/api/home",
                                 "/api/products/**",
                                 "/api/categories/**"
